@@ -1,0 +1,20 @@
+﻿{
+    "folder_0": {
+        "edges": [
+
+        ],
+        "id": "0",
+        "nodes": [
+        ]
+    },
+    "folderTree": [
+        {
+            "children": [
+            ],
+            "icon": "folder",
+            "id": "0",
+            "label": "Root"
+        }
+    ],
+    "lastId": 0
+}

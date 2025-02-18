@@ -1,0 +1,594 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <!-- 
+    Microsoft ResX Schema 
+    
+    Version 2.0
+    
+    The primary goals of this format is to allow a simple XML format 
+    that is mostly human readable. The generation and parsing of the 
+    various data types are done through the TypeConverter classes 
+    associated with the data types.
+    
+    Example:
+    
+    ... ado.net/XML headers & schema ...
+    <resheader name="resmimetype">text/microsoft-resx</resheader>
+    <resheader name="version">2.0</resheader>
+    <resheader name="reader">System.Resources.ResXResourceReader, System.Windows.Forms, ...</resheader>
+    <resheader name="writer">System.Resources.ResXResourceWriter, System.Windows.Forms, ...</resheader>
+    <data name="Name1"><value>this is my long string</value><comment>this is a comment</comment></data>
+    <data name="Color1" type="System.Drawing.Color, System.Drawing">Blue</data>
+    <data name="Bitmap1" mimetype="application/x-microsoft.net.object.binary.base64">
+        <value>[base64 mime encoded serialized .NET Framework object]</value>
+    </data>
+    <data name="Icon1" type="System.Drawing.Icon, System.Drawing" mimetype="application/x-microsoft.net.object.bytearray.base64">
+        <value>[base64 mime encoded string representing a byte array form of the .NET Framework object]</value>
+        <comment>This is a comment</comment>
+    </data>
+                
+    There are any number of "resheader" rows that contain simple 
+    name/value pairs.
+    
+    Each data row contains a name, and value. The row also contains a 
+    type or mimetype. Type corresponds to a .NET class that support 
+    text/value conversion through the TypeConverter architecture. 
+    Classes that don't support this are serialized and stored with the 
+    mimetype set.
+    
+    The mimetype is used for serialized objects, and tells the 
+    ResXResourceReader how to depersist the object. This is currently not 
+    extensible. For a given mimetype the value must be set accordingly:
+    
+    Note - application/x-microsoft.net.object.binary.base64 is the format 
+    that the ResXResourceWriter will generate, however the reader can 
+    read any of the formats listed below.
+    
+    mimetype: application/x-microsoft.net.object.binary.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Binary.BinaryFormatter
+            : and then encoded with base64 encoding.
+    
+    mimetype: application/x-microsoft.net.object.soap.base64
+    value   : The object must be serialized with 
+            : System.Runtime.Serialization.Formatters.Soap.SoapFormatter
+            : and then encoded with base64 encoding.
+
+    mimetype: application/x-microsoft.net.object.bytearray.base64
+    value   : The object must be serialized into a byte array 
+            : using a System.ComponentModel.TypeConverter
+            : and then encoded with base64 encoding.
+    -->
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="TxtAddOrOverwriteFilesInTheArchive" xml:space="preserve">
+    <value>Add / overwrite files in the archive</value>
+  </data>
+  <data name="TxtAnErrorOccurredWhileProcessingTheFile" xml:space="preserve">
+    <value>An error occurred while processing the file</value>
+  </data>
+  <data name="TxtAppendRow" xml:space="preserve">
+    <value>Append row</value>
+  </data>
+  <data name="TxtAtLeastOneFieldMustDaysHoursMinBeGreaterThan0" xml:space="preserve">
+    <value>At least a field among days, hours or minutes must be greater than 0</value>
+  </data>
+  <data name="TxtCannotSetIsDentity" xml:space="preserve">
+    <value>Flag "Is identity" cannot be set to true for datatypes String and DateTime</value>
+  </data>
+  <data name="TxtChangingThisOptionYouWillLoseColumnDef" xml:space="preserve">
+    <value>If you change this option the configuration in "Column definition" tab will be lost. Do you want to continue?</value>
+  </data>
+  <data name="TxtCheckExistence" xml:space="preserve">
+    <value>Check existence</value>
+  </data>
+  <data name="TxtCompressBackup" xml:space="preserve">
+    <value>Compress backup</value>
+  </data>
+  <data name="TxtCopy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="TxtCpuEvent" xml:space="preserve">
+    <value>Cpu event</value>
+  </data>
+  <data name="TxtCreateWithUniqueNames" xml:space="preserve">
+    <value>Create with unique names</value>
+  </data>
+  <data name="TxtDateStart" xml:space="preserve">
+    <value>Date start</value>
+  </data>
+  <data name="TxtDatetime" xml:space="preserve">
+    <value>Datetime</value>
+  </data>
+  <data name="TxtDateTimeEvent" xml:space="preserve">
+    <value>Date / Time event</value>
+  </data>
+  <data name="TxtDecimal" xml:space="preserve">
+    <value>Decimal</value>
+  </data>
+  <data name="TxtDelete" xml:space="preserve">
+    <value>Delete</value>
+  </data>
+  <data name="TxtDeletedFiles" xml:space="preserve">
+    <value>Deleted files</value>
+  </data>
+  <data name="TxtDeleteRow" xml:space="preserve">
+    <value>Delete row</value>
+  </data>
+  <data name="TxtDiskSpaceEvent" xml:space="preserve">
+    <value>Disk space event</value>
+  </data>
+  <data name="TxtDoNotCompressBackup" xml:space="preserve">
+    <value>Do not compress backup</value>
+  </data>
+  <data name="TxtDynDataChangeType" xml:space="preserve">
+    <value>Change type</value>
+  </data>
+  <data name="TxtDynDataCpuUsagePercentage" xml:space="preserve">
+    <value>Cpu usage %</value>
+  </data>
+  <data name="TxtDynDataDefaultRecordset" xml:space="preserve">
+    <value>Default recordset</value>
+  </data>
+  <data name="TxtDynDataDiskName" xml:space="preserve">
+    <value>Disk name</value>
+  </data>
+  <data name="TxtDynDataDiskSpaceByte" xml:space="preserve">
+    <value>Disk space (bytes)</value>
+  </data>
+  <data name="TxtDynDataExecutionEndDate" xml:space="preserve">
+    <value>Execution end date</value>
+  </data>
+  <data name="TxtDynDataExecutionResult" xml:space="preserve">
+    <value>Execution result</value>
+  </data>
+  <data name="TxtDynDataExecutionReturnValue" xml:space="preserve">
+    <value>Execution return value</value>
+  </data>
+  <data name="TxtDynDataExecutionStartDate" xml:space="preserve">
+    <value>Execution start date</value>
+  </data>
+  <data name="TxtDynDataFieldXOfRecordsetsRow" xml:space="preserve">
+    <value>Field X of recordset's row</value>
+  </data>
+  <data name="TxtDynDataFileExtension" xml:space="preserve">
+    <value>File extension</value>
+  </data>
+  <data name="TxtDynDataFileName" xml:space="preserve">
+    <value>File name</value>
+  </data>
+  <data name="TxtDynDataFileNameWithoutExtension" xml:space="preserve">
+    <value>File name without extension</value>
+  </data>
+  <data name="TxtDynDataFullPathName" xml:space="preserve">
+    <value>File full path and name</value>
+  </data>
+  <data name="TxtDynDataMemoryUsagePercentage" xml:space="preserve">
+    <value>Memory usage %</value>
+  </data>
+  <data name="TxtDynDataNumberOfIterations" xml:space="preserve">
+    <value>Number of iterations</value>
+  </data>
+  <data name="TxtDynDataObjectID" xml:space="preserve">
+    <value>Object ID</value>
+  </data>
+  <data name="TxtDynDataObjectName" xml:space="preserve">
+    <value>Object name</value>
+  </data>
+  <data name="TxtEMailNotValid" xml:space="preserve">
+    <value>The e-mail address entered is not valid</value>
+  </data>
+  <data name="TxtEnterAnEMailAddress" xml:space="preserve">
+    <value>Enter an e-mail address.</value>
+  </data>
+  <data name="TxtEventCode" xml:space="preserve">
+    <value>Event code</value>
+  </data>
+  <data name="TxtExcelFileTask" xml:space="preserve">
+    <value>Excel file task</value>
+  </data>
+  <data name="TxtFail" xml:space="preserve">
+    <value>Fail</value>
+  </data>
+  <data name="TxtFailedBackupsNUmber" xml:space="preserve">
+    <value>Failed backups number</value>
+  </data>
+  <data name="TxtFieldCannotBeEmpty" xml:space="preserve">
+    <value>This field cannot be empty</value>
+  </data>
+  <data name="TxtFieldMustBeANumberBetweenXAndY" xml:space="preserve">
+    <value>Field {0} must be a number between "{1}" and "{2}"</value>
+  </data>
+  <data name="TxtFieldMustBeGreaterThanX" xml:space="preserve">
+    <value>Field must be greater than "{0}"</value>
+  </data>
+  <data name="TxtFieldNotContainAValidBool" xml:space="preserve">
+    <value>This field doesn't contain a valid boolean</value>
+  </data>
+  <data name="TxtFieldNotContainAValidInteger" xml:space="preserve">
+    <value>This field doesn't contain a valid integer</value>
+  </data>
+  <data name="TxtFieldNotContainAValidLong" xml:space="preserve">
+    <value>This field doesn't contain a valid long</value>
+  </data>
+  <data name="TxtFieldNotContainAValidNumber" xml:space="preserve">
+    <value>This field doesn't contain a valid number</value>
+  </data>
+  <data name="TxtFieldNotContainAValidSqlServerDate" xml:space="preserve">
+    <value>This field doesn't contain a valid Sql Server date</value>
+  </data>
+  <data name="TxtFilePathExists" xml:space="preserve">
+    <value>File / Path exists</value>
+  </data>
+  <data name="TxtFileSystemEvent" xml:space="preserve">
+    <value>File system event</value>
+  </data>
+  <data name="TxtFileSystemTask" xml:space="preserve">
+    <value>File system task</value>
+  </data>
+  <data name="TxtFindAllRows" xml:space="preserve">
+    <value>Find all rows</value>
+  </data>
+  <data name="TxtFindAndReplace" xml:space="preserve">
+    <value>Find and replace</value>
+  </data>
+  <data name="TxtFindFirstRow" xml:space="preserve">
+    <value>Find first row</value>
+  </data>
+  <data name="TxtFriday" xml:space="preserve">
+    <value>Friday</value>
+  </data>
+  <data name="TxtFrom" xml:space="preserve">
+    <value>From</value>
+  </data>
+  <data name="TxtFTPFileTransferProtocol" xml:space="preserve">
+    <value>FTP - File transfer protocol</value>
+  </data>
+  <data name="TxtFtpSftpTask" xml:space="preserve">
+    <value>FTP / SFTP task</value>
+  </data>
+  <data name="TxtFullBackup" xml:space="preserve">
+    <value>Full backup</value>
+  </data>
+  <data name="TxtGet" xml:space="preserve">
+    <value>Get</value>
+  </data>
+  <data name="TxtGigabytes" xml:space="preserve">
+    <value>Gigabytes</value>
+  </data>
+  <data name="TxtGreaterThan" xml:space="preserve">
+    <value>Greather than</value>
+  </data>
+  <data name="TxtHead" xml:space="preserve">
+    <value>Head</value>
+  </data>
+  <data name="TxtHigh" xml:space="preserve">
+    <value>High</value>
+  </data>
+  <data name="TxtHttpResult" xml:space="preserve">
+    <value>200</value>
+  </data>
+  <data name="TxtHttpResultExample" xml:space="preserve">
+    <value>200</value>
+  </data>
+  <data name="TxtInsertRow" xml:space="preserve">
+    <value>Insert row</value>
+  </data>
+  <data name="TxtInteger" xml:space="preserve">
+    <value>Integer</value>
+  </data>
+  <data name="TxtLengthPrecision" xml:space="preserve">
+    <value>Length / Precision</value>
+  </data>
+  <data name="TxtLessThan" xml:space="preserve">
+    <value>Less than</value>
+  </data>
+  <data name="TxtLow" xml:space="preserve">
+    <value>Low</value>
+  </data>
+  <data name="TxtMedium" xml:space="preserve">
+    <value>Medium</value>
+  </data>
+  <data name="TxtMegabytes" xml:space="preserve">
+    <value>Megabytes</value>
+  </data>
+  <data name="TxtMemoryEvent" xml:space="preserve">
+    <value>Memory event</value>
+  </data>
+  <data name="TxtModifiedFiles" xml:space="preserve">
+    <value>Modified files</value>
+  </data>
+  <data name="TxtMonday" xml:space="preserve">
+    <value>Monday</value>
+  </data>
+  <data name="TxtMove" xml:space="preserve">
+    <value>Move</value>
+  </data>
+  <data name="TxtMustBeANumberBetweenXAndY" xml:space="preserve">
+    <value>Must be a number between "{0}" and "{1}"</value>
+  </data>
+  <data name="TxtNewFiles" xml:space="preserve">
+    <value>New files</value>
+  </data>
+  <data name="TxtNoHeader" xml:space="preserve">
+    <value>&lt;No header&gt;</value>
+  </data>
+  <data name="TxtNoValue" xml:space="preserve">
+    <value>&lt;No value&gt;</value>
+  </data>
+  <data name="TxtOptions" xml:space="preserve">
+    <value>Options</value>
+  </data>
+  <data name="TxtOSRobotServiceStartEvent" xml:space="preserve">
+    <value>OSRobot service start event</value>
+  </data>
+  <data name="TxtOverwrite" xml:space="preserve">
+    <value>Overwrite</value>
+  </data>
+  <data name="TxtOverwriteArchive" xml:space="preserve">
+    <value>Overwrite archive</value>
+  </data>
+  <data name="TxtOverwriteIfExists" xml:space="preserve">
+    <value>Overwrite if file exists</value>
+  </data>
+  <data name="TxtPasswordAndConfirmDoNotMatch" xml:space="preserve">
+    <value>The fields "Password" and "Confirm password" do not match.</value>
+  </data>
+  <data name="TxtPatch" xml:space="preserve">
+    <value>Patch</value>
+  </data>
+  <data name="TxtPath" xml:space="preserve">
+    <value>Path</value>
+  </data>
+  <data name="TxtPercentage" xml:space="preserve">
+    <value>%</value>
+  </data>
+  <data name="TxtPost" xml:space="preserve">
+    <value>Post</value>
+  </data>
+  <data name="TxtPut" xml:space="preserve">
+    <value>Put</value>
+  </data>
+  <data name="TxtRawContent" xml:space="preserve">
+    <value>Raw content</value>
+  </data>
+  <data name="TxtRawContentExample" xml:space="preserve">
+    <value>[{"Column1":"file1.txt"}, {"Column1":"file2.txt"}, {"Column1":"file3.txt"}]</value>
+  </data>
+  <data name="TxtReadFromRowToLastRow" xml:space="preserve">
+    <value>From &lt;row&gt; to last row</value>
+  </data>
+  <data name="TxtReadFromRowToRow" xml:space="preserve">
+    <value>From &lt;row&gt; to &lt;row&gt;</value>
+  </data>
+  <data name="TxtReadLastNRows" xml:space="preserve">
+    <value>Last &lt;number&gt; rows</value>
+  </data>
+  <data name="TxtReadRow" xml:space="preserve">
+    <value>Read row</value>
+  </data>
+  <data name="TxtReadTextFileTask" xml:space="preserve">
+    <value>Read text file task</value>
+  </data>
+  <data name="TxtRecursiveCopy" xml:space="preserve">
+    <value>Recursive copy</value>
+  </data>
+  <data name="TxtRESTApiTask" xml:space="preserve">
+    <value>REST Api Task</value>
+  </data>
+  <data name="TxtRunProgramTask" xml:space="preserve">
+    <value>Run program task</value>
+  </data>
+  <data name="TxtSaturday" xml:space="preserve">
+    <value>Saturday</value>
+  </data>
+  <data name="TxtScale" xml:space="preserve">
+    <value>Scale</value>
+  </data>
+  <data name="TxtScaleMustBeLessThanPrecision" xml:space="preserve">
+    <value>Scale must be less than precision</value>
+  </data>
+  <data name="TxtSendEMailTask" xml:space="preserve">
+    <value>Send e-mail task</value>
+  </data>
+  <data name="TxtSFTPSSHFileTransferProtocol" xml:space="preserve">
+    <value>SFTP - SSH File transfer protocol</value>
+  </data>
+  <data name="TxtSqlServerBackupTask" xml:space="preserve">
+    <value>Sql Server backup task</value>
+  </data>
+  <data name="TxtSqlServerBulkCopyTask" xml:space="preserve">
+    <value>Sql Server bulk copy task</value>
+  </data>
+  <data name="TxtSqlServerCommandTask" xml:space="preserve">
+    <value>Sql Server command task</value>
+  </data>
+  <data name="TxtSqlTypeBit" xml:space="preserve">
+    <value>Bit</value>
+  </data>
+  <data name="TxtSqlTypeDate" xml:space="preserve">
+    <value>Date</value>
+  </data>
+  <data name="TxtSqlTypeDateTime" xml:space="preserve">
+    <value>DateTime</value>
+  </data>
+  <data name="TxtSqlTypeInt" xml:space="preserve">
+    <value>Int</value>
+  </data>
+  <data name="TxtSqlTypeLong" xml:space="preserve">
+    <value>Long</value>
+  </data>
+  <data name="TxtSqlTypeNumeric" xml:space="preserve">
+    <value>Numeric</value>
+  </data>
+  <data name="TxtSqlTypeNVarchar" xml:space="preserve">
+    <value>NVarchar</value>
+  </data>
+  <data name="TxtSqlTypeVarchar" xml:space="preserve">
+    <value>Varchar</value>
+  </data>
+  <data name="TxtSqlTypeXml" xml:space="preserve">
+    <value>Xml</value>
+  </data>
+  <data name="TxtString" xml:space="preserve">
+    <value>String</value>
+  </data>
+  <data name="TxtSuccessfulBackupsNumber" xml:space="preserve">
+    <value>Successful backups number</value>
+  </data>
+  <data name="TxtSunday" xml:space="preserve">
+    <value>Sunday</value>
+  </data>
+  <data name="TxtSystemEventsEvent" xml:space="preserve">
+    <value>System events event</value>
+  </data>
+  <data name="TxtTerabytes" xml:space="preserve">
+    <value>Terabytes</value>
+  </data>
+  <data name="TxtThereAreSomeErrors" xml:space="preserve">
+    <value>There are some errors, cannot save the configuration.</value>
+  </data>
+  <data name="TxtThisFieldMustBeANumberBetweenXAndY" xml:space="preserve">
+    <value>This field must be a number between "{1}" and "{2}"</value>
+  </data>
+  <data name="TxtThisWillOverwriteCurrentColDef" xml:space="preserve">
+    <value>This operation will overwrite your current columns definition. Do you want to continue?</value>
+  </data>
+  <data name="TxtThursday" xml:space="preserve">
+    <value>Thursday</value>
+  </data>
+  <data name="TxtTo" xml:space="preserve">
+    <value>To</value>
+  </data>
+  <data name="TxtTransactionLog" xml:space="preserve">
+    <value>Transaction log</value>
+  </data>
+  <data name="TxtTuesday" xml:space="preserve">
+    <value>Tuesday</value>
+  </data>
+  <data name="TxtUnableToConnectToSqlServer" xml:space="preserve">
+    <value>Unable to connect to Sql Server</value>
+  </data>
+  <data name="TxtUnableToGetDatabaseList" xml:space="preserve">
+    <value>Unable to get database list</value>
+  </data>
+  <data name="TxtUnzipTask" xml:space="preserve">
+    <value>Unzip task</value>
+  </data>
+  <data name="TxtURL" xml:space="preserve">
+    <value>URL</value>
+  </data>
+  <data name="TxtURLExample" xml:space="preserve">
+    <value>https://www.example.com</value>
+  </data>
+  <data name="TxtUseServerDefault" xml:space="preserve">
+    <value>Use server default</value>
+  </data>
+  <data name="TxtWednesday" xml:space="preserve">
+    <value>Wednesday</value>
+  </data>
+  <data name="TxtWriteTextFileTask" xml:space="preserve">
+    <value>Write text file task</value>
+  </data>
+  <data name="TxtYouMustEnterAColumn" xml:space="preserve">
+    <value>You must enter a column</value>
+  </data>
+  <data name="TxtYouMustEnterAColumnWidthForAll" xml:space="preserve">
+    <value>You must enter a column width for all columns</value>
+  </data>
+  <data name="TxtYouMustEnterAFolder" xml:space="preserve">
+    <value>You must enter a folder</value>
+  </data>
+  <data name="TxtYouMustEnterAtLeastOneField" xml:space="preserve">
+    <value>You must enter at least one field</value>
+  </data>
+  <data name="TxtYouMustEnterConnectionString" xml:space="preserve">
+    <value>You must enter a connection string</value>
+  </data>
+  <data name="TxtYouMustEnterDatabaseCredentials" xml:space="preserve">
+    <value>You must enter database credentials</value>
+  </data>
+  <data name="TxtYouMustEnterName" xml:space="preserve">
+    <value>You must enter a name</value>
+  </data>
+  <data name="TxtYouMustInsertValueOrNull" xml:space="preserve">
+    <value>You must insert a value or check "Pass NULL value"</value>
+  </data>
+  <data name="TxtYouMustSelectADatabase" xml:space="preserve">
+    <value>You must select a database</value>
+  </data>
+  <data name="TxtYouMustSelectADelimiter" xml:space="preserve">
+    <value>You must select a delimiter</value>
+  </data>
+  <data name="TxtYouMustSelectAnEvent" xml:space="preserve">
+    <value>You must select an event</value>
+  </data>
+  <data name="TxtYouMustSelectAType" xml:space="preserve">
+    <value>You must select a type</value>
+  </data>
+  <data name="TxtYouMustSelectItem" xml:space="preserve">
+    <value>You must select an item.</value>
+  </data>
+  <data name="TxtYouMustSpecifyACustomDelimiter" xml:space="preserve">
+    <value>You must specify a custom delimiter</value>
+  </data>
+  <data name="TxtZipTask" xml:space="preserve">
+    <value>Zip task</value>
+  </data>
+</root>

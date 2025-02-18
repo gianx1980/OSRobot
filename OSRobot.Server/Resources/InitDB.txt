@@ -1,0 +1,24 @@
+﻿-- --------------------------------------
+-- Sqlite database script initialization
+-- --------------------------------------
+CREATE TABLE Users
+(
+	Id				INTEGER PRIMARY KEY AUTOINCREMENT,
+	UserName		TEXT	NOT NULL UNIQUE,
+	Salt			TEXT	NOT NULL,
+	Password		TEXT	NOT NULL
+);
+
+-- Default credentials: admin / admin
+INSERT INTO Users(UserName, Salt, Password) VALUES('admin', '(Th£m3qFc=b,-R£)j)£2OGjelJf|(XQhB.2AF7bHSdg3(13O}m;&0zyu&7%i(&M$', 'z6VBl1gxUv87M6d3x4i5If8WNNx8WmsjznDlxUn17SEA0rQiLOPMeWa5Wu+rvznpPz7tbepODFcY0/+9t3OF9w==');
+
+
+CREATE TABLE UserRefreshTokens
+(
+	Id				INTEGER PRIMARY KEY AUTOINCREMENT,
+	UserId			INTEGER	NOT NULL,
+	RefreshToken	TEXT	NOT NULL,
+	DateCreate		TEXT	NOT NULL,
+	FOREIGN KEY(UserId) REFERENCES Users(Id)
+);
+
