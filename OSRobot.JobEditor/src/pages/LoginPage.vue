@@ -65,7 +65,7 @@ const _router = useRouter();
 const _i18n = useI18n();
 const _$t = _i18n.t;
 const _$q = useQuasar();
-const _formData = ref({ username: "admin", password: "admin" });
+const _formData = ref({ username: null, password: null });
 const _formIsSubmitting = ref(false);
 
 if (process.env.NODE_ENV !== "production") {
