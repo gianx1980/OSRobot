@@ -1,6 +1,6 @@
 {
-  "name": "tdp-robot-jobeditor",
-  "version": "0.0.1",
+  "name": "osrobot-jobeditor",
+  "version": "1.0.0",
   "description": "OSRobot JobEditor",
   "productName": "OSRobot JobEditor",
   "author": "thedummyprogrammer",
