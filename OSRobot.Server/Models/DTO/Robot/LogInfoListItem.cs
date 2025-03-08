@@ -16,39 +16,18 @@
     You should have received a copy of the GNU General Public License
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
-using OSRobot.Server.Core;
+namespace OSRobot.Server.Models.DTO.Robot;
 
-namespace OSRobot.Server.JobEngineLib.Infrastructure.Abstract;
-
-public enum ReloadJobsReturnValues
+public class LogInfoListItem
 {
-    Ok = 0,
-    CannotReloadWhileRunningTask,
-    GenericError
-}
+    public LogInfoListItem(int eventId, DateTime execDateTime, string fileName)
+    {
+        EventId = eventId;
+        ExecDateTime = execDateTime;
+        FileName = fileName;
+    }
 
-public struct LogInfoItem
-{
     public int EventId { get; set; }
     public DateTime ExecDateTime { get; set; }
-    public string FileName { get; set; }    
-}
-
-public interface IJobEngine
-{
-    public void Start();
-
-    public void Stop();
-
-    public bool StartTask(int taskID);
-
-    public ReloadJobsReturnValues ReloadJobs();
-
-    public List<IPlugin> GetPlugins();
-
-    public IPlugin? GetPlugin(string pluginId);
-
-    public List<LogInfoItem> GetFolderLogs(int folderId);
-
-    public string GetLog(LogInfoItem logItem);
+    public string FileName { get; set; }
 }

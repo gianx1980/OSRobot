@@ -116,9 +116,9 @@ public class RobotController : AppControllerBase
     [HttpPost]
     [Route("StartTask")]
     [Authorize]
-    public IActionResult StartTask([FromQuery] int taskID)
+    public IActionResult StartTask([FromQuery] int taskId)
     {
-        bool result = _jobEngine.StartTask(taskID);
+        bool result = _jobEngine.StartTask(taskId);
 
         MainResponse<object> mainResponse;
         int responseCode;
@@ -166,4 +166,26 @@ public class RobotController : AppControllerBase
 
         return Ok(mainResponse);
     }
+
+    [HttpGet]
+    [Route("FolderLogs")]
+    [Authorize]
+    public IActionResult FolderLogs([FromQuery] int folderId)
+    {
+        List<LogInfoItem> folderLogs = _jobEngine.GetFolderLogs(folderId);
+
+        List<LogInfoListItem> logInfoList =
+        [
+            ..folderLogs.Select(folderLog => new LogInfoListItem(folderLog.EventId,
+                                                                   folderLog.ExecDateTime,
+                                                                   folderLog.FileName
+                                                                   ))
+        ];
+
+        MainResponse<List<LogInfoListItem>> mainResponse = new(MainResponse<object>.ResponseOk, null, logInfoList);
+
+        return Ok(mainResponse);
+    }
+
+
 }

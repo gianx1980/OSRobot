@@ -293,6 +293,7 @@ export default {
   sessionSwitch: "Session switch",
   SFTP: "SFTP",
   sheetName: "Sheet name",
+  showLog: "Show log",
   smtpServer: "SMTP server",
   skipEmptyFolders: "Skip empty folders",
   skipFirstLine: "Skip first line",

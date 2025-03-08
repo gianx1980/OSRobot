@@ -6,6 +6,10 @@
 
         <q-toolbar-title>{{ _$t("osRobot") }}</q-toolbar-title>
 
+        <q-btn dense flat round icon="work_history">
+          <q-tooltip>{{ _$t("showLog") }}</q-tooltip>
+        </q-btn>
+
         <q-btn
           dense
           flat
