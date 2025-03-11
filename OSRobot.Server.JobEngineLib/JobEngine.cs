@@ -57,6 +57,9 @@ public class JobEngine : IJobEngine
     private List<ITask> _tasks;
     private System.Timers.Timer _logCleanTimer;
 
+    // Log name pattern
+    private Regex _logNameRegex = new Regex(@"^(\d+)_(\d{4}-\d{2}-\d{2}T\d{2}_\d{2}_\d{2})_(\d+)_(\d+).log$");
+
     // Keep track of running tasks
     private object _lockRunningTasksCount = new object();
     private long _runningTasksCount;
@@ -71,6 +74,11 @@ public class JobEngine : IJobEngine
         _tasks = new List<ITask>();
         _logCleanTimer = new System.Timers.Timer();
         _runningTasks = new ConcurrentDictionary<long, ITask>();
+    }
+
+    private bool _isValidLogName(string logName)
+    {
+        return _logNameRegex.IsMatch(logName);
     }
 
     private bool _loadJobData()
@@ -164,22 +172,22 @@ public class JobEngine : IJobEngine
         return null;
     }
 
-    private LogInfoItem _logInfoItemFromLogName(string logName)
+    private LogInfoItem _createLogInfoItemFromLogName(int folderId, string logName)
     {
         if (string.IsNullOrEmpty(logName))
             throw new ApplicationException("_logInfoItemFromLogName: input param 'logName' is empty");
 
-        string logNamePattern = @"^(\d+)_(\d{4}-\d{2}-\d{2}T\d{2}_\d{2}_\d{2})_(\d+)_(\d+)$";
-        Match match = Regex.Match(logName, logNamePattern);
-
+        Match match = _logNameRegex.Match(logName);
+        
         if (!match.Success)
             throw new ApplicationException("_logInfoItemFromLogName: invalid string format");
 
         int eventId = int.Parse(match.Groups[1].Value);
-        if (!DateTime.TryParse(match.Groups[2].Value, out DateTime execDateTime))
+
+        if (!DateTime.TryParse(match.Groups[2].Value.Replace('_', ':'), out DateTime execDateTime))
             throw new ApplicationException("_logInfoItemFromLogName: date/time string format");
 
-        return new LogInfoItem() { EventId = eventId, ExecDateTime = execDateTime, FileName = logName };
+        return new LogInfoItem() { FolderId = folderId, EventId = eventId, ExecDateTime = execDateTime, FileName = logName };
     }
 
     private Task _executeTask(ITask task, DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, IPluginInstanceLogger instanceLogger)
@@ -528,18 +536,41 @@ public class JobEngine : IJobEngine
         if (folder == null)
             return folderLogs;
 
-        string logFullPath = folder.GetPhysicalFullPath();
-        string[] logFiles = Directory.GetFiles(logFullPath);
+        string logFullPath = Path.Combine(_config.LogPath, folder.GetPhysicalFullPath());
 
-        folderLogs.AddRange(
-            logFiles.Select(file => _logInfoItemFromLogName(file))
-        );
+        if (Directory.Exists(logFullPath))
+        {
+            // Return logfiles containted in the specified folder.
+            // Check that the filename matches the expected pattern.
+            string[] logFiles = Directory.GetFiles(logFullPath);
+            folderLogs.AddRange(
+                logFiles.Where(file => _isValidLogName(Path.GetFileName(file)))
+                        .Select(file => _createLogInfoItemFromLogName(folderId, Path.GetFileName(file)))
+            );
+        }
+
+        // Sort in reverse order
+        folderLogs.Sort((o1, o2) =>
+        {
+            if (o1.ExecDateTime < o2.ExecDateTime)
+                return 1;
+            else if (o1.ExecDateTime > o2.ExecDateTime)
+                return -1;
+            else
+                return 0;
+        });
 
         return folderLogs;
-    }
+    }            
+            
 
-    public string GetLog(LogInfoItem logItem)
+    public string? GetLogContent(int folderId, string logFileName)
     {
-        throw new NotImplementedException();
+        IFolder? folder = _findFolderRecursive(_rootFolder, folderId);
+        if (folder == null || !_isValidLogName(logFileName))
+            return null;
+
+        string logFullPath = Path.Combine(_config.LogPath, folder.GetPhysicalFullPath(), logFileName);
+        return File.ReadAllText(logFullPath);
     }
 }

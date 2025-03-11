@@ -187,5 +187,17 @@ public class RobotController : AppControllerBase
         return Ok(mainResponse);
     }
 
+    [HttpGet]
+    [Route("LogContent")]
+    [Authorize]
+    public IActionResult LogContent([FromQuery] int folderId, string logFileName)
+    {
+        string? logContent = _jobEngine.GetLogContent(folderId, logFileName);
+        if (logContent == null)
+            return NotFound(null);
 
+        MainResponse<string> mainResponse = new(MainResponse<object>.ResponseOk, null, logContent);
+
+        return Ok(mainResponse);
+    }
 }

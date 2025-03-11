@@ -29,6 +29,7 @@ public enum ReloadJobsReturnValues
 
 public struct LogInfoItem
 {
+    public int FolderId { get; set; }
     public int EventId { get; set; }
     public DateTime ExecDateTime { get; set; }
     public string FileName { get; set; }    
@@ -50,5 +51,5 @@ public interface IJobEngine
 
     public List<LogInfoItem> GetFolderLogs(int folderId);
 
-    public string GetLog(LogInfoItem logItem);
+    public string? GetLogContent(int folderId, string logFileName);
 }
