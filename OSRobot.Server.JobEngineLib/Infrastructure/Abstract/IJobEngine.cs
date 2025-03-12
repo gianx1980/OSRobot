@@ -27,12 +27,21 @@ public enum ReloadJobsReturnValues
     GenericError
 }
 
-public struct LogInfoItem
+public struct LogInfo
 {
     public int FolderId { get; set; }
     public int EventId { get; set; }
     public DateTime ExecDateTime { get; set; }
     public string FileName { get; set; }    
+}
+
+public struct FolderInfo
+{
+    public int Id { get; set; }
+    
+    public string Name { get; set; }
+
+    public string LogPath { get; set; }
 }
 
 public interface IJobEngine
@@ -49,7 +58,9 @@ public interface IJobEngine
 
     public IPlugin? GetPlugin(string pluginId);
 
-    public List<LogInfoItem> GetFolderLogs(int folderId);
+    public List<LogInfo> GetFolderLogs(int folderId);
+
+    public FolderInfo? GetFolderInfo(int folderId);
 
     public string? GetLogContent(int folderId, string logFileName);
 }

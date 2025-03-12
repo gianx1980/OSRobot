@@ -172,7 +172,7 @@ public class RobotController : AppControllerBase
     [Authorize]
     public IActionResult FolderLogs([FromQuery] int folderId)
     {
-        List<LogInfoItem> folderLogs = _jobEngine.GetFolderLogs(folderId);
+        List<LogInfo> folderLogs = _jobEngine.GetFolderLogs(folderId);
 
         List<LogInfoListItem> logInfoList =
         [
@@ -188,9 +188,23 @@ public class RobotController : AppControllerBase
     }
 
     [HttpGet]
+    [Route("FolderInfo")]
+    [Authorize]
+    public IActionResult FolderInfo([FromQuery] int folderId)
+    {
+        FolderInfo? folderInfo = _jobEngine.GetFolderInfo(folderId);
+        if (folderInfo == null)
+            return NotFound(null);
+
+        MainResponse<FolderInfo> mainResponse = new(MainResponse<FolderInfo>.ResponseOk, null, (FolderInfo)folderInfo);
+
+        return Ok(mainResponse);
+    }
+
+    [HttpGet]
     [Route("LogContent")]
     [Authorize]
-    public IActionResult LogContent([FromQuery] int folderId, string logFileName)
+    public IActionResult LogContent([FromQuery] int folderId, [FromQuery] string logFileName)
     {
         string? logContent = _jobEngine.GetLogContent(folderId, logFileName);
         if (logContent == null)

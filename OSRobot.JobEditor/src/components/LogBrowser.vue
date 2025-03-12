@@ -21,9 +21,9 @@
                     square
                     class="q-ml-xs"
                     size="xs"
-                    icon="mode_edit"
+                    icon="search"
                     color="primary"
-                    @click="_showLogDetail"
+                    @click="_showLogContent(props.row)"
                   />
                 </q-td>
               </template>
@@ -31,14 +31,30 @@
           </div>
         </div>
       </q-card-section>
+      <q-card-actions align="right">
+        <div>
+          <q-btn
+            square
+            class="q-ml-xs"
+            icon="refresh"
+            color="primary"
+            :label="_$t('refresh')"
+            @click="_loadLogList(_props.folderId)"
+          />
+        </div>
+      </q-card-actions>
     </q-card>
   </div>
 </template>
 <script setup>
-import { ref, onMounted, watch } from "vue";
+import LogViewer from "src/components/LogViewer.vue";
+import { ref, watch } from "vue";
+import { useQuasar } from "quasar";
 import { useAppStore } from "src/stores/appStore.js";
 import { useI18n } from "vue-i18n";
 import Robot from "src/infrastructure/server/Robot.js";
+
+const _$q = useQuasar();
 
 const _i18n = useI18n();
 const _$t = _i18n.t;
@@ -81,12 +97,28 @@ const _logList = ref([]);
 watch(
   () => _props.folderId,
   async (newFolderId) => {
-    const robot = new Robot(_user.token, _user.refreshToken);
-
-    const folderLogs = await robot.getFolderLogs(newFolderId);
-    _logList.value = folderLogs.responseObject;
+    _loadLogList(newFolderId);
   }
 );
 
-function _showLogDetail() {}
+async function _loadLogList(folderId) {
+  const robot = new Robot(_user.token, _user.refreshToken);
+
+  const folderLogsResponse = await robot.getFolderLogs(folderId);
+  _logList.value = folderLogsResponse.responseObject;
+}
+
+function _showLogContent(row) {
+  _$q
+    .dialog({
+      component: LogViewer,
+      componentProps: {
+        cancel: true,
+        persistent: true,
+        folderId: _props.folderId,
+        logFileName: row.fileName,
+      },
+    })
+    .onOk((ev) => {});
+}
 </script>

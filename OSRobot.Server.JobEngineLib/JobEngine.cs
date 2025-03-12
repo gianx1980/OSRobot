@@ -172,7 +172,7 @@ public class JobEngine : IJobEngine
         return null;
     }
 
-    private LogInfoItem _createLogInfoItemFromLogName(int folderId, string logName)
+    private LogInfo _createLogInfoItemFromLogName(int folderId, string logName)
     {
         if (string.IsNullOrEmpty(logName))
             throw new ApplicationException("_logInfoItemFromLogName: input param 'logName' is empty");
@@ -187,7 +187,7 @@ public class JobEngine : IJobEngine
         if (!DateTime.TryParse(match.Groups[2].Value.Replace('_', ':'), out DateTime execDateTime))
             throw new ApplicationException("_logInfoItemFromLogName: date/time string format");
 
-        return new LogInfoItem() { FolderId = folderId, EventId = eventId, ExecDateTime = execDateTime, FileName = logName };
+        return new LogInfo() { FolderId = folderId, EventId = eventId, ExecDateTime = execDateTime, FileName = logName };
     }
 
     private Task _executeTask(ITask task, DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, IPluginInstanceLogger instanceLogger)
@@ -529,9 +529,9 @@ public class JobEngine : IJobEngine
         return (IPlugin?)Activator.CreateInstance(pluginType);
     }
 
-    public List<LogInfoItem> GetFolderLogs(int folderId)
+    public List<LogInfo> GetFolderLogs(int folderId)
     {
-        List<LogInfoItem> folderLogs = new List<LogInfoItem>();
+        List<LogInfo> folderLogs = new List<LogInfo>();
         IFolder? folder = _findFolderRecursive(_rootFolder, folderId);
         if (folder == null)
             return folderLogs;
@@ -561,8 +561,21 @@ public class JobEngine : IJobEngine
         });
 
         return folderLogs;
-    }            
-            
+    }
+
+    public FolderInfo? GetFolderInfo(int folderId)
+    {
+        IFolder? folder = _findFolderRecursive(_rootFolder, folderId);
+        if (folder == null)
+            return null;
+
+        string logFullPath = folder.GetPhysicalFullPath();
+
+        return new FolderInfo() {   Id = folderId, 
+                                    Name = folder.Config.Name,
+                                    LogPath = logFullPath
+        };
+    }
 
     public string? GetLogContent(int folderId, string logFileName)
     {
@@ -571,6 +584,10 @@ public class JobEngine : IJobEngine
             return null;
 
         string logFullPath = Path.Combine(_config.LogPath, folder.GetPhysicalFullPath(), logFileName);
+
+        if (!File.Exists(logFullPath))
+            return string.Empty;
+
         return File.ReadAllText(logFullPath);
     }
 }

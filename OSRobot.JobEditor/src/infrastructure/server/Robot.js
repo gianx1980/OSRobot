@@ -82,6 +82,27 @@ export default class Robot extends ServiceBase {
     return result;
   }
 
+  async getFolderInfo(folderId) {
+    let result = null;
+
+    try {
+      const response = await this._get({
+        url: "/Robot/FolderInfo",
+        params: { folderId: folderId },
+      });
+      const item = response.data.responseObject;
+
+      result = new ServiceResponse(
+        response.data.responseCode,
+        response.data.responseCode === 0 ? item : null
+      );
+    } catch (e) {
+      this._throwException(e);
+    }
+
+    return result;
+  }
+
   async getLogContent(folderId, logFileName) {
     let result = null;
 
