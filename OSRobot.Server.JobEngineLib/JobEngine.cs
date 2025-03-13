@@ -549,17 +549,6 @@ public class JobEngine : IJobEngine
             );
         }
 
-        // Sort in reverse order
-        folderLogs.Sort((o1, o2) =>
-        {
-            if (o1.ExecDateTime < o2.ExecDateTime)
-                return 1;
-            else if (o1.ExecDateTime > o2.ExecDateTime)
-                return -1;
-            else
-                return 0;
-        });
-
         return folderLogs;
     }
 

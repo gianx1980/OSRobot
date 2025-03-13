@@ -13,6 +13,8 @@
               :visible-columns="_logColumnVisibility"
               :no-data-label="_$t('thereAreNoItemsToShow')"
               row-key="fileName"
+              :pagination="_logListpagination"
+              style="height: 400px"
               dense
             >
               <template v-slot:body-cell-actions="props">
@@ -93,6 +95,12 @@ const _logItemColumnsDef = [
 const _logColumnVisibility = ref(["eventId", "execDateTime", "actions"]);
 
 const _logList = ref([]);
+
+const _logListpagination = {
+  rowsPerPage: 50,
+  sortBy: "execDateTime",
+  descending: true,
+};
 
 watch(
   () => _props.folderId,
