@@ -634,7 +634,7 @@ function _drop(ev) {
   if (data.pluginId !== "Folder") {
     pluginInfo = _getPluginInfo(data.pluginId);
 
-    config = _deepCopy(pluginInfo.configSample); //Object.assign({}, pluginInfo.configSample);
+    config = _deepCopy(pluginInfo.configSample);
     config.id = newId;
     config.pluginId = data.pluginId;
     config.name = `${pluginInfo.title} ${newId}`;
@@ -694,9 +694,12 @@ function _drop(ev) {
     pluginInfo
   );
   addNodes(newNode);
+
+  _updateContainingFolderItems();
 }
 
 function _updateContainingFolderItems() {
+  _selectedFolderNodes.value = getNodes.value;
   _containingFolderItems.value = _selectedFolderNodes.value.map((t) => {
     return {
       id: t.id,
