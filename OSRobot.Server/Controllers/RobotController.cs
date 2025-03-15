@@ -116,9 +116,9 @@ public class RobotController : AppControllerBase
     [HttpPost]
     [Route("StartTask")]
     [Authorize]
-    public IActionResult StartTask([FromQuery] int taskID)
+    public IActionResult StartTask([FromQuery] int taskId)
     {
-        bool result = _jobEngine.StartTask(taskID);
+        bool result = _jobEngine.StartTask(taskId);
 
         MainResponse<object> mainResponse;
         int responseCode;
@@ -163,6 +163,54 @@ public class RobotController : AppControllerBase
             responseCode = MainResponse<object>.ResponseGenericError;
         }
         mainResponse = new MainResponse<object>(responseCode, responseMessage, null);
+
+        return Ok(mainResponse);
+    }
+
+    [HttpGet]
+    [Route("FolderLogs")]
+    [Authorize]
+    public IActionResult FolderLogs([FromQuery] int folderId)
+    {
+        List<LogInfo> folderLogs = _jobEngine.GetFolderLogs(folderId);
+
+        List<LogInfoListItem> logInfoList =
+        [
+            ..folderLogs.Select(folderLog => new LogInfoListItem(folderLog.EventId,
+                                                                   folderLog.ExecDateTime,
+                                                                   folderLog.FileName
+                                                                   ))
+        ];
+
+        MainResponse<List<LogInfoListItem>> mainResponse = new(MainResponse<object>.ResponseOk, null, logInfoList);
+
+        return Ok(mainResponse);
+    }
+
+    [HttpGet]
+    [Route("FolderInfo")]
+    [Authorize]
+    public IActionResult FolderInfo([FromQuery] int folderId)
+    {
+        FolderInfo? folderInfo = _jobEngine.GetFolderInfo(folderId);
+        if (folderInfo == null)
+            return NotFound(null);
+
+        MainResponse<FolderInfo> mainResponse = new(MainResponse<FolderInfo>.ResponseOk, null, (FolderInfo)folderInfo);
+
+        return Ok(mainResponse);
+    }
+
+    [HttpGet]
+    [Route("LogContent")]
+    [Authorize]
+    public IActionResult LogContent([FromQuery] int folderId, [FromQuery] string logFileName)
+    {
+        string? logContent = _jobEngine.GetLogContent(folderId, logFileName);
+        if (logContent == null)
+            return NotFound(null);
+
+        MainResponse<string> mainResponse = new(MainResponse<object>.ResponseOk, null, logContent);
 
         return Ok(mainResponse);
     }

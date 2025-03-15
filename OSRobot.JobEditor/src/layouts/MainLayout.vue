@@ -6,6 +6,10 @@
 
         <q-toolbar-title>{{ _$t("osRobot") }}</q-toolbar-title>
 
+        <q-btn dense flat round icon="work_history" @click="_toggleLogDrawer">
+          <q-tooltip>{{ _$t("showLogs") }}</q-tooltip>
+        </q-btn>
+
         <q-btn
           dense
           flat
@@ -112,7 +116,10 @@
         v-model="_selectedItemConfig"
         @nodeNeedsUpdate="_nodeNeedsUpdate"
       />
-      <!-- drawer content -->
+    </q-drawer>
+
+    <q-drawer v-model="_logDrawerOpen" side="right" :width="600" bordered>
+      <LogBrowser :folderId="_selectedFolder" />
     </q-drawer>
 
     <q-page-container>
@@ -172,6 +179,7 @@
 </template>
 
 <script setup>
+import LogBrowser from "src/components/LogBrowser.vue";
 import EmptyConfigForm from "src/robotObjects/EmptyConfigForm.vue";
 import ConnectionConfigForm from "src/robotObjects/connection/ConnectionConfigForm.vue";
 import FolderConfigForm from "src/robotObjects/folder/FolderConfigForm.vue";
@@ -385,6 +393,11 @@ function _toggleLeftDrawer() {
 const _rightDrawerOpen = ref(false);
 function _toggleRightDrawer() {
   _rightDrawerOpen.value = !_rightDrawerOpen.value;
+}
+
+const _logDrawerOpen = ref(false);
+function _toggleLogDrawer() {
+  _logDrawerOpen.value = !_logDrawerOpen.value;
 }
 
 function _objectLibTreeNodeStartDrag(ev) {
@@ -621,7 +634,7 @@ function _drop(ev) {
   if (data.pluginId !== "Folder") {
     pluginInfo = _getPluginInfo(data.pluginId);
 
-    config = _deepCopy(pluginInfo.configSample); //Object.assign({}, pluginInfo.configSample);
+    config = _deepCopy(pluginInfo.configSample);
     config.id = newId;
     config.pluginId = data.pluginId;
     config.name = `${pluginInfo.title} ${newId}`;
@@ -681,9 +694,12 @@ function _drop(ev) {
     pluginInfo
   );
   addNodes(newNode);
+
+  _updateContainingFolderItems();
 }
 
 function _updateContainingFolderItems() {
+  _selectedFolderNodes.value = getNodes.value;
   _containingFolderItems.value = _selectedFolderNodes.value.map((t) => {
     return {
       id: t.id,
@@ -724,6 +740,7 @@ function _vueFlowEdgeClick(ev) {
 function _vueFlowClick(ev) {
   if (!_isWorkspaceAreaNodeClickEvent) {
     _rightDrawerOpen.value = false;
+    _logDrawerOpen.value = false;
     _selectedItemConfigForm = _configForms["EmptyConfigForm"];
   }
 
