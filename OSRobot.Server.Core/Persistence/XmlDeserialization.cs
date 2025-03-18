@@ -28,11 +28,11 @@ namespace OSRobot.Server.Core.Persistence;
 
 public class XmlDeserialization
 {
-    private XmlDocument _xmlDoc;
-    private Dictionary<int, XmlElement> _xmlObjects;
-    private XmlElement _xmlRootObject;
-    private Dictionary<int, object> _objectsDeserialized;
-    private Dictionary<int, string> _references;
+    private readonly XmlDocument _xmlDoc;
+    private readonly Dictionary<int, XmlElement> _xmlObjects;
+    private readonly XmlElement _xmlRootObject;
+    private readonly Dictionary<int, object> _objectsDeserialized;
+    private readonly Dictionary<int, string> _references;
 
     public bool CheckSerializeAttribute { get; set; }
 
@@ -40,27 +40,23 @@ public class XmlDeserialization
     {
         _xmlDoc = xmlDoc;
 
-        XmlElement? tempRootOBject = (XmlElement?)_xmlDoc.SelectSingleNode($"//{XmlCommon.ObjectTagName}[@{XmlCommon.RootObjectAttributeName}='True']");
-
-        if (tempRootOBject == null)
-            throw new ApplicationException("XmlDeserialization ctor: Cannot find root node.");
-        
+        XmlElement? tempRootOBject = (XmlElement?)_xmlDoc.SelectSingleNode($"//{XmlCommon.ObjectTagName}[@{XmlCommon.RootObjectAttributeName}='True']") ?? throw new ApplicationException("XmlDeserialization ctor: Cannot find root node.");
         _xmlRootObject = tempRootOBject;
-        _xmlObjects = new Dictionary<int, XmlElement>();
-        _objectsDeserialized = new Dictionary<int, object>();
-        _references = new Dictionary<int, string>();
+        _xmlObjects = [];
+        _objectsDeserialized = [];
+        _references = [];
     }
 
     private bool CheckIfObjectExists(int objectID, out object? objectRef)
     {
-        if (!_objectsDeserialized.ContainsKey(objectID))
+        if (!_objectsDeserialized.TryGetValue(objectID, out object? value))
         {
             objectRef = null;
             return false;
         }
         else
         {
-            objectRef = _objectsDeserialized[objectID];
+            objectRef = value;
             return true;
         }
     }
@@ -103,16 +99,10 @@ public class XmlDeserialization
             return null;
 
         string instanceTypeName = xmlObject.GetAttribute(XmlCommon.RefTypeIDAttributeName);
-        Type? objType = GetType(instanceTypeName);
-        if (objType == null)
-            throw new ApplicationException($"Cannot find type {instanceTypeName}");
-
+        Type? objType = GetType(instanceTypeName) ?? throw new ApplicationException($"Cannot find type {instanceTypeName}");
         XmlNodeList xmlItems = xmlObject.GetElementsByTagName(XmlCommon.ItemTagName);
 
-        IList? objArray = (IList?)Activator.CreateInstance(objType, new object[] { xmlItems.Count });
-        if (objArray == null)
-            throw new ApplicationException($"Cannot create instance of type {instanceTypeName}");
-
+        IList? objArray = (IList?)Activator.CreateInstance(objType, new object[] { xmlItems.Count }) ?? throw new ApplicationException($"Cannot create instance of type {instanceTypeName}");
         for (int i = 0; i < xmlItems.Count; i++)
         {
             if (xmlItems[i] == null) continue;
@@ -127,9 +117,7 @@ public class XmlDeserialization
     private object? DeserializeStruct(XmlElement xmlObject)
     {
         string instanceTypeName = xmlObject.GetAttribute(XmlCommon.RefTypeIDAttributeName);
-        Type? objType = GetType(instanceTypeName);
-        if (objType == null)
-            throw new ApplicationException($"Cannot find type {instanceTypeName}");
+        Type? objType = GetType(instanceTypeName) ?? throw new ApplicationException($"Cannot find type {instanceTypeName}");
 
         // For properties check if we need to consider non public ones
         BindingFlags propsBindingFlags = BindingFlags.Public | BindingFlags.Instance;
@@ -139,10 +127,7 @@ public class XmlDeserialization
         FieldInfo[] fields = objType.GetFields(propsBindingFlags);
         PropertyInfo[] properties = objType.GetProperties(BindingFlags.Public | BindingFlags.Instance);
 
-        object? objClass = CreateObjectInstance(objType);
-        if (objClass == null)
-            throw new ApplicationException($"Cannot create instance of type {instanceTypeName}");
-
+        object? objClass = CreateObjectInstance(objType) ?? throw new ApplicationException($"Cannot create instance of type {instanceTypeName}");
         foreach (XmlElement xmlSubElement in xmlObject.ChildNodes)
         {
             XmlElement xmlObjectToDeserialize;
@@ -184,22 +169,10 @@ public class XmlDeserialization
     private object? DeserializeDataTable(XmlElement xmlObject)
     {
         string instanceTypeName = xmlObject.GetAttribute(XmlCommon.RefTypeIDAttributeName);
-        Type? objType = GetType(instanceTypeName);
-        if (objType == null)
-            throw new ApplicationException($"Cannot find type {instanceTypeName}");
-        
-        object? objClass = CreateObjectInstance(objType);
-        if (objClass == null)
-            throw new ApplicationException($"Cannot create instance of type {instanceTypeName}");
-
-        XmlNodeList? xmlColumnsDefinition = xmlObject.SelectNodes($"{XmlCommon.ColumnsDefinitionTagName}/{XmlCommon.ColumnTagName}");
-        if (xmlColumnsDefinition == null)
-            throw new ApplicationException($"Cannot find columns definition tags for datatable");
-
-        XmlNodeList? xmlRows = xmlObject.SelectNodes($"{XmlCommon.RowsTagName}/{XmlCommon.RowTagName}");
-        if (xmlRows == null)
-            throw new ApplicationException($"Cannot find rows tags for datatable");
-
+        Type? objType = GetType(instanceTypeName) ?? throw new ApplicationException($"Cannot find type {instanceTypeName}");
+        object? objClass = CreateObjectInstance(objType) ?? throw new ApplicationException($"Cannot create instance of type {instanceTypeName}");
+        XmlNodeList? xmlColumnsDefinition = xmlObject.SelectNodes($"{XmlCommon.ColumnsDefinitionTagName}/{XmlCommon.ColumnTagName}") ?? throw new ApplicationException($"Cannot find columns definition tags for datatable");
+        XmlNodeList? xmlRows = xmlObject.SelectNodes($"{XmlCommon.RowsTagName}/{XmlCommon.RowTagName}") ?? throw new ApplicationException($"Cannot find rows tags for datatable");
         DataTable dataTable = (DataTable)objClass;
         
         foreach (XmlElement xmlSubEl in xmlColumnsDefinition)
@@ -237,14 +210,8 @@ public class XmlDeserialization
             return null;
 
         string instanceTypeName = xmlObject.GetAttribute(XmlCommon.RefTypeIDAttributeName);
-        Type? objType = GetType(instanceTypeName);
-        if (objType == null)
-            throw new ApplicationException($"Cannot find type {instanceTypeName}");
-
-        IList? objList = (IList?)Activator.CreateInstance(objType);
-        if (objList == null)
-            throw new ApplicationException($"Cannot create instance of type {instanceTypeName}");
-
+        Type? objType = GetType(instanceTypeName) ?? throw new ApplicationException($"Cannot find type {instanceTypeName}");
+        IList? objList = (IList?)Activator.CreateInstance(objType) ?? throw new ApplicationException($"Cannot create instance of type {instanceTypeName}");
         int thisObjectID = int.Parse(xmlObject.GetAttribute(XmlCommon.RefIDAttributeName));
         bool objectExists = CheckIfObjectExists(thisObjectID, out object? thisObject);
         if (objectExists)
@@ -281,14 +248,8 @@ public class XmlDeserialization
             return null;
 
         string instanceTypeName = xmlObject.GetAttribute(XmlCommon.RefTypeIDAttributeName);
-        Type? objType = GetType(instanceTypeName);
-        if (objType == null)
-            throw new ApplicationException($"Cannot find type {instanceTypeName}");
-
-        IDictionary? objDictionary = (IDictionary?)Activator.CreateInstance(objType);
-        if (objDictionary == null)
-            throw new ApplicationException($"Cannot create instance of type {instanceTypeName}");
-
+        Type? objType = GetType(instanceTypeName) ?? throw new ApplicationException($"Cannot find type {instanceTypeName}");
+        IDictionary? objDictionary = (IDictionary?)Activator.CreateInstance(objType) ?? throw new ApplicationException($"Cannot create instance of type {instanceTypeName}");
         int thisObjectID = int.Parse(xmlObject.GetAttribute(XmlCommon.RefIDAttributeName));
         bool objectExists = CheckIfObjectExists(thisObjectID, out object? thisObject);
         if (objectExists)
@@ -339,11 +300,7 @@ public class XmlDeserialization
             if (xmlKeyObject == null || xmlValueObject == null)
                 throw new ApplicationException("Dictionary deserialization: cannot find key tag or value tag");
 
-            object? objKey = DeserializeObject(xmlKeyObject);
-
-            if (objKey == null)
-                throw new ApplicationException("Dictionary deserialization: cannot find key tag");
-
+            object? objKey = DeserializeObject(xmlKeyObject) ?? throw new ApplicationException("Dictionary deserialization: cannot find key tag");
             object? objValue = DeserializeObject(xmlValueObject);
             
             objDictionary.Add(objKey, objValue);
@@ -361,10 +318,7 @@ public class XmlDeserialization
             return null;
 
         string instanceTypeName = xmlObject.GetAttribute(XmlCommon.RefTypeIDAttributeName);
-        Type? objType = GetType(instanceTypeName);
-        if (objType == null)
-            throw new ApplicationException($"Cannot find type {instanceTypeName}");
-
+        Type? objType = GetType(instanceTypeName) ?? throw new ApplicationException($"Cannot find type {instanceTypeName}");
         int refObjectID = -1;
         int thisObjectID = int.Parse(xmlObject.GetAttribute(XmlCommon.RefIDAttributeName));
 
@@ -373,8 +327,8 @@ public class XmlDeserialization
         if (CheckSerializeAttribute)
             propsBindingFlags |= BindingFlags.NonPublic;
 
-        List<FieldInfo> fieldList = new List<FieldInfo>();
-        List<PropertyInfo> propertyList = new List<PropertyInfo>();
+        List<FieldInfo> fieldList = [];
+        List<PropertyInfo> propertyList = [];
 
         // Take care of parent classes!
         Type? currentType = objType;
@@ -388,13 +342,10 @@ public class XmlDeserialization
 
             currentType = currentType.BaseType;
         }
-        FieldInfo[] fields = fieldList.ToArray();
-        PropertyInfo[] properties = propertyList.ToArray(); 
+        FieldInfo[] fields = [.. fieldList];
+        PropertyInfo[] properties = [.. propertyList]; 
 
-        object? objClass = CreateObjectInstance(objType);
-        if (objClass == null)
-            throw new ApplicationException($"Cannot create instance of type {instanceTypeName}");
-
+        object? objClass = CreateObjectInstance(objType) ?? throw new ApplicationException($"Cannot create instance of type {instanceTypeName}");
         bool objectExists = CheckIfObjectExists(thisObjectID, out object? thisObject);
         if (objectExists)
             return thisObject;
@@ -455,10 +406,7 @@ public class XmlDeserialization
             return null;
 
         string instanceTypeName = xmlObject.GetAttribute(XmlCommon.RefTypeIDAttributeName);
-        Type? objType = GetType(instanceTypeName);
-        if (objType == null)
-            throw new ApplicationException($"Cannot find type {instanceTypeName}");
-
+        Type? objType = GetType(instanceTypeName) ?? throw new ApplicationException($"Cannot find type {instanceTypeName}");
         if (objType.IsAssignableFrom(typeof(DataTable)))
         {
             return DeserializeDataTable(xmlObject);

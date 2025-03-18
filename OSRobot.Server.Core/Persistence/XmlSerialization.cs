@@ -42,9 +42,9 @@ public class XmlSerialization
     public bool CheckSerializeAttribute { get; set; }
 
     private int _lastObjectID;
-    private List<ObjectSerialized> _objectsSerialized;
+    private readonly List<ObjectSerialized> _objectsSerialized;
     private int _lastTypeID;
-    private Dictionary<string, int> _referencedTypes;
+    private readonly Dictionary<string, int> _referencedTypes;
     private XmlDocument _xmlDoc;
 
     
@@ -81,11 +81,8 @@ public class XmlSerialization
     private XmlAttribute CreateTypeAttribute(object objectToSerialize)
     {
         int refTypeID;
-        string? objectType = objectToSerialize.GetType().AssemblyQualifiedName;
-        if (objectType == null)
-            throw new ApplicationException("Assembly name is null.");
-
-        if (!_referencedTypes.ContainsKey(objectType))
+        string? objectType = objectToSerialize.GetType().AssemblyQualifiedName ?? throw new ApplicationException("Assembly name is null.");
+        if (!_referencedTypes.TryGetValue(objectType, out int value))
         {
             _lastTypeID++;
             _referencedTypes.Add(objectType, _lastTypeID);
@@ -98,7 +95,7 @@ public class XmlSerialization
         }
         else
         {
-            refTypeID = _referencedTypes[objectType];
+            refTypeID = value;
         }
 
         XmlAttribute xmlTypeAttr = _xmlDoc.CreateAttribute(XmlCommon.RefTypeIDAttributeName);

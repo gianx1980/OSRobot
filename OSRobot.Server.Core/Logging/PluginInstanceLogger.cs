@@ -16,6 +16,8 @@
     You should have received a copy of the GNU General Public License
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
+using OSRobot.Server.Core.Logging.Abstract;
+
 namespace OSRobot.Server.Core.Logging;
 
 public class PluginInstanceLogger : IPluginInstanceLogger
@@ -23,10 +25,10 @@ public class PluginInstanceLogger : IPluginInstanceLogger
     public static string LogPath { get; set; } = string.Empty;
 
     private string _pathFileName = string.Empty;
-    private object _lockWriting = new object();
+    private readonly object _lockWriting = new();
 
     private static int _instanceCounter = 0;
-    private static object _lockInstanceCounter = new object();
+    private readonly static object _lockInstanceCounter = new();
 
     private static string GetLogFileName(int eventID)
     {
@@ -50,7 +52,7 @@ public class PluginInstanceLogger : IPluginInstanceLogger
             Directory.CreateDirectory(logPath);
         }
 
-        PluginInstanceLogger pluginInstanceLogger = new PluginInstanceLogger();
+        PluginInstanceLogger pluginInstanceLogger = new();
         pluginInstanceLogger.Init(Path.Combine(logPath, GetLogFileName(plugin.Config.Id)));
 
         return pluginInstanceLogger;
@@ -70,13 +72,11 @@ public class PluginInstanceLogger : IPluginInstanceLogger
     {
         lock (_lockWriting)
         {
-            using (StreamWriter sw = new StreamWriter(_pathFileName, true))
-            {
-                if (position != -1)
-                    sw.BaseStream.Position = position;
+            using StreamWriter sw = new(_pathFileName, true);
+            if (position != -1)
+                sw.BaseStream.Position = position;
 
-                sw.WriteLine(text);
-            }
+            sw.WriteLine(text);
         }
     }
 

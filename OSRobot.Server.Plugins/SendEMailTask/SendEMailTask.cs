@@ -29,38 +29,36 @@ public class SendEMailTask : IterationTask
     {
         SendEMailTaskConfig tConfig = (SendEMailTaskConfig)_iterationConfig;
 
-        using (SmtpClient mailClient = new SmtpClient(tConfig.SMTPServer, int.Parse(tConfig.Port)))
-        using (MailMessage mail = new MailMessage())
+        using SmtpClient mailClient = new(tConfig.SMTPServer, int.Parse(tConfig.Port));
+        using MailMessage mail = new();
+        mail.Sender = new MailAddress(tConfig.Sender);
+        mail.From = new MailAddress(tConfig.Sender);
+
+        foreach (string Recipient in tConfig.Recipients)
         {
-            mail.Sender = new MailAddress(tConfig.Sender);
-            mail.From = new MailAddress(tConfig.Sender);
-
-            foreach (string Recipient in tConfig.Recipients)
-            {
-                mail.To.Add(Recipient);
-            }
-
-            foreach (string ccRecipient in tConfig.CC)
-            {
-                mail.CC.Add(ccRecipient);
-            }
-
-            foreach (string fileAttachment in tConfig.Attachments)
-            {
-                mail.Attachments.Add(new Attachment(fileAttachment));
-            }
-
-            mail.Subject = tConfig.Subject;
-            mail.Body = tConfig.Message;
-
-            if (tConfig.Authenticate)
-            {
-                mailClient.Credentials = new NetworkCredential(tConfig.Username, tConfig.Password);
-            }
-
-            mailClient.EnableSsl = tConfig.UseSSL;
-            mailClient.Port = int.Parse(tConfig.Port);
-            mailClient.Send(mail);
+            mail.To.Add(Recipient);
         }
+
+        foreach (string ccRecipient in tConfig.CC)
+        {
+            mail.CC.Add(ccRecipient);
+        }
+
+        foreach (string fileAttachment in tConfig.Attachments)
+        {
+            mail.Attachments.Add(new Attachment(fileAttachment));
+        }
+
+        mail.Subject = tConfig.Subject;
+        mail.Body = tConfig.Message;
+
+        if (tConfig.Authenticate)
+        {
+            mailClient.Credentials = new NetworkCredential(tConfig.Username, tConfig.Password);
+        }
+
+        mailClient.EnableSsl = tConfig.UseSSL;
+        mailClient.Port = int.Parse(tConfig.Port);
+        mailClient.Send(mail);
     }
 }

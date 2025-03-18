@@ -70,10 +70,8 @@ public class FtpSftpClient : IDisposable
         }
         else if (_sftpClient != null)
         {
-            using (FileStream fStream = new FileStream(localFile, FileMode.Open))
-            {
-                _sftpClient.UploadFile(fStream, remoteFile, overwrite);
-            }
+            using FileStream fStream = new(localFile, FileMode.Open);
+            _sftpClient.UploadFile(fStream, remoteFile, overwrite);
         }
     }
 
@@ -88,10 +86,8 @@ public class FtpSftpClient : IDisposable
         }
         else if (_sftpClient != null)
         {
-            using (FileStream fStream = new FileStream(localFile, FileMode.Create))
-            {
-                _sftpClient.DownloadFile(localFile, fStream);
-            }
+            using FileStream fStream = new(localFile, FileMode.Create);
+            _sftpClient.DownloadFile(localFile, fStream);
         }
     }
 
@@ -204,17 +200,17 @@ public class FtpSftpClient : IDisposable
         if (_ftpClient == null && _sftpClient == null)
             throw new ApplicationException("Method \"Connect\" not called.");
 
-        List<FtpSftpFileInfo> result = new List<FtpSftpFileInfo>();
+        List<FtpSftpFileInfo> result = [];
 
         if (_ftpClient != null)
         {
             FtpListItem[] list = _ftpClient.GetListing(remotePath);
             foreach (FtpListItem item in list)
             {
-                FtpSftpFileInfo fileInfo = new FtpSftpFileInfo(item.Name, item.FullName,
-                                                                item.Type == FtpObjectType.File,
-                                                                item.Type == FtpObjectType.Directory,
-                                                                item.Type == FtpObjectType.Link);
+                FtpSftpFileInfo fileInfo = new(item.Name, item.FullName,
+                                                    item.Type == FtpObjectType.File,
+                                                    item.Type == FtpObjectType.Directory,
+                                                    item.Type == FtpObjectType.Link);
                 result.Add(fileInfo);
             }
         }
@@ -223,7 +219,7 @@ public class FtpSftpClient : IDisposable
             IEnumerable<ISftpFile> list = _sftpClient.ListDirectory(remotePath);
             foreach (ISftpFile item in list)
             {
-                FtpSftpFileInfo fileInfo = new FtpSftpFileInfo(item.Name, item.FullName,
+                FtpSftpFileInfo fileInfo = new(item.Name, item.FullName,
                                                                 item.IsRegularFile,
                                                                 item.IsDirectory,
                                                                 item.IsSymbolicLink);
@@ -236,7 +232,7 @@ public class FtpSftpClient : IDisposable
 
     public List<FtpSftpFileInfo> LocalListing(string localPath)
     {
-        List<FtpSftpFileInfo> result = new List<FtpSftpFileInfo>();
+        List<FtpSftpFileInfo> result = [];
 
         string[] files = Directory.GetFiles(localPath);
         foreach (string fullPathFileName in files)

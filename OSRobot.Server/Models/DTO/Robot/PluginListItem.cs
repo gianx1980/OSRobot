@@ -38,7 +38,7 @@ public class PluginListItem
     public EnumOSPlatform SupportedOSPlatforms { get; }
     public string[] SupportedOSPlatformList { 
         get {
-            List<string> platforms = new List<string>();
+            List<string> platforms = [];
 
             if (SupportedOSPlatforms == EnumOSPlatform.All)
                 platforms.Add("All platforms");

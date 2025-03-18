@@ -20,6 +20,7 @@
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging;
+using OSRobot.Server.Core.Logging.Abstract;
 using OSRobot.Server.Plugins.DateTimeEvent;
 using System;
 using System.Collections.Generic;
@@ -34,7 +35,7 @@ public class FileSystemEvent : IEvent
 
     public IPluginInstanceConfig Config { get; set; } = new FileSystemEventConfig();
 
-    public List<PluginInstanceConnection> Connections { get; set; } = new List<PluginInstanceConnection>();
+    public List<PluginInstanceConnection> Connections { get; set; } = [];
 
     public event EventTriggeredDelegate? EventTriggered;
 
@@ -54,14 +55,14 @@ public class FileSystemEvent : IEvent
         }
     }
 
-    private List<FileSystemWatcher> _fileSystemWatchers = new List<FileSystemWatcher>();
+    private readonly List<FileSystemWatcher> _fileSystemWatchers = [];
 
     public void Init()
     {
         FileSystemEventConfig tConfig = (FileSystemEventConfig)Config;
         foreach (FolderToMonitor folder in tConfig.FoldersToMonitor)
         {
-            FileSystemWatcher watcher = new FileSystemWatcher();
+            FileSystemWatcher watcher = new();
             watcher.Path = folder.Path;
             watcher.IncludeSubdirectories = folder.MonitorSubFolders;
             
@@ -101,7 +102,7 @@ public class FileSystemEvent : IEvent
             FileSystemEventConfig tConfig = (FileSystemEventConfig)Config;
             DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, true, 0, now, now, 1);
             
-            FileInfo fi = new FileInfo(e.FullPath);
+            FileInfo fi = new(e.FullPath);
             dDataSet.Add(FileSystemEventCommon.DynDataKeyFullPathName, e.FullPath);
             dDataSet.Add(FileSystemEventCommon.DynDataKeyFileName, e.Name ?? string.Empty);
             dDataSet.Add(FileSystemEventCommon.DynDataKeyFileNameWithoutExtension, e.Name == null ? string.Empty : e.Name.Substring(0, e.Name.Length - fi.Extension.Length));

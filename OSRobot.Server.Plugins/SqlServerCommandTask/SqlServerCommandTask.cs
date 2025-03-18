@@ -31,7 +31,7 @@ public class SqlServerCommandTask : IterationTask
 
     private SqlParameter CreateParameter(SqlServerParamDefinition paramDef, DynamicDataChain dataChain, int iterationNumber)
     {
-        SqlParameter sqlParam = new SqlParameter();
+        SqlParameter sqlParam = new();
 
         sqlParam.ParameterName = paramDef.Name;
 
@@ -106,44 +106,42 @@ public class SqlServerCommandTask : IterationTask
 
         string ConnectionString = $"Server={tConfig.Server};Database={tConfig.Database};User Id={tConfig.Username};Password={tConfig.Password};{tConfig.ConnectionStringOptions}";
 
-        using (SqlConnection cnt = new SqlConnection(ConnectionString))
-        using (SqlCommand cmd = new SqlCommand(string.Empty, cnt))
+        using SqlConnection cnt = new(ConnectionString);
+        using SqlCommand cmd = new(string.Empty, cnt);
+        cnt.Open();
+
+        if (tConfig.Type == QueryTaskType.Text)
+            cmd.CommandType = CommandType.Text;
+        else
+            cmd.CommandType = CommandType.StoredProcedure;
+
+        if (cmd.CommandType == CommandType.StoredProcedure)
         {
-            cnt.Open();
+            cmd.Parameters.Add("@RETVALUE", SqlDbType.Int);
+            cmd.Parameters["@RETVALUE"].Direction = ParameterDirection.ReturnValue;
+        }
 
-            if (tConfig.Type == QueryTaskType.Text)
-                cmd.CommandType = CommandType.Text;
-            else
-                cmd.CommandType = CommandType.StoredProcedure;
+        foreach (SqlServerParamDefinition ParamDef in tConfig.ParamsDefinition)
+        {
+            cmd.Parameters.Add(CreateParameter(ParamDef, _dataChain, currentIteration));
+        }
 
-            if (cmd.CommandType == CommandType.StoredProcedure)
-            {
-                cmd.Parameters.Add("@RETVALUE", SqlDbType.Int);
-                cmd.Parameters["@RETVALUE"].Direction = ParameterDirection.ReturnValue;
-            }
+        cmd.CommandText = tConfig.Query;
+        cmd.CommandTimeout = tConfig.CommandTimeout;
 
-            foreach (SqlServerParamDefinition ParamDef in tConfig.ParamsDefinition)
-            {
-                cmd.Parameters.Add(CreateParameter(ParamDef, _dataChain, currentIteration));
-            }
+        if (tConfig.ReturnsRecordset)
+        {
+            SqlDataAdapter da = new(cmd);
+            da.Fill((DataTable)_defaultRecordset);
+        }
+        else
+        {
+            _executionReturnValue = cmd.ExecuteNonQuery();
+        }
 
-            cmd.CommandText = tConfig.Query;
-            cmd.CommandTimeout = tConfig.CommandTimeout;
-
-            if (tConfig.ReturnsRecordset)
-            {
-                SqlDataAdapter da = new SqlDataAdapter(cmd);
-                da.Fill((DataTable)_defaultRecordset);
-            }
-            else
-            {
-                _executionReturnValue = cmd.ExecuteNonQuery();
-            }
-
-            if (cmd.CommandType == CommandType.StoredProcedure)
-            {
-                _executionReturnValue = (int)cmd.Parameters["@RETVALUE"].Value;
-            }
+        if (cmd.CommandType == CommandType.StoredProcedure)
+        {
+            _executionReturnValue = (int)cmd.Parameters["@RETVALUE"].Value;
         }
     }
 

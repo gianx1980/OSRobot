@@ -22,8 +22,8 @@ public class InstanceExecResult
 {
     public InstanceExecResult(List<ExecResult> execResults)
     {
-        this.execResults = execResults;
+        ExecResults = execResults;
     }
 
-    public List<ExecResult> execResults { get; private set; } 
+    public List<ExecResult> ExecResults { get; private set; } 
 }

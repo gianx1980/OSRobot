@@ -87,7 +87,7 @@ public class UserRepository : IUserRepository, IDisposable
 
     public async Task<UserRepositoryResponse<object?>> Users_RefreshTokenSave(long userId, string refreshToken)
     {
-        UserRefreshToken userRefreshToken = new UserRefreshToken()
+        UserRefreshToken userRefreshToken = new()
         {
             UserId = userId,
             RefreshToken = refreshToken,

@@ -17,7 +17,7 @@
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
 using OSRobot.Server.Core.DynamicData;
-using OSRobot.Server.Core.Logging;
+using OSRobot.Server.Core.Logging.Abstract;
 
 namespace OSRobot.Server.Core;
 

@@ -25,7 +25,7 @@ internal static class FtpSftpTaskCommon
 {
     public static List<string> SplitRemotePath(string remotePath)
     {
-        List<string> result = new List<string>();
+        List<string> result = [];
         string[] items_1 = Regex.Split(remotePath, @"\\");
 
         foreach (string item_1 in items_1)
@@ -43,7 +43,7 @@ internal static class FtpSftpTaskCommon
 
     public static List<string> SplitLocalPath(string localPath)
     {
-        List<string> result = new List<string>();
+        List<string> result = [];
         string separator = Path.DirectorySeparatorChar.ToString();
 
         if (Path.DirectorySeparatorChar == '\\')

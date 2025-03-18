@@ -101,14 +101,14 @@ public class AccountController : AppControllerBase
         if (loginResult.ResultObject == null
             || loginResult.ResultCode == UserRepositoryResult.WrongCredentials)
         {
-            MainResponse<UserLoginResponse> errorResp = new MainResponse<UserLoginResponse>(UserLoginResponse.ResponseWrongCredentials, null, null);
+            MainResponse<UserLoginResponse> errorResp = new(UserLoginResponse.ResponseWrongCredentials, null, null);
             return Ok(errorResp);
         }
 
         Tokens token = _jWTManager.CreateToken(new UserConfig() { Id = loginResult.ResultObject.Id, Username = loginResult.ResultObject.UserName });
         if (token.Token == null)
         {
-            MainResponse<UserLoginResponse> errorResp = new MainResponse<UserLoginResponse>(UserLoginResponse.ResponseWrongCredentials, "Error during the creation of the token", null);
+            MainResponse<UserLoginResponse> errorResp = new(UserLoginResponse.ResponseWrongCredentials, "Error during the creation of the token", null);
             return Ok(errorResp);
         }
 
@@ -117,7 +117,7 @@ public class AccountController : AppControllerBase
 
         UserLoginResponse userLoginResponse = new(userLogin.Username, token.Token, token.RefreshToken);
 
-        MainResponse<UserLoginResponse> mainResponse = new MainResponse<UserLoginResponse>(MainResponse<UserLoginResponse>.ResponseOk, null, userLoginResponse);
+        MainResponse<UserLoginResponse> mainResponse = new(MainResponse<UserLoginResponse>.ResponseOk, null, userLoginResponse);
         return Ok(mainResponse);
     }
 
@@ -128,7 +128,7 @@ public class AccountController : AppControllerBase
     {
         if (userChangePassowordRequest.NewPassword != userChangePassowordRequest.ConfirmPassword)
         {
-            MainResponse<object?> errorResp = new MainResponse<object?>(MainResponse<object?>.ConfirmPasswordMismatch, "New password / confirm password mismatch", null);
+            MainResponse<object?> errorResp = new(MainResponse<object?>.ConfirmPasswordMismatch, "New password / confirm password mismatch", null);
             return Ok(errorResp);
         }
 
@@ -137,13 +137,13 @@ public class AccountController : AppControllerBase
         if (loginResult.ResultObject == null
             || loginResult.ResultCode == UserRepositoryResult.WrongCredentials)
         {
-            MainResponse<UserLoginResponse> errorResp = new MainResponse<UserLoginResponse>(UserLoginResponse.ResponseWrongCredentials, "Wrong credentials", null);
+            MainResponse<UserLoginResponse> errorResp = new(UserLoginResponse.ResponseWrongCredentials, "Wrong credentials", null);
             return Ok(errorResp);
         }
 
         await _userRepository.Users_ChangePassword(AppUser!.Id, userChangePassowordRequest.NewPassword);
 
-        MainResponse<object?> mainResponse = new MainResponse<object?>(MainResponse<object?>.ResponseOk, null, null);
+        MainResponse<object?> mainResponse = new(MainResponse<object?>.ResponseOk, null, null);
         return Ok(mainResponse);
     }
 
@@ -164,12 +164,12 @@ public class AccountController : AppControllerBase
         Tokens token = _jWTManager.CreateToken(new UserConfig() { Username = userName });
         if (token.Token == null)
         {
-            MainResponse<UserRefreshTokenResponse> errorResp = new MainResponse<UserRefreshTokenResponse>(MainResponse<UserRefreshTokenResponse>.ResponseGenericError, "Error during the creation of the token", null);
+            MainResponse<UserRefreshTokenResponse> errorResp = new(MainResponse<UserRefreshTokenResponse>.ResponseGenericError, "Error during the creation of the token", null);
             return Ok(errorResp);
         }
 
-        UserRefreshTokenResponse userRefreshTokenResponse = new UserRefreshTokenResponse(token.Token);
-        MainResponse<UserRefreshTokenResponse> mainResponse = new MainResponse<UserRefreshTokenResponse>(MainResponse<UserRefreshTokenResponse>.ResponseOk, null, userRefreshTokenResponse);
+        UserRefreshTokenResponse userRefreshTokenResponse = new(token.Token);
+        MainResponse<UserRefreshTokenResponse> mainResponse = new(MainResponse<UserRefreshTokenResponse>.ResponseOk, null, userRefreshTokenResponse);
 
         return Ok(mainResponse);
     }

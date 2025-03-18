@@ -32,26 +32,22 @@ public class SqlServerBulkCopyTask : IterationTask
         SqlServerBulkCopyTaskConfig tConfig = (SqlServerBulkCopyTaskConfig)_iterationConfig;            
         string connectionString = $"Server={tConfig.Server};Database={tConfig.Database};User ID={tConfig.Username};Password={tConfig.Password};{tConfig.ConnectionStringOptions}";
 
-        using (SqlConnection cnt = new SqlConnection(connectionString))
+        using SqlConnection cnt = new(connectionString);
+        cnt.Open();
+
+        using SqlBulkCopy bulkCopy = new(cnt);
+        bulkCopy.BulkCopyTimeout = tConfig.CommandTimeout;
+        bulkCopy.DestinationTableName = tConfig.DestinationTable;
+        DataTable? dtSource = (DataTable?)DynamicDataParser.GetDynamicDataObject(tConfig.SourceRecordset, _dataChain);
+
+        if (dtSource == null)
         {
-            cnt.Open();
-
-            using (SqlBulkCopy bulkCopy = new SqlBulkCopy(cnt))
-            {
-                bulkCopy.BulkCopyTimeout = tConfig.CommandTimeout;
-                bulkCopy.DestinationTableName = tConfig.DestinationTable;
-                DataTable? dtSource = (DataTable?)DynamicDataParser.GetDynamicDataObject(tConfig.SourceRecordset, _dataChain);
-
-                if (dtSource == null)
-                {
-                    _instanceLogger?.Error(this, "Cannot access the requested source recordset.");
-                    return;
-                }
-
-                _instanceLogger?.Info(this, $"About to bulk copy {dtSource.Rows.Count} rows to table {tConfig.DestinationTable}...");
-                bulkCopy.WriteToServer(dtSource);
-                _instanceLogger?.Info(this, "Bulk copy successfully completed");
-            }
+            _instanceLogger?.Error(this, "Cannot access the requested source recordset.");
+            return;
         }
+
+        _instanceLogger?.Info(this, $"About to bulk copy {dtSource.Rows.Count} rows to table {tConfig.DestinationTable}...");
+        bulkCopy.WriteToServer(dtSource);
+        _instanceLogger?.Info(this, "Bulk copy successfully completed");
     }
 }

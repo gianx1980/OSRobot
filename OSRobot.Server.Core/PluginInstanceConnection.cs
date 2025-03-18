@@ -43,8 +43,8 @@ public class PluginInstanceConnection
 
     public bool Enabled { get; set; }
     public int? WaitSeconds { get; set; }
-    public List<ExecutionCondition> ExecuteConditions { get; set; } = new List<ExecutionCondition>();
-    public List<ExecutionCondition> DontExecuteConditions { get; set; } = new List<ExecutionCondition>();
+    public List<ExecutionCondition> ExecuteConditions { get; set; } = [];
+    public List<ExecutionCondition> DontExecuteConditions { get; set; } = [];
 
     public bool EvaluateExecConditions(ExecResult execResult)
     {

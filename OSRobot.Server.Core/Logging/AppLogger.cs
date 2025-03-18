@@ -23,7 +23,7 @@ namespace OSRobot.Server.Core.Logging;
 
 public class AppLogger : IAppLogger
 {
-    private ILogger _logger;
+    private readonly ILogger _logger;
 
     public AppLogger(ILogger logger )
     {

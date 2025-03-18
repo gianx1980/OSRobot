@@ -28,5 +28,5 @@ public class FileSystemEventConfig : IEventConfig
     public bool Enabled { get; set; } = true;
     public bool Log { get; set; } = true;
     
-    public List<FolderToMonitor> FoldersToMonitor { get; set; } = new List<FolderToMonitor>();
+    public List<FolderToMonitor> FoldersToMonitor { get; set; } = [];
 }

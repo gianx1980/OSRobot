@@ -62,10 +62,10 @@ public class JWTManager : IJWTManager
         {
             Subject = new ClaimsIdentity(new Claim[]
             {
-                new Claim(ClaimTypes.Sid, userConfig.Id.ToString()),
-                new Claim(ClaimTypes.NameIdentifier, userConfig.Username),
-                new Claim(JwtRegisteredClaimNames.Aud, _configuration["AppSettings:JWT:Audience"]!),
-                new Claim(JwtRegisteredClaimNames.Iss, _configuration["AppSettings:JWT:Issuer"]!)
+                new(ClaimTypes.Sid, userConfig.Id.ToString()),
+                new(ClaimTypes.NameIdentifier, userConfig.Username),
+                new(JwtRegisteredClaimNames.Aud, _configuration["AppSettings:JWT:Audience"]!),
+                new(JwtRegisteredClaimNames.Iss, _configuration["AppSettings:JWT:Issuer"]!)
             }),
             Expires = DateTime.UtcNow.AddMinutes(double.Parse(_configuration["AppSettings:JWT:ExpireInMinutes"]!)),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKey), SecurityAlgorithms.HmacSha256Signature)

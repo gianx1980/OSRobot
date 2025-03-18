@@ -58,22 +58,22 @@ public class JsonDeserialization
         }
     }
 
-    private JsonDocument _jsonDoc;
+    private readonly JsonDocument _jsonDoc;
 
     public JsonDeserialization(JsonDocument jsonDoc)
     {
         _jsonDoc = jsonDoc;
     }
 
-    private List<Folder> _getFolderList(Folder folder)
+    private List<Folder> GetFolderList(Folder folder)
     {
-        List<Folder> result = new List<Folder>() { folder };
+        List<Folder> result = [ folder ];
         
         if (folder.Items.Count > 0)
         {
             foreach (Folder folderChild in folder)
             {
-                List<Folder> folderList = _getFolderList(folderChild);
+                List<Folder> folderList = GetFolderList(folderChild);
                 result.AddRange(folderList);
             }
         }
@@ -81,21 +81,23 @@ public class JsonDeserialization
         return result;
     }
 
-    private void _buildFolderTree(Folder folder, FolderTreeItem[] folderTreeChildren)
+    private void BuildFolderTree(Folder folder, FolderTreeItem[] folderTreeChildren)
     {
         foreach (FolderTreeItem folderTreeItem in folderTreeChildren)
         {
-            Folder childFolder = new Folder();
-            childFolder.ParentFolder = folder;
-            childFolder.Config = new FolderConfig()
+            Folder childFolder = new()
             {
-                Id = folderTreeItem.id,
-                Name = folderTreeItem.label,
+                ParentFolder = folder,
+                Config = new FolderConfig()
+                {
+                    Id = folderTreeItem.id,
+                    Name = folderTreeItem.label,
+                }
             };
             folder.Items.Add(childFolder);
 
             if (folderTreeItem.children.Length > 0)
-                _buildFolderTree(childFolder, folderTreeItem.children);
+                BuildFolderTree(childFolder, folderTreeItem.children);
         }
     }
 
@@ -103,7 +105,7 @@ public class JsonDeserialization
     {
         JsonElement jsonRootElement = _jsonDoc.RootElement;
 
-        JsonSerializerOptions jsonSerializerOptions = new JsonSerializerOptions()
+        JsonSerializerOptions jsonSerializerOptions = new()
         {
             Converters = { new StringToIntConverter() },
             PropertyNameCaseInsensitive = true
@@ -111,26 +113,26 @@ public class JsonDeserialization
 
         // Deserialize workspace's folder tree structure
         JsonElement jsonFolderTree = jsonRootElement.GetProperty("folderTree");
-        FolderTreeItem[]? folderTree = jsonFolderTree.Deserialize<FolderTreeItem[]>(jsonSerializerOptions);
-        if (folderTree == null)
-            throw new ApplicationException("Cannot deserialize folder tree structure.");
+        FolderTreeItem[]? folderTree = jsonFolderTree.Deserialize<FolderTreeItem[]>(jsonSerializerOptions) ?? throw new ApplicationException("Cannot deserialize folder tree structure.");
 
         // Build the folder tree structure
-        Folder rootFolder = new Folder();
-        rootFolder.Config = new FolderConfig()
+        Folder rootFolder = new()
         {
-            Id = 0,
-            Enabled = true,
-            Log = true
+            Config = new FolderConfig()
+            {
+                Id = 0,
+                Enabled = true,
+                Log = true
+            }
         };
 
-        _buildFolderTree(rootFolder, folderTree[0].children);
+        BuildFolderTree(rootFolder, folderTree[0].children);
 
         // For convenience get a flat folder list
-        List<Folder> folderList = _getFolderList(rootFolder);
+        List<Folder> folderList = GetFolderList(rootFolder);
 
         // Contains a reference to all plugin instances
-        List<IPluginInstance> allPluginInstances = new List<IPluginInstance>();
+        List<IPluginInstance> allPluginInstances = [];
         
         // Deserialize events and tasks of each folder
         foreach (Folder folder in folderList)
@@ -149,24 +151,14 @@ public class JsonDeserialization
                     continue;
 
                 // Get plugininstance type and create an instance of it
-                Type? pluginInstanceType = Type.GetType($"OSRobot.Server.Plugins.{pluginId}.{pluginId}, OSRobot.Server.Plugins");
-                if (pluginInstanceType == null)
-                    throw new ApplicationException($"Cannot get type for: {pluginId}");
-
-                IPluginInstance? pluginInstance = (IPluginInstance?)Activator.CreateInstance(pluginInstanceType);
-                if (pluginInstance == null)
-                    throw new ApplicationException($"An error occurred while creating an instance of type {pluginId}");
+                Type? pluginInstanceType = Type.GetType($"OSRobot.Server.Plugins.{pluginId}.{pluginId}, OSRobot.Server.Plugins") ?? throw new ApplicationException($"Cannot get type for: {pluginId}");
+                IPluginInstance? pluginInstance = (IPluginInstance?)Activator.CreateInstance(pluginInstanceType) ?? throw new ApplicationException($"An error occurred while creating an instance of type {pluginId}");
                 pluginInstance.ParentFolder = folder;
                 folder.Add(pluginInstance);
 
                 // Deserialize configuration of the plugin instance
-                Type? pluginInstanceConfigType = Type.GetType($"OSRobot.Server.Plugins.{pluginId}.{pluginId}Config, OSRobot.Server.Plugins");
-                if (pluginInstanceConfigType == null)
-                    throw new ApplicationException($"Cannot get configuration type for: {pluginId}");
-
-                IPluginInstanceConfig? pluginInstanceConfig = (IPluginInstanceConfig?)jsonPluginObjectConfig.Deserialize(pluginInstanceConfigType, jsonSerializerOptions);
-                if (pluginInstanceConfig == null)
-                    throw new ApplicationException($"An error occurred while creating an instance of type {pluginId}Config");
+                Type? pluginInstanceConfigType = Type.GetType($"OSRobot.Server.Plugins.{pluginId}.{pluginId}Config, OSRobot.Server.Plugins") ?? throw new ApplicationException($"Cannot get configuration type for: {pluginId}");
+                IPluginInstanceConfig? pluginInstanceConfig = (IPluginInstanceConfig?)jsonPluginObjectConfig.Deserialize(pluginInstanceConfigType, jsonSerializerOptions) ?? throw new ApplicationException($"An error occurred while creating an instance of type {pluginId}Config");
                 pluginInstance.Config = pluginInstanceConfig;
 
                 allPluginInstances.Add(pluginInstance);
@@ -177,23 +169,14 @@ public class JsonDeserialization
             {
                 JsonElement jsonConnectionConfig = jsonConnection.GetProperty("workspaceConnectionConfig");
 
-                PluginInstanceConnection? pluginInstanceConnection = (PluginInstanceConnection?)jsonConnectionConfig.Deserialize(typeof(PluginInstanceConnection), jsonSerializerOptions);
-                if (pluginInstanceConnection == null)
-                    throw new ApplicationException($"An error occurred while creating an instance of type PluginInstanceConnection");
-
+                PluginInstanceConnection? pluginInstanceConnection = (PluginInstanceConnection?)jsonConnectionConfig.Deserialize(typeof(PluginInstanceConnection), jsonSerializerOptions) ?? throw new ApplicationException($"An error occurred while creating an instance of type PluginInstanceConnection");
                 JsonElement jsonSource = jsonConnectionConfig.GetProperty("source");
                 int sourceId = int.Parse(jsonSource.ToString());
                 JsonElement jsonTarget = jsonConnectionConfig.GetProperty("target");
                 int targetId = int.Parse(jsonTarget.ToString());
 
-                IPluginInstance? source = allPluginInstances.Where(p => p.Config.Id == sourceId).FirstOrDefault();
-                if (source == null)
-                    throw new ApplicationException($"Building connection: cannot find source object with Id: {sourceId}");
-
-                IPluginInstance? target = allPluginInstances.Where(p => p.Config.Id == targetId).FirstOrDefault();
-                if (target == null)
-                    throw new ApplicationException($"Building connection: cannot find target object with Id: {targetId}");
-
+                IPluginInstance? source = allPluginInstances.Where(p => p.Config.Id == sourceId).FirstOrDefault() ?? throw new ApplicationException($"Building connection: cannot find source object with Id: {sourceId}");
+                IPluginInstance? target = allPluginInstances.Where(p => p.Config.Id == targetId).FirstOrDefault() ?? throw new ApplicationException($"Building connection: cannot find target object with Id: {targetId}");
                 pluginInstanceConnection.ConnectTo = target;
                 source.Connections.Add(pluginInstanceConnection);
             }

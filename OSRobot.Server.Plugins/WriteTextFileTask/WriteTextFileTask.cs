@@ -66,7 +66,7 @@ public class WriteTextFileTask : BaseTask
         if (!File.Exists(config.FilePath))
             return true;
 
-        FileInfo FI = new FileInfo(config.FilePath);
+        FileInfo FI = new(config.FilePath);
         if (FI.Length == 0)
             return true;
 
@@ -75,7 +75,7 @@ public class WriteTextFileTask : BaseTask
 
     private string[] BuildHeaderArray(WriteTextFileTaskConfig config, DynamicDataChain dataChain)
     {
-        List<string> fieldValues = new List<string>();
+        List<string> fieldValues = new();
 
         foreach (WriteTextFileColumnDefinition col in config.ColumnsDefinition)
         {
@@ -88,7 +88,7 @@ public class WriteTextFileTask : BaseTask
 
     private string[] BuildDataArray(int iterationNumber, WriteTextFileTaskConfig config, DynamicDataChain dataChain)
     {
-        List<string> fieldValues = new List<string>();
+        List<string> fieldValues = new();
 
         foreach (WriteTextFileColumnDefinition col in config.ColumnsDefinition)
         {
@@ -100,7 +100,7 @@ public class WriteTextFileTask : BaseTask
 
     private string BuildFixedFormatString(WriteTextFileTaskConfig config)
     {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
 
         int colIndex = 0;
         foreach (WriteTextFileColumnDefinition col in config.ColumnsDefinition)
@@ -115,7 +115,7 @@ public class WriteTextFileTask : BaseTask
 
     private string BuildRow(WriteTextFileTaskConfig config, string[] fieldValues)
     {
-        StringBuilder sb = new StringBuilder();
+        StringBuilder sb = new();
 
         if (!config.FormatAsDelimitedFile && !config.FormatAsFixedLengthColumnsFile)
         {
@@ -162,7 +162,7 @@ public class WriteTextFileTask : BaseTask
             switch (tConfig_0.TaskType)
             {
                 case WriteTextFileTaskType.AppendRow:
-                    using (StreamWriter sw = new StreamWriter(tConfig_0.FilePath, true))
+                    using (StreamWriter sw = new(tConfig_0.FilePath, true))
                     {
                         for (i = 0; i < _iterationsCount; i++)
                         {
@@ -211,7 +211,7 @@ public class WriteTextFileTask : BaseTask
             }
 
             DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, true, 0, startDateTime, DateTime.Now, _iterationsCount);
-            ExecResult result = new ExecResult(true, dDataSet);
+            ExecResult result = new(true, dDataSet);
             _execResults.Add(result);
         }
         catch (Exception ex)
@@ -220,7 +220,7 @@ public class WriteTextFileTask : BaseTask
                 _instanceLogger?.TaskError(this, ex);
 
             DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, false, -1, startDateTime, DateTime.Now, i + 1);
-            ExecResult result = new ExecResult(false, dDataSet);
+            ExecResult result = new(false, dDataSet);
             _execResults.Add(result);
         }
     }

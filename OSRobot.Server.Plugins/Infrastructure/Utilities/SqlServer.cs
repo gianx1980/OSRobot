@@ -59,10 +59,8 @@ public static class SqlServer
 
         try
         {
-            using (SqlConnection cnt = new SqlConnection(connectionString))
-            {
-                cnt.Open();
-            }
+            using SqlConnection cnt = new(connectionString);
+            cnt.Open();
 
             return true;
         }
@@ -79,10 +77,10 @@ public static class SqlServer
     {
         string connectionString = BuildConnectionString(server, null, username, password, connectionStringOptions);
 
-        List<SqlServerDatabaseListItem>? databaseList = new List<SqlServerDatabaseListItem>();
+        List<SqlServerDatabaseListItem>? databaseList = [];
 
-        using SqlConnection cnt = new SqlConnection(connectionString);
-        using SqlCommand cmdDatabases = new SqlCommand("SELECT database_id, name FROM sys.databases", cnt);
+        using SqlConnection cnt = new(connectionString);
+        using SqlCommand cmdDatabases = new("SELECT database_id, name FROM sys.databases", cnt);
 
         try
         {

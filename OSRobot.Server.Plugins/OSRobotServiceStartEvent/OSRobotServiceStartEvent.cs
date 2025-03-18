@@ -20,6 +20,7 @@
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging;
+using OSRobot.Server.Core.Logging.Abstract;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 
@@ -35,7 +36,7 @@ public class OSRobotServiceStartEvent : IEvent
 
     public IPluginInstanceConfig Config { get; set; } = new OSRobotServiceStartEventConfig();
 
-    public List<PluginInstanceConnection> Connections { get; set; } = new List<PluginInstanceConnection>();
+    public List<PluginInstanceConnection> Connections { get; set; } = [];
 
     [field: NonSerialized]
     public event EventTriggeredDelegate? EventTriggered;

@@ -49,8 +49,8 @@ namespace OSRobot.Server.JobEngineLib;
 
 public class JobEngine : IJobEngine
 {
-    private IAppLogger _log;
-    private IJobEngineConfig _config;
+    private readonly IAppLogger _log;
+    private readonly IJobEngineConfig _config;
     private IFolder _rootFolder;
 
     private List<IEvent> _events;
@@ -58,12 +58,12 @@ public class JobEngine : IJobEngine
     private System.Timers.Timer _logCleanTimer;
 
     // Log name pattern
-    private Regex _logNameRegex = new Regex(@"^(\d+)_(\d{4}-\d{2}-\d{2}T\d{2}_\d{2}_\d{2})_(\d+)_(\d+).log$");
+    private readonly Regex _logNameRegex = new(@"^(\d+)_(\d{4}-\d{2}-\d{2}T\d{2}_\d{2}_\d{2})_(\d+)_(\d+).log$");
 
     // Keep track of running tasks
-    private object _lockRunningTasksCount = new object();
+    private readonly object _lockRunningTasksCount = new();
     private long _runningTasksCount;
-    private ConcurrentDictionary<long, ITask> _runningTasks;
+    private readonly ConcurrentDictionary<long, ITask> _runningTasks;
 
     public JobEngine(IAppLogger appLogger, IJobEngineConfig config)
     {
@@ -110,7 +110,7 @@ public class JobEngine : IJobEngine
 
     private List<IEvent> _getEventList(IFolder folder)
     {
-        List<IEvent> events = new List<IEvent>();
+        List<IEvent> events = new();
 
         foreach (IPluginInstanceBase pluginInstance in folder)
         {
@@ -134,7 +134,7 @@ public class JobEngine : IJobEngine
 
     private List<ITask> _getTaskList(IFolder folder)
     {
-        List<ITask> tasks = new List<ITask>();
+        List<ITask> tasks = new();
 
         foreach (IPluginInstanceBase pluginInstance in folder)
         {
@@ -199,7 +199,7 @@ public class JobEngine : IJobEngine
             thisTaskId = _runningTasksCount;
         }
 
-        Task t = new Task(() =>
+        Task t = new(() =>
         {
             ITask? taskCopy = null;
             try
@@ -236,7 +236,7 @@ public class JobEngine : IJobEngine
                         if (!nextTask.Config.Enabled)
                             continue;
 
-                        foreach (ExecResult execRes in instExecResult.execResults)
+                        foreach (ExecResult execRes in instExecResult.ExecResults)
                         {
                             if (connection.EvaluateExecConditions(execRes))
                             {
@@ -276,10 +276,10 @@ public class JobEngine : IJobEngine
         _log.Info($"Event triggered by object: {pluginEvent.Config.Id}:{pluginEvent.Config.Name}:{pluginEvent.GetType().Name}");
 
         _log.Info("Building dynamic data chain");
-        DynamicDataChain DataChain = new DynamicDataChain();
+        DynamicDataChain DataChain = new();
         DataChain.Add(pluginEvent.Config.Id, e.DynamicData);
 
-        ExecResult execResult = new ExecResult(true, e.DynamicData);
+        ExecResult execResult = new(true, e.DynamicData);
 
         foreach (PluginInstanceConnection connection in pluginEvent.Connections)
         {
@@ -317,7 +317,7 @@ public class JobEngine : IJobEngine
         string[] files = Directory.GetFiles(logPath);
         foreach (string fullPathFileName in files)
         {
-            FileInfo fi = new FileInfo(fullPathFileName);
+            FileInfo fi = new(fullPathFileName);
             if (fi.CreationTime < dateLimit)
                 fi.Delete();
         }
@@ -459,7 +459,7 @@ public class JobEngine : IJobEngine
             }
 
             IPluginInstanceLogger logger = PluginInstanceLogger.GetLogger(taskObj);
-            DynamicDataChain dataChain = new DynamicDataChain();
+            DynamicDataChain dataChain = new();
             DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(taskObj, true, 0, now, now, 1);
 
             _executeTask(taskObj, dataChain, dDataSet, logger);
@@ -477,7 +477,7 @@ public class JobEngine : IJobEngine
     {
         _log.Info("Trying to reload job data...");
 
-        if (_runningTasks.Count > 0)
+        if (!_runningTasks.IsEmpty)
         {
             _log.Info($"Cannot reload jobs now, there are {_runningTasks.Count} running tasks, please retry later.");
             return ReloadJobsReturnValues.CannotReloadWhileRunningTask;
@@ -531,7 +531,7 @@ public class JobEngine : IJobEngine
 
     public List<LogInfo> GetFolderLogs(int folderId)
     {
-        List<LogInfo> folderLogs = new List<LogInfo>();
+        List<LogInfo> folderLogs = new();
         IFolder? folder = _findFolderRecursive(_rootFolder, folderId);
         if (folder == null)
             return folderLogs;

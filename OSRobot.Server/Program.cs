@@ -41,11 +41,11 @@ void _initConfigDatabase(string dbConnectionString)
     string name = info.Name!;
 
     using Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream($"{name}.Resources.InitDB.txt")!;
-    using StreamReader streamReader = new StreamReader(stream, Encoding.UTF8);
+    using StreamReader streamReader = new(stream, Encoding.UTF8);
     string initDBScript = streamReader.ReadToEnd();
 
-    using SqliteConnection connection = new SqliteConnection(dbConnectionString);
-    using SqliteCommand command = new SqliteCommand(initDBScript, connection);
+    using SqliteConnection connection = new(dbConnectionString);
+    using SqliteCommand command = new(initDBScript, connection);
     connection.Open();
     command.ExecuteNonQuery();
 }
@@ -56,10 +56,10 @@ void _initConfigJobsFile(string jobsConfigPathName)
     string name = info.Name!;
 
     using Stream stream = Assembly.GetExecutingAssembly().GetManifestResourceStream($"{name}.Resources.InitJobs.txt")!;
-    using StreamReader streamReader = new StreamReader(stream, Encoding.UTF8);
+    using StreamReader streamReader = new(stream, Encoding.UTF8);
     string initConfigJobsFile = streamReader.ReadToEnd();
 
-    using StreamWriter sw = new StreamWriter(jobsConfigPathName);
+    using StreamWriter sw = new(jobsConfigPathName);
     sw.Write(initConfigJobsFile);
 }
 
@@ -132,14 +132,14 @@ if (!File.Exists(jobsConfigPathName))
 }
 
 //// Initialize JobEngine
-AppLogger appLogger = new AppLogger(logger);
-JobEngineConfig jobEngineConfig = new JobEngineConfig();
+AppLogger appLogger = new(logger);
+JobEngineConfig jobEngineConfig = new();
 jobEngineConfig.LogPath = builder.Configuration["AppSettings:JobEngineConfig:LogPath"]!;
 jobEngineConfig.DataPath = builder.Configuration["AppSettings:JobEngineConfig:DataPath"]!;
 jobEngineConfig.SerialExecution = Convert.ToBoolean(builder.Configuration["AppSettings:JobEngineConfig:SerialExecution"]!);
 jobEngineConfig.CleanUpLogsOlderThanHours = Convert.ToInt32(builder.Configuration["AppSettings:JobEngineConfig:CleanUpLogsOlderThanHours"]!);
 jobEngineConfig.CleanUpLogsIntervalHours = Convert.ToInt32(builder.Configuration["AppSettings:JobEngineConfig:CleanUpLogsIntervalHours"]!);
-JobEngine jobEngine = new JobEngine(appLogger, jobEngineConfig);
+JobEngine jobEngine = new(appLogger, jobEngineConfig);
 jobEngine.Start();
 
 builder.Services.AddSingleton<IJobEngine>(jobEngine);

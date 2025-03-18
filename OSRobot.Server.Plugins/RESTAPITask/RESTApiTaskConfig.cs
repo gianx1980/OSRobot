@@ -46,7 +46,7 @@ public class RESTApiTaskConfig : ITaskConfig
     public string URL { get; set; } = string.Empty;
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public MethodType Method { get; set; }
-    public List<RESTApiHeader> Headers { get; } = new List<RESTApiHeader>();
+    public List<RESTApiHeader> Headers { get; } = [];
 
     [DynamicData]
     public string Parameters { get; set; } = string.Empty;

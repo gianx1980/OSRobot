@@ -23,6 +23,7 @@
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging;
+using OSRobot.Server.Core.Logging.Abstract;
 using System.ComponentModel;
 using System.Diagnostics;
 
@@ -46,17 +47,17 @@ public class CpuEvent : IEvent
     public IFolder? ParentFolder { get; set; }
     public IPluginInstanceConfig Config { get; set; } = new CpuEventConfig();
 
-    public List<PluginInstanceConnection> Connections { get; set; } = new List<PluginInstanceConnection>();
+    public List<PluginInstanceConnection> Connections { get; set; } = [];
 
     public event EventTriggeredDelegate? EventTriggered;
 
-    private System.Timers.Timer _recurringTimer = new System.Timers.Timer();
+    private readonly System.Timers.Timer _recurringTimer = new();
 
     private PerformanceCounter? _perfCounter;
 
     private CounterSample _lastSample;
 
-    private List<CpuUsageSample> _cpuUsageSamples = new List<CpuUsageSample>();
+    private readonly List<CpuUsageSample> _cpuUsageSamples = [];
 
     private DateTime _dateLastTrigger;
 
@@ -84,7 +85,7 @@ public class CpuEvent : IEvent
     {
         _recurringTimer.Enabled = false;
         _recurringTimer.AutoReset = true;
-        _recurringTimer.Elapsed += _RecurringTimer_Elapsed;
+        _recurringTimer.Elapsed += RecurringTimer_Elapsed;
 
         CpuEventConfig tConfig = (CpuEventConfig)Config;
 
@@ -102,7 +103,7 @@ public class CpuEvent : IEvent
         _recurringTimer.Dispose();
     }
 
-    private void _RecurringTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
+    private void RecurringTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
     {
         IPluginInstanceLogger logger = PluginInstanceLogger.GetLogger(this);
 

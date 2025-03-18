@@ -28,7 +28,7 @@ public class RunProgramTask : IterationTask
     {
         RunProgramTaskConfig tConfig = (RunProgramTaskConfig)_iterationConfig;
 
-        ProcessStartInfo pInfo = new ProcessStartInfo(tConfig.ProgramPath, tConfig.Parameters);
+        ProcessStartInfo pInfo = new(tConfig.ProgramPath, tConfig.Parameters);
         string defaultWorkingFolder = Path.GetDirectoryName(tConfig.ProgramPath) ?? string.Empty;
         pInfo.WorkingDirectory = string.IsNullOrEmpty(tConfig.WorkingFolder) ? defaultWorkingFolder : tConfig.WorkingFolder;
         _instanceLogger?.Info(this, $"Running program: {tConfig.ProgramPath} Parameters: {tConfig.Parameters} Working folder: {pInfo.WorkingDirectory}");

@@ -42,10 +42,10 @@ namespace OSRobot.Server.Controllers
         [Authorize]
         public IActionResult GetConfig()
         {
-            ConfigResponse configResponse = new ConfigResponse(_appSettings.JWT.RequestNewTokenIfMinutesLeft, _appSettings.ClientSettings.AppTitle, _appSettings.ClientSettings.StaticFilesUrl,
+            ConfigResponse configResponse = new(_appSettings.JWT.RequestNewTokenIfMinutesLeft, _appSettings.ClientSettings.AppTitle, _appSettings.ClientSettings.StaticFilesUrl,
                                                                 _appSettings.ClientSettings.HeartBeatInterval, _appSettings.ClientSettings.NotificationServerSentEventsEnabled, _appSettings.ClientSettings.NotificationPollingInterval);
 
-            MainResponse<ConfigResponse> mainResponse = new MainResponse<ConfigResponse>(MainResponse<ConfigResponse>.ResponseOk, null, configResponse);
+            MainResponse<ConfigResponse> mainResponse = new(MainResponse<ConfigResponse>.ResponseOk, null, configResponse);
 
             return Ok(mainResponse);
         }

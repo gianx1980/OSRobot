@@ -19,6 +19,7 @@
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging;
+using OSRobot.Server.Core.Logging.Abstract;
 using System.ComponentModel;
 
 namespace OSRobot.Server.Plugins.DiskSpaceEvent;
@@ -29,11 +30,11 @@ public class DiskSpaceEvent : IEvent
 
     public IPluginInstanceConfig Config { get; set; } = new DiskSpaceEventConfig();
 
-    public List<PluginInstanceConnection> Connections { get; set; } = new List<PluginInstanceConnection>();
+    public List<PluginInstanceConnection> Connections { get; set; } = [];
     
     public event EventTriggeredDelegate? EventTriggered;
 
-    private System.Timers.Timer _recurringTimer = new System.Timers.Timer();
+    private readonly System.Timers.Timer _recurringTimer = new();
 
     protected virtual void OnEventTriggered(EventTriggeredEventArgs e)
     {
@@ -55,7 +56,7 @@ public class DiskSpaceEvent : IEvent
     {
         _recurringTimer.Enabled = false;
         _recurringTimer.AutoReset = true;
-        _recurringTimer.Elapsed += _RecurringTimer_Elapsed;
+        _recurringTimer.Elapsed += RecurringTimer_Elapsed;
 
         DiskSpaceEventConfig TConfig = (DiskSpaceEventConfig)Config;
 
@@ -100,7 +101,7 @@ public class DiskSpaceEvent : IEvent
         return result;
     }
 
-    private void _RecurringTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
+    private void RecurringTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
     {
         IPluginInstanceLogger logger = PluginInstanceLogger.GetLogger(this);
 

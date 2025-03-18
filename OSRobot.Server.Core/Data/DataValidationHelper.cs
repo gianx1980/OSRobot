@@ -23,7 +23,7 @@ namespace OSRobot.Server.Core.Data;
 
 public class DataValidationHelper
 {
-    private CultureInfo _cultureInfo;
+    private readonly CultureInfo _cultureInfo;
 
     public DataValidationHelper()
     {

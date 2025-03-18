@@ -24,7 +24,7 @@ namespace OSRobot.Server.Core.DynamicData;
 
 public static class DynamicDataParser
 {       
-    private static Regex _regExFieldValue = new Regex(@"\{object\[(?<ObjectID>\d+)\]\.(?<FieldName>\w+)(\[\'(?<SubFieldName>\w+)\'\])?\}", RegexOptions.IgnoreCase);
+    private readonly static Regex _regExFieldValue = new(@"\{object\[(?<ObjectID>\d+)\]\.(?<FieldName>\w+)(\[\'(?<SubFieldName>\w+)\'\])?\}", RegexOptions.IgnoreCase);
 
     public static string ReplaceDynamicData(string input, DynamicDataChain dynamicDataChain, int iterationNumber)
     {
@@ -53,9 +53,8 @@ public static class DynamicDataParser
                     Dictionary<string, object> row = list[iterationNumber];
                     result = row[subFieldName].ToString() ?? string.Empty;
                 }
-                else if (objectDataSet[fieldName] is DataTable)
+                else if (objectDataSet[fieldName] is DataTable list)
                 {
-                    DataTable list = (DataTable)objectDataSet[fieldName];
                     DataRow row = list.Rows[iterationNumber];
                     result = row[subFieldName].ToString() ?? string.Empty;
                 }
@@ -93,13 +92,13 @@ public static class DynamicDataParser
         {
             if (dynamicDataSet.ContainsKey(CommonDynamicData.DefaultRecordsetName))
             {
-                if (dynamicDataSet[CommonDynamicData.DefaultRecordsetName] is List<Dictionary<string, object>>)
+                if (dynamicDataSet[CommonDynamicData.DefaultRecordsetName] is List<Dictionary<string, object>> list)
                 {
-                    count = ((List<Dictionary<string, object>>)dynamicDataSet[CommonDynamicData.DefaultRecordsetName]).Count;
+                    count = list.Count;
                 }
-                else if (dynamicDataSet[CommonDynamicData.DefaultRecordsetName] is DataTable)
+                else if (dynamicDataSet[CommonDynamicData.DefaultRecordsetName] is DataTable dataTable)
                 {
-                    count = ((DataTable)dynamicDataSet[CommonDynamicData.DefaultRecordsetName]).Rows.Count;
+                    count = dataTable.Rows.Count;
                 }
             }
         }
