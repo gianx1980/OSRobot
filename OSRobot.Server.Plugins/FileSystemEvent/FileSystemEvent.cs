@@ -48,7 +48,7 @@ public class FileSystemEvent : IEvent
             {
                 ISynchronizeInvoke? syncInvoke = singleCast.Target as ISynchronizeInvoke;
                 if ((syncInvoke != null) && (syncInvoke.InvokeRequired))
-                    syncInvoke.Invoke(singleCast, new object[] { this, e });
+                    syncInvoke.Invoke(singleCast, [this, e]);
                 else
                     singleCast(this, e);
             }
@@ -62,10 +62,12 @@ public class FileSystemEvent : IEvent
         FileSystemEventConfig tConfig = (FileSystemEventConfig)Config;
         foreach (FolderToMonitor folder in tConfig.FoldersToMonitor)
         {
-            FileSystemWatcher watcher = new();
-            watcher.Path = folder.Path;
-            watcher.IncludeSubdirectories = folder.MonitorSubFolders;
-            
+            FileSystemWatcher watcher = new()
+            {
+                Path = folder.Path,
+                IncludeSubdirectories = folder.MonitorSubFolders
+            };
+
             if (folder.MonitorAction == MonitorActionType.NewFiles)
                 watcher.Created += WatcherEvent;
             else if (folder.MonitorAction == MonitorActionType.ModifiedFiles)

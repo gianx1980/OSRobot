@@ -26,7 +26,7 @@ using System.Text.RegularExpressions;
 
 namespace OSRobot.Server.Plugins.FtpSftpTask;
 
-public class FtpSftpTask : IterationTask
+public partial class FtpSftpTask : IterationTask
 {
     private void BuildRemotePath(FtpSftpClient fileTransferClient, string remotePath, bool skipLastSegment)
     {
@@ -64,7 +64,7 @@ public class FtpSftpTask : IterationTask
                 string item = pathItems[i];
                 if (!string.IsNullOrEmpty(item))
                 {
-                    if (Regex.Match(item, @"[A-Z]:", RegexOptions.IgnoreCase).Success)
+                    if (BuildLocalPathRegex().Match(item).Success)
                     {
                         fullPath.Append($"{Path.DirectorySeparatorChar}{item}");
                     }
@@ -206,10 +206,7 @@ public class FtpSftpTask : IterationTask
 
             foreach (FtpSftpCopyItem copyItem in tConfig.CopyItems)
             {
-                FtpSftpCopyItem? copyItemCopy = (FtpSftpCopyItem?)CoreHelpers.CloneObjects(copyItem);
-                if (copyItemCopy == null)
-                    throw new ApplicationException("Cloning CopyItem returned null");
-
+                FtpSftpCopyItem? copyItemCopy = (FtpSftpCopyItem?)CoreHelpers.CloneObjects(copyItem) ?? throw new ApplicationException("Cloning CopyItem returned null");
                 copyItemCopy.LocalPath = DynamicDataParser.ReplaceDynamicData(copyItemCopy.LocalPath, _dataChain, currentIteration);
                 copyItemCopy.RemotePath = DynamicDataParser.ReplaceDynamicData(copyItemCopy.RemotePath, _dataChain, currentIteration);
                 ManageCopyItem(fileTransferClient, copyItemCopy, _instanceLogger!);
@@ -223,10 +220,7 @@ public class FtpSftpTask : IterationTask
 
             foreach (FtpSftpDeleteItem deleteItem in tConfig.DeleteItems)
             {
-                FtpSftpDeleteItem? deleteItemCopy = (FtpSftpDeleteItem?)CoreHelpers.CloneObjects(deleteItem);
-                if (deleteItemCopy == null)
-                    throw new ApplicationException("Cloning DeleteItem returned null");
-
+                FtpSftpDeleteItem? deleteItemCopy = (FtpSftpDeleteItem?)CoreHelpers.CloneObjects(deleteItem) ?? throw new ApplicationException("Cloning DeleteItem returned null");
                 deleteItemCopy.RemotePath = DynamicDataParser.ReplaceDynamicData(deleteItemCopy.RemotePath, _dataChain, currentIteration);
                 ManageDeleteItem(fileTransferClient, deleteItemCopy, _instanceLogger!);
             }
@@ -234,4 +228,7 @@ public class FtpSftpTask : IterationTask
             _instanceLogger?.Info("Delete files completed");
         }
     }
+
+    [GeneratedRegex(@"[A-Z]:", RegexOptions.IgnoreCase, "it-IT")]
+    private static partial Regex BuildLocalPathRegex();
 }

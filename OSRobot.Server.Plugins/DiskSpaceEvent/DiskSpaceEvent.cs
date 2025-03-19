@@ -45,7 +45,7 @@ public class DiskSpaceEvent : IEvent
             {
                 ISynchronizeInvoke? syncInvoke = singleCast.Target as ISynchronizeInvoke;
                 if ((syncInvoke != null) && (syncInvoke.InvokeRequired))
-                    syncInvoke.Invoke(singleCast, new object[] { this, e });
+                    syncInvoke.Invoke(singleCast, [this, e]);
                 else
                     singleCast(this, e);
             }

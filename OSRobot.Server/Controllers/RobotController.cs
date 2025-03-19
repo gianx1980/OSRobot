@@ -31,23 +31,17 @@ namespace OSRobot.Server.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class RobotController : AppControllerBase
+public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSettings) : AppControllerBase
 {
-    private readonly IJobEngine _jobEngine;
-    private readonly AppSettings _appSettings;
-
-    public RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSettings)
-    {
-        _jobEngine = jobEngine;
-        _appSettings = appSettings.Value;
-    }
+    private readonly IJobEngine _jobEngine = jobEngine;
+    private readonly AppSettings _appSettings = appSettings.Value;
 
     [HttpGet]
     [Route("Objects")]
     [Authorize]
     public IActionResult Objects()
     {
-        List<PluginListItem> pluginList = _jobEngine.GetPlugins().Select(t => new PluginListItem(t.Id, t.Title, t.PluginType.ToString().ToLowerInvariant(), t.GetPluginDefaultConfig(), t.SupportedOSPlatforms)).ToList();
+        List<PluginListItem> pluginList = [.. _jobEngine.GetPlugins().Select(t => new PluginListItem(t.Id, t.Title, t.PluginType.ToString().ToLowerInvariant(), t.GetPluginDefaultConfig(), t.SupportedOSPlatforms))];
         MainResponse<List<PluginListItem>> mainResponse = new(MainResponse<List<PluginListItem>>.ResponseOk, null, pluginList);
         return Ok(mainResponse);
     }
@@ -61,7 +55,7 @@ public class RobotController : AppControllerBase
         if (plugin == null)
             return NotFound();
 
-        List<PluginDynDataSampleListItem> dynDataSamplesList = plugin.SampleDynamicData.Select(t => new PluginDynDataSampleListItem(t.Description, t.Example, t.InternalName)).ToList();
+        List<PluginDynDataSampleListItem> dynDataSamplesList = [.. plugin.SampleDynamicData.Select(t => new PluginDynDataSampleListItem(t.Description, t.Example, t.InternalName))];
 
         MainResponse<List<PluginDynDataSampleListItem>> mainResponse = new(MainResponse<List<PluginDynDataSampleListItem>>.ResponseOk, null, dynDataSamplesList);
         return Ok(mainResponse);

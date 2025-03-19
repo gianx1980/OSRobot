@@ -244,11 +244,11 @@ public class SqlServerBackupTask : IterationTask
             return;
         }
 
-        List<string> dbToBackupList = currentDbList.Select(t => t.Name).ToList();
+        List<string> dbToBackupList = [.. currentDbList.Select(t => t.Name)];
 
         if (tConfig.DatabasesToBackup == DatabasesToBackupEnum.SelectedDatabases)
         {
-            dbToBackupList = dbToBackupList.Where(t => tConfig.SelectedDatabases.Contains(t)).ToList();
+            dbToBackupList = [.. dbToBackupList.Where(t => tConfig.SelectedDatabases.Contains(t))];
         }
 
         string prevFileNameTemplate = tConfig.FileNameTemplate;

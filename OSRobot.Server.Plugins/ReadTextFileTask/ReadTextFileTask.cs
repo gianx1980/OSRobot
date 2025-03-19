@@ -30,7 +30,7 @@ public class ReadTextFileTask : IterationTask
 {
     private string[] BuildDelimitersArray(ReadTextFileTaskConfig config)
     {
-        List<string> delimiters = new();
+        List<string> delimiters = [];
 
         if (config.DelimiterTab)
             delimiters.Add("\t");
@@ -47,7 +47,7 @@ public class ReadTextFileTask : IterationTask
         if (config.DelimiterOther)
             delimiters.Add(config.DelimiterOtherChar);
 
-        return delimiters.ToArray();
+        return [.. delimiters];
     }
 
     private void BuildCustomDataTable(DataTable recordset, ReadTextFileTaskConfig config)
@@ -88,7 +88,7 @@ public class ReadTextFileTask : IterationTask
     private string[] ReadRow(TextFieldParser parser, ReadTextFileTaskConfig config)
     {
         if (config.SplitColumnsType == ReadTextFileSplitColumnsType.None || config.SplitColumnsType == ReadTextFileSplitColumnsType.UseFixedWidthColumns)
-            return new string[] { parser.ReadLine() ?? string.Empty };
+            return [parser.ReadLine() ?? string.Empty];
         else // TextFileReadSplitColumnsType.UseDelimiters
         {
             return parser.ReadFields() ?? new string[1];

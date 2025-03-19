@@ -133,12 +133,14 @@ if (!File.Exists(jobsConfigPathName))
 
 //// Initialize JobEngine
 AppLogger appLogger = new(logger);
-JobEngineConfig jobEngineConfig = new();
-jobEngineConfig.LogPath = builder.Configuration["AppSettings:JobEngineConfig:LogPath"]!;
-jobEngineConfig.DataPath = builder.Configuration["AppSettings:JobEngineConfig:DataPath"]!;
-jobEngineConfig.SerialExecution = Convert.ToBoolean(builder.Configuration["AppSettings:JobEngineConfig:SerialExecution"]!);
-jobEngineConfig.CleanUpLogsOlderThanHours = Convert.ToInt32(builder.Configuration["AppSettings:JobEngineConfig:CleanUpLogsOlderThanHours"]!);
-jobEngineConfig.CleanUpLogsIntervalHours = Convert.ToInt32(builder.Configuration["AppSettings:JobEngineConfig:CleanUpLogsIntervalHours"]!);
+JobEngineConfig jobEngineConfig = new()
+{
+    LogPath = builder.Configuration["AppSettings:JobEngineConfig:LogPath"]!,
+    DataPath = builder.Configuration["AppSettings:JobEngineConfig:DataPath"]!,
+    SerialExecution = Convert.ToBoolean(builder.Configuration["AppSettings:JobEngineConfig:SerialExecution"]!),
+    CleanUpLogsOlderThanHours = Convert.ToInt32(builder.Configuration["AppSettings:JobEngineConfig:CleanUpLogsOlderThanHours"]!),
+    CleanUpLogsIntervalHours = Convert.ToInt32(builder.Configuration["AppSettings:JobEngineConfig:CleanUpLogsIntervalHours"]!)
+};
 JobEngine jobEngine = new(appLogger, jobEngineConfig);
 jobEngine.Start();
 

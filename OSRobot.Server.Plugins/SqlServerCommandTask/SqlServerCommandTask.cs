@@ -31,9 +31,10 @@ public class SqlServerCommandTask : IterationTask
 
     private SqlParameter CreateParameter(SqlServerParamDefinition paramDef, DynamicDataChain dataChain, int iterationNumber)
     {
-        SqlParameter sqlParam = new();
-
-        sqlParam.ParameterName = paramDef.Name;
+        SqlParameter sqlParam = new()
+        {
+            ParameterName = paramDef.Name
+        };
 
         switch (paramDef.Type)
         {

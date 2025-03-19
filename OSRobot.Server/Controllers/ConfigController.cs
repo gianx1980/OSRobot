@@ -28,14 +28,9 @@ namespace OSRobot.Server.Controllers
 {
     [Route("api/[controller]")]
     [ApiController]
-    public class ConfigController : AppControllerBase
+    public class ConfigController(IOptions<AppSettings> appSettings) : AppControllerBase
     {
-        private readonly AppSettings _appSettings;
-
-        public ConfigController(IOptions<AppSettings> appSettings)
-        {
-            _appSettings = appSettings.Value;
-        }
+        private readonly AppSettings _appSettings = appSettings.Value;
 
         [HttpPost]
         [Route("GetConfig")]

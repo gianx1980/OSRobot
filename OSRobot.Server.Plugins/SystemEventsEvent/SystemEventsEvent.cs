@@ -32,7 +32,7 @@ public class SystemEventsEvent : IEvent
     public int Id { get; set; }
     public IPluginInstanceConfig Config { get; set; } = new SystemEventsEventConfig();
 
-    public List<PluginInstanceConnection> Connections { get; set; } = new List<PluginInstanceConnection>();
+    public List<PluginInstanceConnection> Connections { get; set; } = [];
 
     public event EventTriggeredDelegate? EventTriggered;
 
@@ -45,7 +45,7 @@ public class SystemEventsEvent : IEvent
             {
                 ISynchronizeInvoke? syncInvoke = singleCast.Target as ISynchronizeInvoke;
                 if ((syncInvoke != null) && (syncInvoke.InvokeRequired))
-                    syncInvoke.Invoke(singleCast, new object[] { this, e });
+                    syncInvoke.Invoke(singleCast, [this, e]);
                 else
                     singleCast(this, e);
             }

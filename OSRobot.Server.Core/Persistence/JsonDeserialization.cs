@@ -21,7 +21,7 @@ using System.Text.Json.Serialization;
 
 namespace OSRobot.Server.Core.Persistence;
 
-public class JsonDeserialization
+public class JsonDeserialization(JsonDocument jsonDoc)
 {
     private class FolderTreeItem
     {
@@ -58,12 +58,7 @@ public class JsonDeserialization
         }
     }
 
-    private readonly JsonDocument _jsonDoc;
-
-    public JsonDeserialization(JsonDocument jsonDoc)
-    {
-        _jsonDoc = jsonDoc;
-    }
+    private readonly JsonDocument _jsonDoc = jsonDoc;
 
     private List<Folder> GetFolderList(Folder folder)
     {

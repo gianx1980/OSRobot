@@ -18,16 +18,9 @@
 ======================================================================================*/
 namespace OSRobot.Server.Models.DTO.Robot;
 
-public class LogInfoListItem
+public class LogInfoListItem(int eventId, DateTime execDateTime, string fileName)
 {
-    public LogInfoListItem(int eventId, DateTime execDateTime, string fileName)
-    {
-        EventId = eventId;
-        ExecDateTime = execDateTime;
-        FileName = fileName;
-    }
-
-    public int EventId { get; set; }
-    public DateTime ExecDateTime { get; set; }
-    public string FileName { get; set; }
+    public int EventId { get; set; } = eventId;
+    public DateTime ExecDateTime { get; set; } = execDateTime;
+    public string FileName { get; set; } = fileName;
 }

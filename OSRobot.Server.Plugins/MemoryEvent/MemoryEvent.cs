@@ -28,17 +28,11 @@ using System.Diagnostics;
 
 namespace OSRobot.Server.Plugins.MemoryEvent;
 
-public class MemoryUsageSample
+public class MemoryUsageSample(float sampleValue)
 {
-    public MemoryUsageSample(float sampleValue)
-    {
-        SampleDateTime = DateTime.Now;
-        SampleValue = sampleValue;
-    }
+    public DateTime SampleDateTime { get; set; } = DateTime.Now;
 
-    public DateTime SampleDateTime { get; set; }
-
-    public float SampleValue { get; set; }
+    public float SampleValue { get; set; } = sampleValue;
 }
 
 public class MemoryEvent : IEvent
@@ -72,7 +66,7 @@ public class MemoryEvent : IEvent
             {
                 ISynchronizeInvoke? syncInvoke = singleCast.Target as ISynchronizeInvoke;
                 if ((syncInvoke != null) && (syncInvoke.InvokeRequired))
-                    syncInvoke.Invoke(singleCast, new object[] { this, e });
+                    syncInvoke.Invoke(singleCast, [this, e]);
                 else
                     singleCast(this, e);
             }

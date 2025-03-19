@@ -27,16 +27,10 @@ namespace OSRobot.Server.Core.Persistence;
 
 public class XmlSerialization
 {
-    class ObjectSerialized
+    class ObjectSerialized(int id, object obj)
     {
-        public ObjectSerialized(int id, object obj) 
-        {
-            Id = id;
-            Obj = obj;
-        }
-
-        public int Id { get; set; }
-        public object Obj { get; set; }
+        public int Id { get; set; } = id;
+        public object Obj { get; set; } = obj;
     }
 
     public bool CheckSerializeAttribute { get; set; }
@@ -54,8 +48,8 @@ public class XmlSerialization
     public XmlSerialization()
     {
         _xmlDoc = new XmlDocument();
-        _objectsSerialized = new List<ObjectSerialized>();
-        _referencedTypes = new Dictionary<string, int>();
+        _objectsSerialized = [];
+        _referencedTypes = [];
     }
 
     private bool TrackObject(object objectRef, out int objectID)

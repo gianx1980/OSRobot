@@ -39,13 +39,13 @@ namespace OSRobot.Server.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class AccountController : AppControllerBase
+public class AccountController(IJWTManager jWTManager, IOptions<AppSettings> appSettings, IUserRepository userRepository) : AppControllerBase
 {
-    private readonly IJWTManager _jWTManager;
-    private readonly AppSettings _appSettings;
-    private readonly IUserRepository _userRepository;
+    private readonly IJWTManager _jWTManager = jWTManager;
+    private readonly AppSettings _appSettings = appSettings.Value;
+    private readonly IUserRepository _userRepository = userRepository;
     
-    private string? _getPrincipalNameFromExpiredToken(string token)
+    private string? GetPrincipalNameFromExpiredToken(string token)
     {
         var tokenValidationParameters = new TokenValidationParameters
         {
@@ -78,13 +78,6 @@ public class AccountController : AppControllerBase
         string? name = principal.Claims.Where(t => t.Type.Contains("nameidentifier")).FirstOrDefault()?.Value;
 
         return name;
-    }
-
-    public AccountController(IJWTManager jWTManager, IOptions<AppSettings> appSettings, IUserRepository userRepository)
-    {
-        _jWTManager = jWTManager;
-        _appSettings = appSettings.Value;
-        _userRepository = userRepository;
     }
 
 
@@ -151,7 +144,7 @@ public class AccountController : AppControllerBase
     [Route("RefreshToken")]
     public async Task<IActionResult> RefreshToken([FromBody] UserRefreshTokenRequest userRefreshTokenRequest)
     {        
-        string? userName = _getPrincipalNameFromExpiredToken(userRefreshTokenRequest.Token);
+        string? userName = GetPrincipalNameFromExpiredToken(userRefreshTokenRequest.Token);
         if (userName == null)
             return Unauthorized();
 

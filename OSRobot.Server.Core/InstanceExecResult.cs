@@ -18,12 +18,7 @@
 ======================================================================================*/
 namespace OSRobot.Server.Core;
 
-public class InstanceExecResult
+public class InstanceExecResult(List<ExecResult> execResults)
 {
-    public InstanceExecResult(List<ExecResult> execResults)
-    {
-        ExecResults = execResults;
-    }
-
-    public List<ExecResult> ExecResults { get; private set; } 
+    public List<ExecResult> ExecResults { get; private set; } = execResults;
 }

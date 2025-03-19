@@ -18,15 +18,9 @@
 ======================================================================================*/
 namespace OSRobot.Server.Infrastructure.Security;
 
-public class UserRepositoryResponse<T>
+public class UserRepositoryResponse<T>(UserRepositoryResult resultCode, T resultObject)
 {
-    public UserRepositoryResponse(UserRepositoryResult resultCode, T resultObject)
-    {
-        ResultCode = resultCode;
-        ResultObject = resultObject;
-    }
+    public UserRepositoryResult ResultCode { get; set; } = resultCode;
 
-    public UserRepositoryResult ResultCode { get; set; }
-
-    public T ResultObject { get; set; }
+    public T ResultObject { get; set; } = resultObject;
 }

@@ -20,14 +20,8 @@ using System.Security.Claims;
 
 namespace OSRobot.Server.Infrastructure.Security;
 
-public class AppTokenUser
+public class AppTokenUser(ClaimsIdentity identity)
 {
-    public int Id { get; }
-    public string Username { get; }
-
-    public AppTokenUser(ClaimsIdentity identity)
-    {
-        Id = int.Parse(identity.Claims.FirstOrDefault(t => t.Type == ClaimTypes.Sid)!.Value);
-        Username = identity.Claims.FirstOrDefault(t => t.Type == ClaimTypes.NameIdentifier)!.Value;
-    }
+    public int Id { get; } = int.Parse(identity.Claims.FirstOrDefault(t => t.Type == ClaimTypes.Sid)!.Value);
+    public string Username { get; } = identity.Claims.FirstOrDefault(t => t.Type == ClaimTypes.NameIdentifier)!.Value;
 }

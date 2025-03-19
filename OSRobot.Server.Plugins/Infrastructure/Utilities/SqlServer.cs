@@ -28,16 +28,10 @@ using System.Threading.Tasks;
 
 namespace OSRobot.Server.Plugins.Infrastructure.Utilities;
 
-public class SqlServerDatabaseListItem
+public class SqlServerDatabaseListItem(int id, string name)
 {
-    public SqlServerDatabaseListItem(int id, string name)
-    {
-        Id = id;
-        Name = name;
-    }
-
-    public int Id { get; set; } 
-    public string Name { get; set; }
+    public int Id { get; set; } = id;
+    public string Name { get; set; } = name;
 }
 
 

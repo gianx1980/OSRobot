@@ -42,10 +42,7 @@ public class WriteTextFileTask : BaseTask
 
     private WriteTextFileTaskConfig ParseDynamicData(int iterationNumber, WriteTextFileTaskConfig config, DynamicDataChain dataChain)
     {
-        WriteTextFileTaskConfig? configCopy = (WriteTextFileTaskConfig?)CoreHelpers.CloneObjects(config);
-        if (configCopy == null)
-            throw new ApplicationException("Cloning configuration returned null");
-
+        WriteTextFileTaskConfig? configCopy = (WriteTextFileTaskConfig?)CoreHelpers.CloneObjects(config) ?? throw new ApplicationException("Cloning configuration returned null");
         DynamicDataParser.Parse(configCopy, dataChain, iterationNumber);
         
         foreach (WriteTextFileColumnDefinition col in configCopy.ColumnsDefinition)
@@ -75,27 +72,27 @@ public class WriteTextFileTask : BaseTask
 
     private string[] BuildHeaderArray(WriteTextFileTaskConfig config, DynamicDataChain dataChain)
     {
-        List<string> fieldValues = new();
+        List<string> fieldValues = [];
 
         foreach (WriteTextFileColumnDefinition col in config.ColumnsDefinition)
         {
             fieldValues.Add(col.HeaderTitle);
         }
 
-        return fieldValues.ToArray();
+        return [.. fieldValues];
     }
 
 
     private string[] BuildDataArray(int iterationNumber, WriteTextFileTaskConfig config, DynamicDataChain dataChain)
     {
-        List<string> fieldValues = new();
+        List<string> fieldValues = [];
 
         foreach (WriteTextFileColumnDefinition col in config.ColumnsDefinition)
         {
             fieldValues.Add(DynamicDataParser.ReplaceDynamicData(col.FieldValue, dataChain, iterationNumber));
         }
 
-        return fieldValues.ToArray();
+        return [.. fieldValues];
     }
 
     private string BuildFixedFormatString(WriteTextFileTaskConfig config)
@@ -182,7 +179,7 @@ public class WriteTextFileTask : BaseTask
 
                 case WriteTextFileTaskType.InsertRow:
                     {
-                        List<string> fileLines = File.ReadAllLines(tConfig_0.FilePath).ToList();
+                        List<string> fileLines = [.. File.ReadAllLines(tConfig_0.FilePath)];
 
                         for (i = 0; i < _iterationsCount; i++)
                         {

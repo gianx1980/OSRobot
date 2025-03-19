@@ -18,14 +18,8 @@
 ======================================================================================*/
 namespace OSRobot.Server.Models.DTO.User;
 
-public class UserRefreshTokenRequest
+public class UserRefreshTokenRequest(string token, string refreshToken)
 {
-    public UserRefreshTokenRequest(string token, string refreshToken)
-    {
-        Token = token;
-        RefreshToken = refreshToken;
-    }
-
-    public string Token { get; set; }
-    public string RefreshToken { get; set; }
+    public string Token { get; set; } = token;
+    public string RefreshToken { get; set; } = refreshToken;
 }

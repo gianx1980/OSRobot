@@ -18,16 +18,9 @@
 ======================================================================================*/
 namespace OSRobot.Server.Models.DTO.Robot;
 
-public class PluginDynDataSampleListItem
+public class PluginDynDataSampleListItem(string name, string exampleValue, string internalName)
 {
-    public PluginDynDataSampleListItem(string name, string exampleValue, string internalName)
-    {
-        Name = name;
-        ExampleValue = exampleValue;
-        InternalName = internalName;
-    }
-
-    public string Name { get; }
-    public string ExampleValue { get; }
-    public string InternalName { get; }
+    public string Name { get; } = name;
+    public string ExampleValue { get; } = exampleValue;
+    public string InternalName { get; } = internalName;
 }

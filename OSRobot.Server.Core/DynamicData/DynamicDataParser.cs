@@ -22,9 +22,9 @@ using System.Text.RegularExpressions;
 
 namespace OSRobot.Server.Core.DynamicData;
 
-public static class DynamicDataParser
+public static partial class DynamicDataParser
 {       
-    private readonly static Regex _regExFieldValue = new(@"\{object\[(?<ObjectID>\d+)\]\.(?<FieldName>\w+)(\[\'(?<SubFieldName>\w+)\'\])?\}", RegexOptions.IgnoreCase);
+    private readonly static Regex _regExFieldValue = DetectObjectRegex();
 
     public static string ReplaceDynamicData(string input, DynamicDataChain dynamicDataChain, int iterationNumber)
     {
@@ -163,4 +163,7 @@ public static class DynamicDataParser
         IPluginInstanceConfig config = task.Config;
         Parse(config, dynamicDataChain, iterationNumber);
     }
+
+    [GeneratedRegex(@"\{object\[(?<ObjectID>\d+)\]\.(?<FieldName>\w+)(\[\'(?<SubFieldName>\w+)\'\])?\}", RegexOptions.IgnoreCase, "it-IT")]
+    private static partial Regex DetectObjectRegex();
 }

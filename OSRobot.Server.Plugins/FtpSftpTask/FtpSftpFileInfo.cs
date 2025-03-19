@@ -19,20 +19,11 @@
 
 namespace OSRobot.Server.Plugins.FtpSftpTask;
 
-public class FtpSftpFileInfo
+public class FtpSftpFileInfo(string fileName, string fullPath, bool isFile, bool isDirectory, bool isLink)
 {
-    public FtpSftpFileInfo(string fileName, string fullPath, bool isFile, bool isDirectory, bool isLink)
-    {
-        FileName = fileName;
-        FullPath = fullPath;
-        IsFile = isFile;
-        IsDirectory = isDirectory;
-        IsLink = isLink;
-    }
-
-    public string FileName { get; } = string.Empty;
-    public string FullPath { get; } = string.Empty;
-    public bool IsFile { get; }
-    public bool IsDirectory { get; }
-    public bool IsLink { get; }
+    public string FileName { get; } = fileName;
+    public string FullPath { get; } = fullPath;
+    public bool IsFile { get; } = isFile;
+    public bool IsDirectory { get; } = isDirectory;
+    public bool IsLink { get; } = isLink;
 }

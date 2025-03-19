@@ -18,6 +18,7 @@
 ======================================================================================*/
 namespace OSRobot.Server.Core.Persistence;
 
+[AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
 public class XmlEncryptFieldAttribute : Attribute
 {
 

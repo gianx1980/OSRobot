@@ -26,10 +26,10 @@ using System.Runtime.InteropServices;
 
 namespace OSRobot.Server.Plugins.OSRobotServiceStartEvent;
 
-public class OSRobotServiceStartEvent : IEvent
+public partial class OSRobotServiceStartEvent : IEvent
 {
-    [DllImport("kernel32")]
-    extern static ulong GetTickCount64();
+    [LibraryImport("kernel32")]
+    private static partial ulong GetTickCount64();
 
     public IFolder? ParentFolder { get; set; }
     public int Id { get; set; }
@@ -50,7 +50,7 @@ public class OSRobotServiceStartEvent : IEvent
             {
                 ISynchronizeInvoke? syncInvoke = singleCast.Target as ISynchronizeInvoke;
                 if ((syncInvoke != null) && (syncInvoke.InvokeRequired))
-                    syncInvoke.Invoke(singleCast, new object[] { this, e });
+                    syncInvoke.Invoke(singleCast, [this, e]);
                 else
                     singleCast(this, e);
             }

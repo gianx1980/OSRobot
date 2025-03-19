@@ -22,7 +22,7 @@ using System.Text.RegularExpressions;
 
 namespace OSRobot.Server.Core.Persistence;
 
-static class XmlCommon
+static partial class XmlCommon
 {
     public const string KeyContainerName = "OSRobotCryptoKey3";
 
@@ -87,7 +87,7 @@ static class XmlCommon
     public static string Field_GetFieldName(FieldInfo fieldInfo)
     {
         // Take care of automatic properties! (<{0}>k__BackingField)
-        Match mt = Regex.Match(fieldInfo.Name, @"^\<(\w+)\>k__BackingField$");
+        Match mt = AutomaticPropertyBackingFieldRegex().Match(fieldInfo.Name);
 
         if (mt.Success)
             return mt.Groups[1].Value;
@@ -109,4 +109,7 @@ static class XmlCommon
     {
         return fieldInfo.CustomAttributes.Where(A => A.AttributeType == attribute).FirstOrDefault() != null;
     }
+
+    [GeneratedRegex(@"^\<(\w+)\>k__BackingField$")]
+    private static partial Regex AutomaticPropertyBackingFieldRegex();
 }

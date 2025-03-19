@@ -21,7 +21,7 @@ using System.Text.RegularExpressions;
 
 namespace OSRobot.Server.Core.Data;
 
-public class DataValidationHelper
+public partial class DataValidationHelper
 {
     private readonly CultureInfo _cultureInfo;
 
@@ -47,7 +47,7 @@ public class DataValidationHelper
             return false;
         }
 
-        if (!Regex.Match(value, "^\\d+$").Success)
+        if (!IsIntegerRegex().Match(value).Success)
         {
             return false;
         }
@@ -68,7 +68,7 @@ public class DataValidationHelper
             return false;
         }
 
-        if (!Regex.Match(value, "^\\d+$").Success)
+        if (!IsLongRegex().Match(value).Success)
         {
             return false;
         }
@@ -243,7 +243,7 @@ public class DataValidationHelper
             return false;
         }
 
-        if (!Regex.Match(value, "^\\d+$").Success)
+        if (!IsIntegerRegex().Match(value).Success)
         {
             return false;
         }
@@ -292,4 +292,10 @@ public class DataValidationHelper
             return match.Groups[1].Value + ascii;
         }
     }
+
+    [GeneratedRegex("^\\d+$")]
+    private static partial Regex IsIntegerRegex();
+    
+    [GeneratedRegex("^\\d+$")]
+    private static partial Regex IsLongRegex();
 }

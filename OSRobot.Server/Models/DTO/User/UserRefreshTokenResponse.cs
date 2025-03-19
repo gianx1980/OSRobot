@@ -18,12 +18,7 @@
 ======================================================================================*/
 namespace OSRobot.Server.Models.DTO.User;
 
-public class UserRefreshTokenResponse
+public class UserRefreshTokenResponse(string token)
 {
-    public UserRefreshTokenResponse(string token)
-    {
-        Token = token;
-    }
-
-    public string Token { get; set; }
+    public string Token { get; set; } = token;
 }

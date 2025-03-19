@@ -21,16 +21,16 @@ using System.Text.RegularExpressions;
 
 namespace OSRobot.Server.Plugins.FtpSftpTask;
 
-internal static class FtpSftpTaskCommon
+internal static partial class FtpSftpTaskCommon
 {
     public static List<string> SplitRemotePath(string remotePath)
     {
         List<string> result = [];
-        string[] items_1 = Regex.Split(remotePath, @"\\");
+        string[] items_1 = SplitByBackslashRegex().Split(remotePath);
 
         foreach (string item_1 in items_1)
         {
-            string[] items_2 = Regex.Split(item_1, @"/");
+            string[] items_2 = SplitBySlashRegex().Split(item_1);
             foreach (string item_2 in items_2)
             {
                 if (!string.IsNullOrEmpty(item_2))
@@ -63,4 +63,9 @@ internal static class FtpSftpTaskCommon
     {
         return Path.Combine(paths).Replace('\\', '/');
     }
+
+    [GeneratedRegex(@"\\")]
+    private static partial Regex SplitByBackslashRegex();
+    [GeneratedRegex(@"/")]
+    private static partial Regex SplitBySlashRegex();
 }

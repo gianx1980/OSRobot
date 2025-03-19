@@ -18,21 +18,13 @@
 ======================================================================================*/
 namespace OSRobot.Server.Core.DynamicData;
 
-public class DynamicDataObjectSamples
+public class DynamicDataObjectSamples(int id, string description, EnumPluginType type, List<DynamicDataSample> dynamicDataSampleList)
 {
-    public DynamicDataObjectSamples(int id, string description, EnumPluginType type, List<DynamicDataSample> dynamicDataSampleList)
-    {
-        Id = id;
-        Description = description;
-        Type = type;
-        DynamicDataSampleList = dynamicDataSampleList;
-    }
+    public int Id { get; private set; } = id;
 
-    public int Id { get; private set; }
+    public string Description { get; private set; } = description;
 
-    public string Description { get; private set; }
+    public EnumPluginType Type { get; private set; } = type;
 
-    public EnumPluginType Type { get; private set; }
-
-    public List<DynamicDataSample> DynamicDataSampleList { get; private set; }
+    public List<DynamicDataSample> DynamicDataSampleList { get; private set; } = dynamicDataSampleList;
 }

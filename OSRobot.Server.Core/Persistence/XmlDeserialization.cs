@@ -69,7 +69,7 @@ public class XmlDeserialization
     private object? CreateObjectInstance(Type objectType)
     {
         if (objectType == typeof(string))
-            return new string(new char[] { });
+            return new string([]);
         else if (HasDefaultConstructor(objectType))
             return Activator.CreateInstance(objectType);
         else
@@ -102,7 +102,7 @@ public class XmlDeserialization
         Type? objType = GetType(instanceTypeName) ?? throw new ApplicationException($"Cannot find type {instanceTypeName}");
         XmlNodeList xmlItems = xmlObject.GetElementsByTagName(XmlCommon.ItemTagName);
 
-        IList? objArray = (IList?)Activator.CreateInstance(objType, new object[] { xmlItems.Count }) ?? throw new ApplicationException($"Cannot create instance of type {instanceTypeName}");
+        IList? objArray = (IList?)Activator.CreateInstance(objType, [xmlItems.Count]) ?? throw new ApplicationException($"Cannot create instance of type {instanceTypeName}");
         for (int i = 0; i < xmlItems.Count; i++)
         {
             if (xmlItems[i] == null) continue;

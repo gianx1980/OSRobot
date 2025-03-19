@@ -18,12 +18,7 @@
 ======================================================================================*/
 namespace OSRobot.Server.Models.DTO.ClientUtils;
 
-public class DriveListItem
+public class DriveListItem(string name)
 {
-    public string Name { get; set; }    
-
-    public DriveListItem(string name)
-    {
-        Name = name;
-    }
+    public string Name { get; set; } = name;
 }

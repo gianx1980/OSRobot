@@ -29,17 +29,11 @@ using System.Diagnostics;
 
 namespace OSRobot.Server.Plugins.CpuEvent;
 
-public class CpuUsageSample
+public class CpuUsageSample(float sampleValue)
 {
-    public CpuUsageSample(float sampleValue)
-    {
-        SampleDateTime = DateTime.Now;
-        SampleValue = sampleValue;
-    }
+    public DateTime SampleDateTime { get; set; } = DateTime.Now;
 
-    public DateTime SampleDateTime { get; set; }
-
-    public float SampleValue { get; set; }
+    public float SampleValue { get; set; } = sampleValue;
 }
 
 public class CpuEvent : IEvent
@@ -74,7 +68,7 @@ public class CpuEvent : IEvent
             {
                 ISynchronizeInvoke? syncInvoke = singleCast.Target as ISynchronizeInvoke;
                 if ((syncInvoke != null) && (syncInvoke.InvokeRequired))
-                    syncInvoke.Invoke(singleCast, new object[] { this, e });
+                    syncInvoke.Invoke(singleCast, [this, e]);
                 else
                     singleCast(this, e);
             }

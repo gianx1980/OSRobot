@@ -26,26 +26,21 @@ using Irony.Parsing;
 
 namespace OSRobot.Server.Infrastructure.Security;
 
-public class UserRepository : IUserRepository, IDisposable
+public class UserRepository(RobotDBContext context) : IUserRepository, IDisposable
 {
     private const int _saltLength = 64;
     private readonly char[] _charList = @"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789;:.,-_@!£$%&/()=?^'\|[]{}".ToCharArray();
-    private readonly RobotDBContext _dbContext;
+    private readonly RobotDBContext _dbContext = context;
 
-    private async Task<string> _getPasswordHash(string password, string salt)
+    private async Task<string> GetPasswordHash(string password, string salt)
     {
         using SHA512 sha512 = SHA512.Create();
         return Convert.ToBase64String(await sha512.ComputeHashAsync(new MemoryStream(Encoding.UTF8.GetBytes(salt + password))));
     }
 
-    private string _getSalt()
+    private string GetSalt()
     {
         return RandomNumberGenerator.GetString(_charList, _saltLength);
-    }
-
-    public UserRepository(RobotDBContext context)
-    {
-        _dbContext = context;
     }
 
     public async Task<UserRepositoryResponse<User?>> Users_Login(string userName, string password)
@@ -57,7 +52,7 @@ public class UserRepository : IUserRepository, IDisposable
             return new UserRepositoryResponse<User?>(UserRepositoryResult.WrongCredentials, null);
 
         // Check password
-        string passwordHash = await _getPasswordHash(password, user.Salt);
+        string passwordHash = await GetPasswordHash(password, user.Salt);
         if (user.Password != passwordHash)
             return new UserRepositoryResponse<User?>(UserRepositoryResult.WrongCredentials, null);
 
@@ -75,8 +70,8 @@ public class UserRepository : IUserRepository, IDisposable
         if (user == null)
             return new UserRepositoryResponse<object?>(UserRepositoryResult.InvalidUser, null);
 
-        string salt = _getSalt();
-        string passwordHash = await _getPasswordHash(newPassword, salt);
+        string salt = GetSalt();
+        string passwordHash = await GetPasswordHash(newPassword, salt);
 
         user.Salt = salt;
         user.Password = passwordHash;

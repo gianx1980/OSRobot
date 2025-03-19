@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
 	<VersionPrefix>1.0.1</VersionPrefix>
 	<Version>$(VersionPrefix)</Version>
+	<AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
 
   <ItemGroup>

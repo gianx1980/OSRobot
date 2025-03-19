@@ -18,20 +18,12 @@
 ======================================================================================*/
 namespace OSRobot.Server.Core.DynamicData;
 
-public class DynamicDataSample
+public class DynamicDataSample(string internalName, string description, string example, bool isRecordset = false)
 {
-    public DynamicDataSample(string internalName, string description, string example, bool isRecordset = false)
-    {
-        InternalName = internalName;
-        Description = description;
-        Example = example;
-        IsRecordset = isRecordset;
-    }
-
-    public string InternalName { get; private set; }
-    public string Description { get; private set; }
-    public string Example { get; private set; }
-    public bool IsRecordset { get; private set; }
+    public string InternalName { get; private set; } = internalName;
+    public string Description { get; private set; } = description;
+    public string Example { get; private set; } = example;
+    public bool IsRecordset { get; private set; } = isRecordset;
 
     public override string ToString()
     {
