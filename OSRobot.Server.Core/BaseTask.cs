@@ -28,8 +28,8 @@ public abstract class BaseTask : ITask
     protected bool _taskReturnsRecordset = false;
     protected object _defaultRecordset = new DataTable();
     protected int _iterationsCount;
-    protected DynamicDataChain _dataChain = new();
-    protected DynamicDataSet _lastDynamicDataSet = new();
+    protected DynamicDataChain _dataChain = [];
+    protected DynamicDataSet _lastDynamicDataSet = [];
     protected IPluginInstanceLogger? _instanceLogger;
     protected List<ExecResult> _execResults = [];
 

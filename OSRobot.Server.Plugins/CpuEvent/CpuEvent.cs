@@ -64,10 +64,9 @@ public class CpuEvent : IEvent
         EventTriggeredDelegate? handler = EventTriggered;
         if (handler != null)
         {
-            foreach (EventTriggeredDelegate singleCast in handler.GetInvocationList())
+            foreach (EventTriggeredDelegate singleCast in handler.GetInvocationList().Cast<EventTriggeredDelegate>())
             {
-                ISynchronizeInvoke? syncInvoke = singleCast.Target as ISynchronizeInvoke;
-                if ((syncInvoke != null) && (syncInvoke.InvokeRequired))
+                if ((singleCast.Target is ISynchronizeInvoke syncInvoke) && (syncInvoke.InvokeRequired))
                     syncInvoke.Invoke(singleCast, [this, e]);
                 else
                     singleCast(this, e);
@@ -110,8 +109,7 @@ public class CpuEvent : IEvent
 
             CpuEventConfig tConfig = (CpuEventConfig)Config;
 
-            if (_perfCounter == null)
-                _perfCounter = new PerformanceCounter("Processor information", "% processor utility", "_Total");
+            _perfCounter ??= new PerformanceCounter("Processor information", "% processor utility", "_Total");
 
             if (_dateFirstSample == DateTime.MinValue)
                 _dateFirstSample = DateTime.Now;

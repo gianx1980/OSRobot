@@ -44,10 +44,9 @@ public class FileSystemEvent : IEvent
         EventTriggeredDelegate? handler = EventTriggered;
         if (handler != null)
         {
-            foreach (EventTriggeredDelegate singleCast in handler.GetInvocationList())
+            foreach (EventTriggeredDelegate singleCast in handler.GetInvocationList().Cast<EventTriggeredDelegate>())
             {
-                ISynchronizeInvoke? syncInvoke = singleCast.Target as ISynchronizeInvoke;
-                if ((syncInvoke != null) && (syncInvoke.InvokeRequired))
+                if ((singleCast.Target is ISynchronizeInvoke syncInvoke) && (syncInvoke.InvokeRequired))
                     syncInvoke.Invoke(singleCast, [this, e]);
                 else
                     singleCast(this, e);
@@ -107,8 +106,8 @@ public class FileSystemEvent : IEvent
             FileInfo fi = new(e.FullPath);
             dDataSet.Add(FileSystemEventCommon.DynDataKeyFullPathName, e.FullPath);
             dDataSet.Add(FileSystemEventCommon.DynDataKeyFileName, e.Name ?? string.Empty);
-            dDataSet.Add(FileSystemEventCommon.DynDataKeyFileNameWithoutExtension, e.Name == null ? string.Empty : e.Name.Substring(0, e.Name.Length - fi.Extension.Length));
-            dDataSet.Add(FileSystemEventCommon.DynDataKeyFileExtension, fi.Extension.Substring(1));
+            dDataSet.Add(FileSystemEventCommon.DynDataKeyFileNameWithoutExtension, e.Name == null ? string.Empty : e.Name[..^fi.Extension.Length]);
+            dDataSet.Add(FileSystemEventCommon.DynDataKeyFileExtension, fi.Extension[1..]);
             dDataSet.Add(FileSystemEventCommon.DynDataKeyChangeType, e.ChangeType.ToString());
             
             if (Config.Log)

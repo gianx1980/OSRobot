@@ -65,7 +65,7 @@ public class FileSystemTask : IterationTask
             throw new ApplicationException($"Copy: Source {source} must contain path information.");
 
         string? destinationPath = Path.GetDirectoryName(destination);
-        if (string.IsNullOrEmpty(destination))
+        if (string.IsNullOrEmpty(destinationPath))
             throw new ApplicationException($"Copy: Destination {destination} must contain path information.");
 
         string sourceName = Path.GetFileName(source);

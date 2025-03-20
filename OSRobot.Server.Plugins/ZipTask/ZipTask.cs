@@ -54,7 +54,7 @@ public class ZipTask : IterationTask
         if (files.Length == 0 && folders.Length == 0 && !skipEmptyFolder)
         {
             DirectoryInfo fi = new(path);
-            string EntryName = path.Substring(folderOffset);
+            string EntryName = path[folderOffset..];
             EntryName = ZipEntry.CleanName(EntryName + "/empty.txt");   // It seems the only way to mantain an empty folder...
             ZipEntry NewEntry = new(EntryName)
             {
@@ -71,7 +71,7 @@ public class ZipTask : IterationTask
         FileInfo fi = new(filePathName);
 
         // Make the name in zip based on the folder
-        string entryName = filePathName.Substring(folderOffset);
+        string entryName = filePathName[folderOffset..];
 
         // Remove drive from name and fix slash direction
         entryName = ZipEntry.CleanName(entryName);
@@ -122,7 +122,7 @@ public class ZipTask : IterationTask
         // This setting will strip the leading part of the folder path in the entries, 
         // to make the entries relative to the starting folder.
         // To include the full path for each entry up to the drive root, assign to 0.
-        int folderOffset = storeFullPath ? 0 : (itemFolderName.Length + (itemFolderName.EndsWith("\\") ? 0 : 1));
+        int folderOffset = storeFullPath ? 0 : (itemFolderName.Length + (itemFolderName.EndsWith('\\') ? 0 : 1));
 
         string[] files = Directory.GetFiles(itemFolderName, itemName);
         foreach (string fileName in files)

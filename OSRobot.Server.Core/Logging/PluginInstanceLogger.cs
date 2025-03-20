@@ -43,6 +43,7 @@ public class PluginInstanceLogger : IPluginInstanceLogger
         return $"{eventID}_{now.ToIsoDate().Replace(":", "_")}_{now.Ticks}_{_instanceCounter}.log";
     }
 
+    #pragma warning disable CA1859
     private static IPluginInstanceLogger GetPluginLogger(IPluginInstance plugin)
     {
         //TODO: Check the log path!!!
@@ -57,6 +58,7 @@ public class PluginInstanceLogger : IPluginInstanceLogger
 
         return pluginInstanceLogger;
     }
+    #pragma warning restore CA1859
 
     public static IPluginInstanceLogger GetLogger(IEvent robotEvent)
     {

@@ -25,10 +25,14 @@ public class JsonDeserialization(JsonDocument jsonDoc)
 {
     private class FolderTreeItem
     {
-        public int id { get; set; }
-        public string label { get; set; } = null!;
-        public string icon { get; set; } = null!;
-        public FolderTreeItem[] children { get; set; } = null!;
+        [JsonPropertyName("id")]
+        public int Id { get; set; }
+        [JsonPropertyName("label")]
+        public string Label { get; set; } = null!;
+        [JsonPropertyName("Icon")]
+        public string Icon { get; set; } = null!;
+        [JsonPropertyName("children")]
+        public FolderTreeItem[] Children { get; set; } = null!;
     }
 
     public class StringToIntConverter : JsonConverter<int>
@@ -66,7 +70,7 @@ public class JsonDeserialization(JsonDocument jsonDoc)
         
         if (folder.Items.Count > 0)
         {
-            foreach (Folder folderChild in folder)
+            foreach (Folder folderChild in folder.Cast<Folder>())
             {
                 List<Folder> folderList = GetFolderList(folderChild);
                 result.AddRange(folderList);
@@ -85,17 +89,18 @@ public class JsonDeserialization(JsonDocument jsonDoc)
                 ParentFolder = folder,
                 Config = new FolderConfig()
                 {
-                    Id = folderTreeItem.id,
-                    Name = folderTreeItem.label,
+                    Id = folderTreeItem.Id,
+                    Name = folderTreeItem.Label,
                 }
             };
             folder.Items.Add(childFolder);
 
-            if (folderTreeItem.children.Length > 0)
-                BuildFolderTree(childFolder, folderTreeItem.children);
+            if (folderTreeItem.Children.Length > 0)
+                BuildFolderTree(childFolder, folderTreeItem.Children);
         }
     }
 
+    #pragma warning disable CA1859
     private object? DeserializeJsonDoc()
     {
         JsonElement jsonRootElement = _jsonDoc.RootElement;
@@ -121,7 +126,7 @@ public class JsonDeserialization(JsonDocument jsonDoc)
             }
         };
 
-        BuildFolderTree(rootFolder, folderTree[0].children);
+        BuildFolderTree(rootFolder, folderTree[0].Children);
 
         // For convenience get a flat folder list
         List<Folder> folderList = GetFolderList(rootFolder);
@@ -178,6 +183,7 @@ public class JsonDeserialization(JsonDocument jsonDoc)
         }
         return rootFolder;
     }
+    #pragma warning restore CA1859
 
     public object? Deserialize()
     {

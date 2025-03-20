@@ -42,7 +42,7 @@ public class SqlServerCommandTask : IterationTask
                 sqlParam.SqlDbType = SqlDbType.VarChar;
                 if (!string.IsNullOrEmpty(paramDef.Length))
                 {
-                    if (paramDef.Length.ToUpper() != "MAX")
+                    if (!paramDef.Length.Equals("MAX", StringComparison.CurrentCultureIgnoreCase))
                         sqlParam.Size = int.Parse(paramDef.Length);
                     else
                         sqlParam.Size = -1;
@@ -54,7 +54,7 @@ public class SqlServerCommandTask : IterationTask
                 sqlParam.SqlDbType = SqlDbType.NVarChar;
                 if (!string.IsNullOrEmpty(paramDef.Length))
                 {
-                    if (paramDef.Length.ToUpper() != "MAX")
+                    if (!paramDef.Length.Equals("MAX", StringComparison.CurrentCultureIgnoreCase))
                         sqlParam.Size = int.Parse(paramDef.Length);
                     else
                         sqlParam.Size = -1;

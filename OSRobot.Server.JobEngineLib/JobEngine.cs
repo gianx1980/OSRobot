@@ -63,7 +63,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
     // Keep track of running tasks
     private long _runningTasksCount;
     private readonly object _lockRunningTasksCount = new();
-    private readonly ConcurrentDictionary<long, ITask> _runningTasks = new ConcurrentDictionary<long, ITask>();
+    private readonly ConcurrentDictionary<long, ITask> _runningTasks = new();
 
     private bool IsValidLogName(string logName)
     {
@@ -103,17 +103,17 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
 
         foreach (IPluginInstanceBase pluginInstance in folder)
         {
-            if (pluginInstance is IEvent)
+            if (pluginInstance is IEvent @event)
             {
                 // Skip disabled events
                 if (!pluginInstance.Config.Enabled)
                     continue;
 
-                events.Add((IEvent)pluginInstance);
+                events.Add(@event);
             }
-            else if (pluginInstance is IFolder)
+            else if (pluginInstance is IFolder innerFolder)
             {
-                List<IEvent> InnerFolderEvents = GetEventList((IFolder)pluginInstance);
+                List<IEvent> InnerFolderEvents = GetEventList(innerFolder);
                 events.AddRange(InnerFolderEvents);
             }
         }
@@ -127,13 +127,13 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
 
         foreach (IPluginInstanceBase pluginInstance in folder)
         {
-            if (pluginInstance is ITask)
+            if (pluginInstance is ITask innerTask)
             {
-                tasks.Add((ITask)pluginInstance);
+                tasks.Add(innerTask);
             }
-            else if (pluginInstance is IFolder)
+            else if (pluginInstance is IFolder innerFolder)
             {
-                List<ITask> innerFolderEvents = GetTaskList((IFolder)pluginInstance);
+                List<ITask> innerFolderEvents = GetTaskList(innerFolder);
                 tasks.AddRange(innerFolderEvents);
             }
         }
@@ -145,13 +145,13 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
     {
         foreach (IPluginInstanceBase pluginInstanceBase in folder.Items)
         {
-            if (pluginInstanceBase is IFolder)
+            if (pluginInstanceBase is IFolder innerFolder)
             {
                 if (pluginInstanceBase.Config.Id == folderId)
-                    return (IFolder)pluginInstanceBase;
+                    return innerFolder;
                 else
                 {
-                    IFolder? folderFound = FindFolderRecursive((IFolder)pluginInstanceBase, folderId);
+                    IFolder? folderFound = FindFolderRecursive(innerFolder, folderId);
                     if (folderFound != null)
                         return folderFound;
                 }

@@ -26,9 +26,9 @@ namespace OSRobot.Server.Plugins.ExcelFileTask;
 
 public class ExcelFileTask : BaseTask
 {
-    bool WorksheetExists(IXLWorkbook wb, string worksheetName)
+    private bool WorksheetExists(XLWorkbook wb, string worksheetName)
     {
-        int totalWorksheets = wb.Worksheets.Count();
+        int totalWorksheets = wb.Worksheets.Count;
         for (int i = 1; i <= totalWorksheets; i++)
         {
             if (wb.Worksheet(i).Name == worksheetName)
@@ -60,7 +60,7 @@ public class ExcelFileTask : BaseTask
                     {
                         bool fileExists = File.Exists(tConfig_0.FilePath);
 
-                        using IXLWorkbook wksBook = (fileExists ? new XLWorkbook(tConfig_0.FilePath) : new XLWorkbook());
+                        using XLWorkbook wksBook = (fileExists ? new (tConfig_0.FilePath) : new ());
                         IXLWorksheet wksSheet;
                         if (!WorksheetExists(wksBook, tConfig_0.SheetName))
                             wksSheet = wksBook.Worksheets.Add(tConfig_0.SheetName);
@@ -121,7 +121,7 @@ public class ExcelFileTask : BaseTask
 
                 case ExcelFileTaskType.ReadRow:
                     {
-                        using IXLWorkbook wksBook = new XLWorkbook(tConfig_0.FilePath);
+                        using XLWorkbook wksBook = new(tConfig_0.FilePath);
                         IXLWorksheet wksSheet = wksBook.Worksheet(tConfig_0.SheetName);
 
                         int readFromRow = 0;

@@ -6,6 +6,7 @@
     <Nullable>enable</Nullable>
 	<VersionPrefix>1.0.1</VersionPrefix>
 	<Version>$(VersionPrefix)</Version>
+	<NeutralLanguage>en-US</NeutralLanguage>
   </PropertyGroup>
 
   <ItemGroup>
