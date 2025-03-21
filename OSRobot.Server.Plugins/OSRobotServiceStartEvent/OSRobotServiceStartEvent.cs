@@ -20,22 +20,23 @@
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging;
+using OSRobot.Server.Core.Logging.Abstract;
 using System.ComponentModel;
 using System.Runtime.InteropServices;
 
 namespace OSRobot.Server.Plugins.OSRobotServiceStartEvent;
 
-public class OSRobotServiceStartEvent : IEvent
+public partial class OSRobotServiceStartEvent : IEvent
 {
-    [DllImport("kernel32")]
-    extern static ulong GetTickCount64();
+    [LibraryImport("kernel32")]
+    private static partial ulong GetTickCount64();
 
     public IFolder? ParentFolder { get; set; }
     public int Id { get; set; }
 
     public IPluginInstanceConfig Config { get; set; } = new OSRobotServiceStartEventConfig();
 
-    public List<PluginInstanceConnection> Connections { get; set; } = new List<PluginInstanceConnection>();
+    public List<PluginInstanceConnection> Connections { get; set; } = [];
 
     [field: NonSerialized]
     public event EventTriggeredDelegate? EventTriggered;
@@ -45,11 +46,10 @@ public class OSRobotServiceStartEvent : IEvent
         EventTriggeredDelegate? handler = EventTriggered;
         if (handler != null)
         {
-            foreach (EventTriggeredDelegate singleCast in handler.GetInvocationList())
+            foreach (EventTriggeredDelegate singleCast in handler.GetInvocationList().Cast<EventTriggeredDelegate>())
             {
-                ISynchronizeInvoke? syncInvoke = singleCast.Target as ISynchronizeInvoke;
-                if ((syncInvoke != null) && (syncInvoke.InvokeRequired))
-                    syncInvoke.Invoke(singleCast, new object[] { this, e });
+                if ((singleCast.Target is ISynchronizeInvoke syncInvoke) && (syncInvoke.InvokeRequired))
+                    syncInvoke.Invoke(singleCast, [this, e]);
                 else
                     singleCast(this, e);
             }

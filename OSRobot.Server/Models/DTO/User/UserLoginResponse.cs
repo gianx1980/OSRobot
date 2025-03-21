@@ -18,20 +18,13 @@
 ======================================================================================*/
 namespace OSRobot.Server.Models.DTO.User;
 
-public class UserLoginResponse
+public class UserLoginResponse(string username, string token, string refreshToken)
 {
     public const int ResponseWrongCredentials = -10;
 
-    public UserLoginResponse(string username, string token, string refreshToken)
-    {
-        Username = username;
-        Token = token;
-        RefreshToken = refreshToken;
-    }
+    public string Username { get; set; } = username;
 
-    public string Username { get; set; }
+    public string Token { get; set; } = token;
 
-    public string Token { get; set; }
-
-    public string RefreshToken { get; set; }
+    public string RefreshToken { get; set; } = refreshToken;
 }

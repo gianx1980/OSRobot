@@ -27,14 +27,9 @@ using System.Text;
 
 namespace OSRobot.Server.Infrastructure.Security;
 
-public class JWTManager : IJWTManager
+public class JWTManager(IConfiguration configuration) : IJWTManager
 {
-    private readonly IConfiguration _configuration;
-
-    public JWTManager(IConfiguration configuration)
-    {
-        _configuration = configuration;
-    }
+    private readonly IConfiguration _configuration = configuration;
 
     private string GenerateRefreshToken()
     {
@@ -60,13 +55,13 @@ public class JWTManager : IJWTManager
         var tokenKey = Encoding.UTF8.GetBytes(_configuration["AppSettings:JWT:Key"]!);
         var tokenDescriptor = new SecurityTokenDescriptor
         {
-            Subject = new ClaimsIdentity(new Claim[]
-            {
-                new Claim(ClaimTypes.Sid, userConfig.Id.ToString()),
-                new Claim(ClaimTypes.NameIdentifier, userConfig.Username),
-                new Claim(JwtRegisteredClaimNames.Aud, _configuration["AppSettings:JWT:Audience"]!),
-                new Claim(JwtRegisteredClaimNames.Iss, _configuration["AppSettings:JWT:Issuer"]!)
-            }),
+            Subject = new ClaimsIdentity(
+            [
+                new(ClaimTypes.Sid, userConfig.Id.ToString()),
+                new(ClaimTypes.NameIdentifier, userConfig.Username),
+                new(JwtRegisteredClaimNames.Aud, _configuration["AppSettings:JWT:Audience"]!),
+                new(JwtRegisteredClaimNames.Iss, _configuration["AppSettings:JWT:Issuer"]!)
+            ]),
             Expires = DateTime.UtcNow.AddMinutes(double.Parse(_configuration["AppSettings:JWT:ExpireInMinutes"]!)),
             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(tokenKey), SecurityAlgorithms.HmacSha256Signature)
         };

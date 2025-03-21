@@ -20,7 +20,7 @@
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.Data;
 using OSRobot.Server.Core.DynamicData;
-using OSRobot.Server.Core.Logging;
+using OSRobot.Server.Core.Logging.Abstract;
 
 
 namespace OSRobot.Server.Plugins.FileSystemTask;
@@ -48,7 +48,7 @@ public class FileSystemTask : IterationTask
 
     private bool IsNameAPattern(string objectName)
     {
-        return objectName.Contains("*") || objectName.Contains("?");
+        return objectName.Contains('*') || objectName.Contains('?');
     } 
 
     private void Copy(string source, string destination, bool overwriteExistingFiles, bool recursive = false, TimeSpan? olderThan = null)
@@ -65,7 +65,7 @@ public class FileSystemTask : IterationTask
             throw new ApplicationException($"Copy: Source {source} must contain path information.");
 
         string? destinationPath = Path.GetDirectoryName(destination);
-        if (string.IsNullOrEmpty(destination))
+        if (string.IsNullOrEmpty(destinationPath))
             throw new ApplicationException($"Copy: Destination {destination} must contain path information.");
 
         string sourceName = Path.GetFileName(source);
@@ -244,10 +244,7 @@ public class FileSystemTask : IterationTask
 
             foreach (FileSystemTaskCopyItem copyItem in tConfig.CopyItems)
             {
-                FileSystemTaskCopyItem? copyItemCopy = (FileSystemTaskCopyItem?)CoreHelpers.CloneObjects(copyItem);
-                if (copyItemCopy == null)
-                    throw new ApplicationException("Cloning configuration returned null");
-
+                FileSystemTaskCopyItem? copyItemCopy = (FileSystemTaskCopyItem?)CoreHelpers.CloneObjects(copyItem) ?? throw new ApplicationException("Cloning configuration returned null");
                 copyItemCopy.SourcePath = DynamicDataParser.ReplaceDynamicData(copyItemCopy.SourcePath, _dataChain, currentIteration);
                 copyItemCopy.DestinationPath = DynamicDataParser.ReplaceDynamicData(copyItemCopy.DestinationPath, _dataChain, currentIteration);
                 copyItemCopy.FilesOlderThanDays = DynamicDataParser.ReplaceDynamicData(copyItemCopy.FilesOlderThanDays, _dataChain, currentIteration);
@@ -264,9 +261,7 @@ public class FileSystemTask : IterationTask
 
             foreach (FileSystemTaskDeleteItem deleteItem in tConfig.DeleteItems)
             {
-                FileSystemTaskDeleteItem? deleteItemCopy = (FileSystemTaskDeleteItem?)CoreHelpers.CloneObjects(deleteItem);
-                if (deleteItemCopy == null)
-                    throw new ApplicationException("Cloning configuration returned null");
+                FileSystemTaskDeleteItem? deleteItemCopy = (FileSystemTaskDeleteItem?)CoreHelpers.CloneObjects(deleteItem) ?? throw new ApplicationException("Cloning configuration returned null");
                 deleteItemCopy.DeletePath = DynamicDataParser.ReplaceDynamicData(deleteItemCopy.DeletePath, _dataChain, currentIteration);
                 deleteItemCopy.FilesOlderThanDays = DynamicDataParser.ReplaceDynamicData(deleteItemCopy.FilesOlderThanDays, _dataChain, currentIteration);
                 deleteItemCopy.FilesOlderThanHours = DynamicDataParser.ReplaceDynamicData(deleteItemCopy.FilesOlderThanHours, _dataChain, currentIteration);

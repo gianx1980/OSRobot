@@ -49,7 +49,7 @@ public class SqlServerCommandTaskConfig : ITaskConfig
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public QueryTaskType Type { get; set; }
     [DynamicData]
-    public List<SqlServerParamDefinition> ParamsDefinition { get; } = new List<SqlServerParamDefinition>();
+    public List<SqlServerParamDefinition> ParamsDefinition { get; } = [];
 
     public bool ReturnsRecordset { get; set; }
 

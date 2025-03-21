@@ -27,7 +27,7 @@ class ReadTextFileTaskAutomaticColumnCreation
         {
             for (int i = 0; i < row.Length; i++)
             {
-                ReadTextFileColumnDefinition ColDef = new ReadTextFileColumnDefinition(row[i], ReadTextFileColumnDataType.String, string.Empty, string.Empty, true, false, i + 1, null, null);
+                ReadTextFileColumnDefinition ColDef = new(row[i], ReadTextFileColumnDataType.String, string.Empty, string.Empty, true, false, i + 1, null, null);
                 columnsDef.Add(ColDef);
             }
         }
@@ -35,7 +35,7 @@ class ReadTextFileTaskAutomaticColumnCreation
         {
             for (int i = 0; i < row.Length; i++)
             {
-                ReadTextFileColumnDefinition ColDef = new ReadTextFileColumnDefinition("Column" + i.ToString(), ReadTextFileColumnDataType.String, string.Empty, string.Empty, true, false, i + 1, null, null);
+                ReadTextFileColumnDefinition ColDef = new("Column" + i.ToString(), ReadTextFileColumnDataType.String, string.Empty, string.Empty, true, false, i + 1, null, null);
                 columnsDef.Add(ColDef);
             }
         }
@@ -43,11 +43,11 @@ class ReadTextFileTaskAutomaticColumnCreation
 
     private ReadTextFileColumnDataType DetectTypeFromString(string val)
     {
-        if (int.TryParse(val, out int IntVal))
+        if (int.TryParse(val, out _))
             return ReadTextFileColumnDataType.Integer;
-        else if (decimal.TryParse(val, out decimal DecVal))
+        else if (decimal.TryParse(val, out _))
             return ReadTextFileColumnDataType.Decimal;
-        else if (DateTime.TryParse(val, out DateTime DateVal))
+        else if (DateTime.TryParse(val, out _))
            return ReadTextFileColumnDataType.Datetime;
         else 
             return ReadTextFileColumnDataType.String;

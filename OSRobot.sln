@@ -5,11 +5,11 @@ VisualStudioVersion = 17.8.34525.116
 MinimumVisualStudioVersion = 10.0.40219.1
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OSRobot.Server", "OSRobot.Server\OSRobot.Server.csproj", "{6E7BA73A-78FC-4926-868A-8AB7D9A71117}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OSRobot.Server.Core", "OSRobot.Server.Core\OSRobot.Server.Core.csproj", "{329170EE-41B6-41F6-9973-E387A2FF0EA1}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OSRobot.Server.Core", "OSRobot.Server.Core\OSRobot.Server.Core.csproj", "{329170EE-41B6-41F6-9973-E387A2FF0EA1}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OSRobot.Server.JobEngineLib", "OSRobot.Server.JobEngineLib\OSRobot.Server.JobEngineLib.csproj", "{5FA896C5-CC55-44DB-99A5-665804325B1A}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OSRobot.Server.JobEngineLib", "OSRobot.Server.JobEngineLib\OSRobot.Server.JobEngineLib.csproj", "{5FA896C5-CC55-44DB-99A5-665804325B1A}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OSRobot.Server.JobEngine", "OSRobot.Server.JobEngine\OSRobot.Server.JobEngine.csproj", "{AD7F307A-A145-41ED-855D-A5444CDCBB95}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OSRobot.Server.JobEngine", "OSRobot.Server.JobEngine\OSRobot.Server.JobEngine.csproj", "{AD7F307A-A145-41ED-855D-A5444CDCBB95}"
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OSRobot.Server.Plugins", "OSRobot.Server.Plugins\OSRobot.Server.Plugins.csproj", "{FC05E516-CBD4-4981-8281-2AAEA598B0D4}"
 EndProject

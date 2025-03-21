@@ -20,25 +20,16 @@ using OSRobot.Server.Core;
 
 namespace OSRobot.Server.Models.DTO.Robot;
 
-public class PluginListItem
-{ 
-    public PluginListItem(string pluginId, string title, string pluginType, IPluginInstanceConfig configSample, EnumOSPlatform supportedOSPlatforms)
-    {
-        Id = pluginId;
-        Title = title;
-        Type = pluginType;
-        ConfigSample = configSample;
-        SupportedOSPlatforms = supportedOSPlatforms;
-    }
-
-    public string Id { get; }
-    public string Title { get; }
-    public string Type { get; }
-    public object ConfigSample { get; }
-    public EnumOSPlatform SupportedOSPlatforms { get; }
+public class PluginListItem(string pluginId, string title, string pluginType, IPluginInstanceConfig configSample, EnumOSPlatform supportedOSPlatforms)
+{
+    public string Id { get; } = pluginId;
+    public string Title { get; } = title;
+    public string Type { get; } = pluginType;
+    public object ConfigSample { get; } = configSample;
+    public EnumOSPlatform SupportedOSPlatforms { get; } = supportedOSPlatforms;
     public string[] SupportedOSPlatformList { 
         get {
-            List<string> platforms = new List<string>();
+            List<string> platforms = [];
 
             if (SupportedOSPlatforms == EnumOSPlatform.All)
                 platforms.Add("All platforms");
@@ -53,7 +44,7 @@ public class PluginListItem
 
             }
 
-            return platforms.ToArray();   
+            return [.. platforms];   
         } 
     }
 }

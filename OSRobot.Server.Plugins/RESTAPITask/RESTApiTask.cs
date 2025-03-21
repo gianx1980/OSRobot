@@ -31,66 +31,62 @@ public class RESTApiTask : IterationTask
 
     protected override void RunIteration(int currentIteration)
     {
-        using (HttpClient client = new HttpClient())
+        using HttpClient client = new();
+        RESTApiTaskConfig tConfig = (RESTApiTaskConfig)_iterationConfig;
+
+        client.DefaultRequestHeaders.Clear();
+        foreach (RESTApiHeader apiHeader in tConfig.Headers)
         {
-            RESTApiTaskConfig tConfig = (RESTApiTaskConfig)_iterationConfig;
+            client.DefaultRequestHeaders.Add(
+                DynamicDataParser.ReplaceDynamicData(apiHeader.Name, _dataChain, currentIteration),
+                DynamicDataParser.ReplaceDynamicData(apiHeader.Value, _dataChain, currentIteration)
+                );
+        }
 
-            client.DefaultRequestHeaders.Clear();
-            foreach (RESTApiHeader apiHeader in tConfig.Headers)
-            {
-                client.DefaultRequestHeaders.Add(
-                    DynamicDataParser.ReplaceDynamicData(apiHeader.Name, _dataChain, currentIteration),
-                    DynamicDataParser.ReplaceDynamicData(apiHeader.Value, _dataChain, currentIteration)
-                    );
-            }
+        Task<HttpResponseMessage> taskResponse;
+        HttpResponseMessage response;
 
-            Task<HttpResponseMessage> taskResponse;
-            HttpResponseMessage response;
+        if (tConfig.Method == MethodType.Get)
+        {
+            _instanceLogger?.Info(this, $"Connecting to: {tConfig.URL} Method: GET");
+            taskResponse = client.GetAsync(tConfig.URL);
+        }
+        else if (tConfig.Method == MethodType.Post)
+        {
+            _instanceLogger?.Info(this, $"Connecting to: {tConfig.URL} Method: POST");
+            StringContent contentParameters = new(tConfig.Parameters, Encoding.UTF8, "application/json");
+            taskResponse = client.PostAsync(tConfig.URL, contentParameters);
+        }
+        else if (tConfig.Method == MethodType.Put)
+        {
+            _instanceLogger?.Info(this, $"Connecting to: {tConfig.URL} Method: PUT");
+            StringContent contentParameters = new(tConfig.Parameters, Encoding.UTF8, "application/json");
+            taskResponse = client.PutAsync(tConfig.URL, contentParameters);
+        }
+        else if (tConfig.Method == MethodType.Delete)
+        {
+            _instanceLogger?.Info(this, $"Connecting to: {tConfig.URL} Method: DELETE");
+            taskResponse = client.DeleteAsync(tConfig.URL);
+        }
+        else
+            throw new ApplicationException($"Http method '{tConfig.Method}' not supported.");
 
-            if (tConfig.Method == MethodType.Get)
-            {
-                _instanceLogger?.Info(this, $"Connecting to: {tConfig.URL} Method: GET");
-                taskResponse = client.GetAsync(tConfig.URL);
-            }
-            else if (tConfig.Method == MethodType.Post)
-            {
-                _instanceLogger?.Info(this, $"Connecting to: {tConfig.URL} Method: POST");
-                StringContent contentParameters = new StringContent(tConfig.Parameters, Encoding.UTF8, "application/json");
-                taskResponse = client.PostAsync(tConfig.URL, contentParameters);
-            }
-            else if (tConfig.Method == MethodType.Put)
-            {
-                _instanceLogger?.Info(this, $"Connecting to: {tConfig.URL} Method: PUT");
-                StringContent contentParameters = new StringContent(tConfig.Parameters, Encoding.UTF8, "application/json");
-                taskResponse = client.PutAsync(tConfig.URL, contentParameters);
-            }
-            else if (tConfig.Method == MethodType.Delete)
-            {
-                _instanceLogger?.Info(this, $"Connecting to: {tConfig.URL} Method: DELETE");
-                taskResponse = client.DeleteAsync(tConfig.URL);
-            }
-            else
-                throw new ApplicationException($"Http method '{tConfig.Method}' not supported.");
+        // Wait for task to complete
+        using (response = taskResponse.Result)
+        {
+            response.EnsureSuccessStatusCode();
 
             // Wait for task to complete
-            using (response = taskResponse.Result)
-            {
-                response.EnsureSuccessStatusCode();
+            _rawContent = response.Content.ReadAsStringAsync().Result;
+            _httpResult = ((int)response.StatusCode).ToString();
+        }
 
-                // Wait for task to complete
-                _rawContent = response.Content.ReadAsStringAsync().Result;
-                _httpResult = ((int)response.StatusCode).ToString();
-            }
-
-            if (tConfig.ReturnsRecordset)
-            {
-                _instanceLogger?.Info(this, "Trying to deserialize JSON response...");
-                List<Dictionary<string, object>>? temp = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(_rawContent);
-                if (temp == null)
-                    throw new ApplicationException("Cannot deserialize JSON response");
-                _defaultRecordset = temp;
-                _instanceLogger?.Info(this, "Deserialization completed.");
-            }
+        if (tConfig.ReturnsRecordset)
+        {
+            _instanceLogger?.Info(this, "Trying to deserialize JSON response...");
+            List<Dictionary<string, object>>? temp = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(_rawContent) ?? throw new ApplicationException("Cannot deserialize JSON response");
+            _defaultRecordset = temp;
+            _instanceLogger?.Info(this, "Deserialization completed.");
         }
     }
 

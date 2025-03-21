@@ -31,24 +31,18 @@ namespace OSRobot.Server.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class RobotController : AppControllerBase
+public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSettings) : AppControllerBase
 {
-    private readonly IJobEngine _jobEngine;
-    private readonly AppSettings _appSettings;
-
-    public RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSettings)
-    {
-        _jobEngine = jobEngine;
-        _appSettings = appSettings.Value;
-    }
+    private readonly IJobEngine _jobEngine = jobEngine;
+    private readonly AppSettings _appSettings = appSettings.Value;
 
     [HttpGet]
     [Route("Objects")]
     [Authorize]
     public IActionResult Objects()
     {
-        List<PluginListItem> pluginList = _jobEngine.GetPlugins().Select(t => new PluginListItem(t.Id, t.Title, t.PluginType.ToString().ToLowerInvariant(), t.GetPluginDefaultConfig(), t.SupportedOSPlatforms)).ToList();
-        MainResponse<List<PluginListItem>> mainResponse = new MainResponse<List<PluginListItem>>(MainResponse<List<PluginListItem>>.ResponseOk, null, pluginList);
+        List<PluginListItem> pluginList = [.. _jobEngine.GetPlugins().Select(t => new PluginListItem(t.Id, t.Title, t.PluginType.ToString().ToLowerInvariant(), t.GetPluginDefaultConfig(), t.SupportedOSPlatforms))];
+        MainResponse<List<PluginListItem>> mainResponse = new(MainResponse<List<PluginListItem>>.ResponseOk, null, pluginList);
         return Ok(mainResponse);
     }
 
@@ -61,9 +55,9 @@ public class RobotController : AppControllerBase
         if (plugin == null)
             return NotFound();
 
-        List<PluginDynDataSampleListItem> dynDataSamplesList = plugin.SampleDynamicData.Select(t => new PluginDynDataSampleListItem(t.Description, t.Example, t.InternalName)).ToList();
+        List<PluginDynDataSampleListItem> dynDataSamplesList = [.. plugin.SampleDynamicData.Select(t => new PluginDynDataSampleListItem(t.Description, t.Example, t.InternalName))];
 
-        MainResponse<List<PluginDynDataSampleListItem>> mainResponse = new MainResponse<List<PluginDynDataSampleListItem>>(MainResponse<List<PluginDynDataSampleListItem>>.ResponseOk, null, dynDataSamplesList);
+        MainResponse<List<PluginDynDataSampleListItem>> mainResponse = new(MainResponse<List<PluginDynDataSampleListItem>>.ResponseOk, null, dynDataSamplesList);
         return Ok(mainResponse);
     }
 
@@ -75,20 +69,20 @@ public class RobotController : AppControllerBase
         // Check the existence of data
         if (!System.IO.File.Exists(Path.Combine(_appSettings.JobEngineConfig.DataPath, "jobs.json")))
         {
-            MainResponse<object> responseNotExists = new MainResponse<object>(MainResponse<object>.ResponseOk, null, null);
+            MainResponse<object> responseNotExists = new(MainResponse<object>.ResponseOk, null, null);
             return Ok(responseNotExists);
         }
 
         string configuration = System.IO.File.ReadAllText(Path.Combine(_appSettings.JobEngineConfig.DataPath, "jobs.json"));
         if (string.IsNullOrEmpty(configuration))
         {
-            MainResponse<object> responseEmptyFile = new MainResponse<object>(MainResponse<object>.ResponseOk, null, null);
+            MainResponse<object> responseEmptyFile = new(MainResponse<object>.ResponseOk, null, null);
             return Ok(responseEmptyFile);
         }
 
         // Deserialize the json configuration and return to client
         var configJson = JsonSerializer.Deserialize<object>(configuration);        
-        MainResponse<object> mainResponse = new MainResponse<object>(MainResponse<object>.ResponseOk, null, configJson);
+        MainResponse<object> mainResponse = new(MainResponse<object>.ResponseOk, null, configJson);
         return Ok(mainResponse);
     }
 
@@ -103,12 +97,12 @@ public class RobotController : AppControllerBase
         {
             System.IO.File.WriteAllText(Path.Combine(_appSettings.JobEngineConfig.DataPath, "jobs.json"), workspaceJobs);
 
-            MainResponse<object> mainResponse = new MainResponse<object>(MainResponse<object>.ResponseOk, null, null);
+            MainResponse<object> mainResponse = new(MainResponse<object>.ResponseOk, null, null);
             return Ok(mainResponse);
         }
         catch
         {
-            MainResponse<object> mainResponse = new MainResponse<object>(MainResponse<object>.ResponseGenericError, "An error occurred while saving jobs.", null);
+            MainResponse<object> mainResponse = new(MainResponse<object>.ResponseGenericError, "An error occurred while saving jobs.", null);
             return BadRequest(mainResponse);
         }
     }

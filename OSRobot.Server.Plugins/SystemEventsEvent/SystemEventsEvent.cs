@@ -21,6 +21,7 @@ using Microsoft.Win32;
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging;
+using OSRobot.Server.Core.Logging.Abstract;
 using System.ComponentModel;
 
 namespace OSRobot.Server.Plugins.SystemEventsEvent;
@@ -31,7 +32,7 @@ public class SystemEventsEvent : IEvent
     public int Id { get; set; }
     public IPluginInstanceConfig Config { get; set; } = new SystemEventsEventConfig();
 
-    public List<PluginInstanceConnection> Connections { get; set; } = new List<PluginInstanceConnection>();
+    public List<PluginInstanceConnection> Connections { get; set; } = [];
 
     public event EventTriggeredDelegate? EventTriggered;
 
@@ -40,11 +41,10 @@ public class SystemEventsEvent : IEvent
         EventTriggeredDelegate? handler = EventTriggered;
         if (handler != null)
         {
-            foreach (EventTriggeredDelegate singleCast in handler.GetInvocationList())
+            foreach (EventTriggeredDelegate singleCast in handler.GetInvocationList().Cast<EventTriggeredDelegate>())
             {
-                ISynchronizeInvoke? syncInvoke = singleCast.Target as ISynchronizeInvoke;
-                if ((syncInvoke != null) && (syncInvoke.InvokeRequired))
-                    syncInvoke.Invoke(singleCast, new object[] { this, e });
+                if ((singleCast.Target is ISynchronizeInvoke syncInvoke) && (syncInvoke.InvokeRequired))
+                    syncInvoke.Invoke(singleCast, [this, e]);
                 else
                     singleCast(this, e);
             }

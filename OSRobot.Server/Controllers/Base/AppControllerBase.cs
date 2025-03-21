@@ -25,5 +25,5 @@ namespace OSRobot.Server.Controllers.Base;
 public class AppControllerBase : ControllerBase
 {
     private AppTokenUser? _appUser;
-    protected AppTokenUser? AppUser { get => _appUser ?? (_appUser = new AppTokenUser((ClaimsIdentity)User.Identity!)); }
+    protected AppTokenUser? AppUser { get => _appUser ??= new AppTokenUser((ClaimsIdentity)User.Identity!); }
 }

@@ -23,7 +23,7 @@ namespace OSRobot.Server.Core;
 
 public class Folder : IFolder
 {
-    public List<IPluginInstanceBase> Items { get; set; } = new List<IPluginInstanceBase>();
+    public List<IPluginInstanceBase> Items { get; set; } = [];
 
     public IFolder? ParentFolder { get; set; } 
 

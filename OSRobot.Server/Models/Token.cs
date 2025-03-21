@@ -18,14 +18,8 @@
 ======================================================================================*/
 namespace OSRobot.Server.Models;
 
-public class Tokens
+public class Tokens(string token, string refreshToken)
 {
-    public Tokens(string token, string refreshToken)
-    {
-        Token = token;
-        RefreshToken = refreshToken;
-    }
-
-    public string Token { get; set; }
-    public string RefreshToken { get; set; }
+    public string Token { get; set; } = token;
+    public string RefreshToken { get; set; } = refreshToken;
 }

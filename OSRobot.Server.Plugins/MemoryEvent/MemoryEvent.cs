@@ -21,23 +21,18 @@ using NickStrupat;
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging;
+using OSRobot.Server.Core.Logging.Abstract;
 using System.ComponentModel;
 using System.Diagnostics;
 
 
 namespace OSRobot.Server.Plugins.MemoryEvent;
 
-public class MemoryUsageSample
+public class MemoryUsageSample(float sampleValue)
 {
-    public MemoryUsageSample(float sampleValue)
-    {
-        SampleDateTime = DateTime.Now;
-        SampleValue = sampleValue;
-    }
+    public DateTime SampleDateTime { get; set; } = DateTime.Now;
 
-    public DateTime SampleDateTime { get; set; }
-
-    public float SampleValue { get; set; }
+    public float SampleValue { get; set; } = sampleValue;
 }
 
 public class MemoryEvent : IEvent
@@ -46,15 +41,15 @@ public class MemoryEvent : IEvent
     public int ID { get; set; }
     public IPluginInstanceConfig Config { get; set; } = new MemoryEventConfig();
 
-    public List<PluginInstanceConnection> Connections { get; set; } = new List<PluginInstanceConnection>();
+    public List<PluginInstanceConnection> Connections { get; set; } = [];
 
     public event EventTriggeredDelegate? EventTriggered;
 
     private System.Timers.Timer? _recurringTimer;
 
-    private ComputerInfo _computerInfo = new ComputerInfo();
+    private readonly ComputerInfo _computerInfo = new();
 
-    private List<MemoryUsageSample> _memoryUsageSamples = new List<MemoryUsageSample>();
+    private List<MemoryUsageSample> _memoryUsageSamples = [];
 
     private DateTime _dateLastTrigger;
 
@@ -67,11 +62,10 @@ public class MemoryEvent : IEvent
         EventTriggeredDelegate? handler = EventTriggered;
         if (handler != null)
         {
-            foreach (EventTriggeredDelegate singleCast in handler.GetInvocationList())
+            foreach (EventTriggeredDelegate singleCast in handler.GetInvocationList().Cast<EventTriggeredDelegate>())
             {
-                ISynchronizeInvoke? syncInvoke = singleCast.Target as ISynchronizeInvoke;
-                if ((syncInvoke != null) && (syncInvoke.InvokeRequired))
-                    syncInvoke.Invoke(singleCast, new object[] { this, e });
+                if ((singleCast.Target is ISynchronizeInvoke syncInvoke) && (syncInvoke.InvokeRequired))
+                    syncInvoke.Invoke(singleCast, [this, e]);
                 else
                     singleCast(this, e);
             }
@@ -80,10 +74,12 @@ public class MemoryEvent : IEvent
 
     public void Init()
     {
-        _memoryUsageSamples = new List<MemoryUsageSample>();
-        _recurringTimer = new System.Timers.Timer();
-        _recurringTimer.Enabled = false;
-        _recurringTimer.AutoReset = true;
+        _memoryUsageSamples = [];
+        _recurringTimer = new()
+        {
+            Enabled = false,
+            AutoReset = true
+        };
         _recurringTimer.Elapsed += RecurringTimer_Elapsed;
         _recurringTimer.Enabled = true;
 

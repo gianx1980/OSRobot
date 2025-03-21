@@ -18,6 +18,7 @@
 ======================================================================================*/
 namespace OSRobot.Server.Core.DynamicData;
 
+[AttributeUsage(AttributeTargets.Property)]
 public class DynamicDataAttribute : Attribute
 {
 

@@ -18,12 +18,7 @@
 ======================================================================================*/
 namespace OSRobot.Server.Models.DTO.Diagnostics;
 
-public class TrackErrorRequest
+public class TrackErrorRequest(string errorMessage)
 {
-    public TrackErrorRequest(string errorMessage)
-    {
-        ErrorMessage = errorMessage;
-    }
-
-    public string ErrorMessage { get; set; }   
+    public string ErrorMessage { get; set; } = errorMessage;
 }

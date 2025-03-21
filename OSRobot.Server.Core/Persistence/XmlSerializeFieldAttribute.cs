@@ -18,6 +18,7 @@
 ======================================================================================*/
 namespace OSRobot.Server.Core.Persistence;
 
+[AttributeUsage(AttributeTargets.Field)]
 public class XmlSerializeFieldAttribute : Attribute
 {
 

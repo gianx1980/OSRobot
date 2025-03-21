@@ -47,41 +47,30 @@ using System.Text.RegularExpressions;
 
 namespace OSRobot.Server.JobEngineLib;
 
-public class JobEngine : IJobEngine
+public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : IJobEngine
 {
-    private IAppLogger _log;
-    private IJobEngineConfig _config;
-    private IFolder _rootFolder;
+    private readonly IAppLogger _log = appLogger;
+    private readonly IJobEngineConfig _config = config;
+    private IFolder _rootFolder = new Folder();
 
-    private List<IEvent> _events;
-    private List<ITask> _tasks;
-    private System.Timers.Timer _logCleanTimer;
+    private List<IEvent> _events = [];
+    private List<ITask> _tasks = [];
+    private System.Timers.Timer _logCleanTimer = new();
 
     // Log name pattern
-    private Regex _logNameRegex = new Regex(@"^(\d+)_(\d{4}-\d{2}-\d{2}T\d{2}_\d{2}_\d{2})_(\d+)_(\d+).log$");
+    private readonly Regex _logNameRegex = LogNameRegex();
 
     // Keep track of running tasks
-    private object _lockRunningTasksCount = new object();
     private long _runningTasksCount;
-    private ConcurrentDictionary<long, ITask> _runningTasks;
+    private readonly object _lockRunningTasksCount = new();
+    private readonly ConcurrentDictionary<long, ITask> _runningTasks = new();
 
-    public JobEngine(IAppLogger appLogger, IJobEngineConfig config)
-    {
-        _log = appLogger;
-        _config = config;
-        _rootFolder = new Folder();
-        _events = new List<IEvent>();
-        _tasks = new List<ITask>();
-        _logCleanTimer = new System.Timers.Timer();
-        _runningTasks = new ConcurrentDictionary<long, ITask>();
-    }
-
-    private bool _isValidLogName(string logName)
+    private bool IsValidLogName(string logName)
     {
         return _logNameRegex.IsMatch(logName);
     }
 
-    private bool _loadJobData()
+    private bool LoadJobData()
     {
         bool result = true;
         string dataPath = _config.DataPath;
@@ -108,23 +97,23 @@ public class JobEngine : IJobEngine
         return result;
     }
 
-    private List<IEvent> _getEventList(IFolder folder)
+    private List<IEvent> GetEventList(IFolder folder)
     {
-        List<IEvent> events = new List<IEvent>();
+        List<IEvent> events = [];
 
         foreach (IPluginInstanceBase pluginInstance in folder)
         {
-            if (pluginInstance is IEvent)
+            if (pluginInstance is IEvent @event)
             {
                 // Skip disabled events
                 if (!pluginInstance.Config.Enabled)
                     continue;
 
-                events.Add((IEvent)pluginInstance);
+                events.Add(@event);
             }
-            else if (pluginInstance is IFolder)
+            else if (pluginInstance is IFolder innerFolder)
             {
-                List<IEvent> InnerFolderEvents = _getEventList((IFolder)pluginInstance);
+                List<IEvent> InnerFolderEvents = GetEventList(innerFolder);
                 events.AddRange(InnerFolderEvents);
             }
         }
@@ -132,19 +121,19 @@ public class JobEngine : IJobEngine
         return events;
     }
 
-    private List<ITask> _getTaskList(IFolder folder)
+    private List<ITask> GetTaskList(IFolder folder)
     {
-        List<ITask> tasks = new List<ITask>();
+        List<ITask> tasks = [];
 
         foreach (IPluginInstanceBase pluginInstance in folder)
         {
-            if (pluginInstance is ITask)
+            if (pluginInstance is ITask innerTask)
             {
-                tasks.Add((ITask)pluginInstance);
+                tasks.Add(innerTask);
             }
-            else if (pluginInstance is IFolder)
+            else if (pluginInstance is IFolder innerFolder)
             {
-                List<ITask> innerFolderEvents = _getTaskList((IFolder)pluginInstance);
+                List<ITask> innerFolderEvents = GetTaskList(innerFolder);
                 tasks.AddRange(innerFolderEvents);
             }
         }
@@ -152,17 +141,17 @@ public class JobEngine : IJobEngine
         return tasks;
     }
 
-    private IFolder? _findFolderRecursive(IFolder folder, int folderId)
+    private IFolder? FindFolderRecursive(IFolder folder, int folderId)
     {
         foreach (IPluginInstanceBase pluginInstanceBase in folder.Items)
         {
-            if (pluginInstanceBase is IFolder)
+            if (pluginInstanceBase is IFolder innerFolder)
             {
                 if (pluginInstanceBase.Config.Id == folderId)
-                    return (IFolder)pluginInstanceBase;
+                    return innerFolder;
                 else
                 {
-                    IFolder? folderFound = _findFolderRecursive((IFolder)pluginInstanceBase, folderId);
+                    IFolder? folderFound = FindFolderRecursive(innerFolder, folderId);
                     if (folderFound != null)
                         return folderFound;
                 }
@@ -172,7 +161,7 @@ public class JobEngine : IJobEngine
         return null;
     }
 
-    private LogInfo _createLogInfoItemFromLogName(int folderId, string logName)
+    private LogInfo CreateLogInfoItemFromLogName(int folderId, string logName)
     {
         if (string.IsNullOrEmpty(logName))
             throw new ApplicationException("_logInfoItemFromLogName: input param 'logName' is empty");
@@ -190,7 +179,7 @@ public class JobEngine : IJobEngine
         return new LogInfo() { FolderId = folderId, EventId = eventId, ExecDateTime = execDateTime, FileName = logName };
     }
 
-    private Task _executeTask(ITask task, DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, IPluginInstanceLogger instanceLogger)
+    private Task ExecuteTask(ITask task, DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, IPluginInstanceLogger instanceLogger)
     {
         // Get running task id
         long thisTaskId;
@@ -199,7 +188,7 @@ public class JobEngine : IJobEngine
             thisTaskId = _runningTasksCount;
         }
 
-        Task t = new Task(() =>
+        Task t = new(() =>
         {
             ITask? taskCopy = null;
             try
@@ -207,10 +196,7 @@ public class JobEngine : IJobEngine
                 taskCopy = (ITask?)CoreHelpers.CloneObjects(task);
                 if (taskCopy == null)
                     throw new ApplicationException("Cloning configuration returned null");
-                DynamicDataSet? lastDataSetCopy = (DynamicDataSet?)CoreHelpers.CloneObjects(lastDynamicDataSet);
-                if (lastDataSetCopy == null)
-                    throw new ApplicationException("Cloning configuration returned null");
-
+                DynamicDataSet? lastDataSetCopy = (DynamicDataSet?)CoreHelpers.CloneObjects(lastDynamicDataSet) ?? throw new ApplicationException("Cloning configuration returned null");
                 if (taskCopy.Config.Log)
                     instanceLogger.TaskStarting(taskCopy);
 
@@ -236,15 +222,13 @@ public class JobEngine : IJobEngine
                         if (!nextTask.Config.Enabled)
                             continue;
 
-                        foreach (ExecResult execRes in instExecResult.execResults)
+                        foreach (ExecResult execRes in instExecResult.ExecResults)
                         {
                             if (connection.EvaluateExecConditions(execRes))
                             {
-                                DynamicDataChain? dataChainCopy = (DynamicDataChain?)CoreHelpers.CloneObjects(dataChain);
-                                if (dataChainCopy == null)
-                                    throw new ApplicationException("Cloning configuration returned null");
+                                DynamicDataChain? dataChainCopy = (DynamicDataChain?)CoreHelpers.CloneObjects(dataChain) ?? throw new ApplicationException("Cloning configuration returned null");
                                 dataChainCopy.Add(taskCopy.Config.Id, execRes.Data);
-                                _executeTask(nextTask, dataChainCopy, execRes.Data, instanceLogger);
+                                ExecuteTask(nextTask, dataChainCopy, execRes.Data, instanceLogger);
                             }
                         }
                     }
@@ -269,17 +253,17 @@ public class JobEngine : IJobEngine
         return t;
     }
 
-    private void _plugin_EventTriggered(object sender, EventTriggeredEventArgs e)
+    private void Plugin_EventTriggered(object sender, EventTriggeredEventArgs e)
     {
         IEvent pluginEvent = (IEvent)sender;
         e.Logger.EventTriggered(pluginEvent);
         _log.Info($"Event triggered by object: {pluginEvent.Config.Id}:{pluginEvent.Config.Name}:{pluginEvent.GetType().Name}");
 
         _log.Info("Building dynamic data chain");
-        DynamicDataChain DataChain = new DynamicDataChain();
+        DynamicDataChain DataChain = [];
         DataChain.Add(pluginEvent.Config.Id, e.DynamicData);
 
-        ExecResult execResult = new ExecResult(true, e.DynamicData);
+        ExecResult execResult = new(true, e.DynamicData);
 
         foreach (PluginInstanceConnection connection in pluginEvent.Connections)
         {
@@ -296,7 +280,7 @@ public class JobEngine : IJobEngine
                 if (taskToRun.Config.Enabled)
                 {
                     _log.Info($"Calling ExecuteTask for: {taskToRun.Config.Id}:{taskToRun.Config.Name}:{taskToRun.GetType().Name}");
-                    _executeTask(taskToRun, DataChain, e.DynamicData, e.Logger);
+                    ExecuteTask(taskToRun, DataChain, e.DynamicData, e.Logger);
                 }
                 else
                 {
@@ -306,18 +290,18 @@ public class JobEngine : IJobEngine
         }
     }   
 
-    private bool _isDirectoryEmpty(string directoryPath)
+    private bool IsDirectoryEmpty(string directoryPath)
     {
         return (Directory.GetFiles(directoryPath).Length == 0 && Directory.GetDirectories(directoryPath).Length == 0);
     }
 
-    private void _cleanUpLog(string logPath, int cleanUpLogsOlderThanHours)
+    private void CleanUpLog(string logPath, int cleanUpLogsOlderThanHours)
     {
         DateTime dateLimit = DateTime.Now.AddHours(-cleanUpLogsOlderThanHours);
         string[] files = Directory.GetFiles(logPath);
         foreach (string fullPathFileName in files)
         {
-            FileInfo fi = new FileInfo(fullPathFileName);
+            FileInfo fi = new(fullPathFileName);
             if (fi.CreationTime < dateLimit)
                 fi.Delete();
         }
@@ -325,18 +309,18 @@ public class JobEngine : IJobEngine
         string[] directories = Directory.GetDirectories(logPath);
         foreach (string fullPathDirectoryName in directories)
         {
-            _cleanUpLog(fullPathDirectoryName, cleanUpLogsOlderThanHours);
-            if (_isDirectoryEmpty(fullPathDirectoryName))
+            CleanUpLog(fullPathDirectoryName, cleanUpLogsOlderThanHours);
+            if (IsDirectoryEmpty(fullPathDirectoryName))
                 Directory.Delete(fullPathDirectoryName);
         }
     }
 
-    private void _logCleanTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
+    private void LogCleanTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
     {
         try
         {
             _log.Info("Cleaning up old logs");
-            _cleanUpLog(_config.LogPath, _config.CleanUpLogsOlderThanHours);
+            CleanUpLog(_config.LogPath, _config.CleanUpLogsOlderThanHours);
 
         }
         catch (Exception ex)
@@ -354,7 +338,7 @@ public class JobEngine : IJobEngine
             _log.Info("Starting OSRobot.JobEngine...");
 
             _log.Info("Loading job data");
-            if (!_loadJobData())
+            if (!LoadJobData())
             {
                 _log.Info("Error loading job data, JobEngine is not working...");
                 return;
@@ -373,24 +357,26 @@ public class JobEngine : IJobEngine
                 {
                     // Trigger a clean up at service startup
                     _log.Info("Cleaning up old logs on initialization");
-                    _cleanUpLog(_config.LogPath, _config.CleanUpLogsOlderThanHours);
+                    CleanUpLog(_config.LogPath, _config.CleanUpLogsOlderThanHours);
                 }
                 catch (Exception ex)
                 {
                     _log.Error("An error occurred while cleaning up old logs on initialization", ex);
                 }
 
-                _logCleanTimer = new System.Timers.Timer();
-                _logCleanTimer.Interval = new TimeSpan(0, _config.CleanUpLogsIntervalHours, 0, 0).TotalMilliseconds;
-                _logCleanTimer.Enabled = true;
-                _logCleanTimer.AutoReset = true;
-                _logCleanTimer.Elapsed += _logCleanTimer_Elapsed;
+                _logCleanTimer = new()
+                {
+                    Interval = new TimeSpan(0, _config.CleanUpLogsIntervalHours, 0, 0).TotalMilliseconds,
+                    Enabled = true,
+                    AutoReset = true
+                };
+                _logCleanTimer.Elapsed += LogCleanTimer_Elapsed;
             }
 
             // Initializes tasks first, then initializes events
             // This guarantee that events will not trigger untils all tasks are initialized
             _log.Info("Starting tasks initialization");
-            _tasks = _getTaskList(_rootFolder);
+            _tasks = GetTaskList(_rootFolder);
             _tasks.ForEach(T =>
             {
                 _log.Info($"Initializing task: {T.Config.Id}:{T.Config.Name}:{T.GetType().Name}");
@@ -398,11 +384,11 @@ public class JobEngine : IJobEngine
             });
 
             _log.Info("Starting events initialization");
-            _events = _getEventList(_rootFolder);
+            _events = GetEventList(_rootFolder);
             _events.ForEach(E =>
             {
                 _log.Info($"Initializing event: {E.Config.Id}:{E.Config.Name}:{E.GetType().Name}");
-                E.EventTriggered += _plugin_EventTriggered;
+                E.EventTriggered += Plugin_EventTriggered;
                 E.Init();
             });
         }
@@ -459,10 +445,10 @@ public class JobEngine : IJobEngine
             }
 
             IPluginInstanceLogger logger = PluginInstanceLogger.GetLogger(taskObj);
-            DynamicDataChain dataChain = new DynamicDataChain();
+            DynamicDataChain dataChain = [];
             DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(taskObj, true, 0, now, now, 1);
 
-            _executeTask(taskObj, dataChain, dDataSet, logger);
+            ExecuteTask(taskObj, dataChain, dDataSet, logger);
 
             return true;
         }
@@ -477,7 +463,7 @@ public class JobEngine : IJobEngine
     {
         _log.Info("Trying to reload job data...");
 
-        if (_runningTasks.Count > 0)
+        if (!_runningTasks.IsEmpty)
         {
             _log.Info($"Cannot reload jobs now, there are {_runningTasks.Count} running tasks, please retry later.");
             return ReloadJobsReturnValues.CannotReloadWhileRunningTask;
@@ -493,8 +479,8 @@ public class JobEngine : IJobEngine
 
     public List<IPlugin> GetPlugins()
     {
-        return new List<IPlugin>()
-        {
+        return
+        [
             new CpuEventPlugin(),
             new DateTimeEventPlugin(),
             new DiskSpaceEventPlugin(),
@@ -515,7 +501,7 @@ public class JobEngine : IJobEngine
             new UnzipTaskPlugin(),
             new WriteTextFileTaskPlugin(),
             new ZipTaskPlugin()
-        };
+        ];
     }
 
     public IPlugin? GetPlugin(string pluginId)
@@ -531,8 +517,8 @@ public class JobEngine : IJobEngine
 
     public List<LogInfo> GetFolderLogs(int folderId)
     {
-        List<LogInfo> folderLogs = new List<LogInfo>();
-        IFolder? folder = _findFolderRecursive(_rootFolder, folderId);
+        List<LogInfo> folderLogs = [];
+        IFolder? folder = FindFolderRecursive(_rootFolder, folderId);
         if (folder == null)
             return folderLogs;
 
@@ -544,8 +530,8 @@ public class JobEngine : IJobEngine
             // Check that the filename matches the expected pattern.
             string[] logFiles = Directory.GetFiles(logFullPath);
             folderLogs.AddRange(
-                logFiles.Where(file => _isValidLogName(Path.GetFileName(file)))
-                        .Select(file => _createLogInfoItemFromLogName(folderId, Path.GetFileName(file)))
+                logFiles.Where(file => IsValidLogName(Path.GetFileName(file)))
+                        .Select(file => CreateLogInfoItemFromLogName(folderId, Path.GetFileName(file)))
             );
         }
 
@@ -554,7 +540,7 @@ public class JobEngine : IJobEngine
 
     public FolderInfo? GetFolderInfo(int folderId)
     {
-        IFolder? folder = _findFolderRecursive(_rootFolder, folderId);
+        IFolder? folder = FindFolderRecursive(_rootFolder, folderId);
         if (folder == null)
             return null;
 
@@ -568,8 +554,8 @@ public class JobEngine : IJobEngine
 
     public string? GetLogContent(int folderId, string logFileName)
     {
-        IFolder? folder = _findFolderRecursive(_rootFolder, folderId);
-        if (folder == null || !_isValidLogName(logFileName))
+        IFolder? folder = FindFolderRecursive(_rootFolder, folderId);
+        if (folder == null || !IsValidLogName(logFileName))
             return null;
 
         string logFullPath = Path.Combine(_config.LogPath, folder.GetPhysicalFullPath(), logFileName);
@@ -579,4 +565,7 @@ public class JobEngine : IJobEngine
 
         return File.ReadAllText(logFullPath);
     }
+
+    [GeneratedRegex(@"^(\d+)_(\d{4}-\d{2}-\d{2}T\d{2}_\d{2}_\d{2})_(\d+)_(\d+).log$")]
+    private static partial Regex LogNameRegex();
 }

@@ -53,11 +53,13 @@ public class ZipTask : IterationTask
 
         if (files.Length == 0 && folders.Length == 0 && !skipEmptyFolder)
         {
-            DirectoryInfo fi = new DirectoryInfo(path);
-            string EntryName = path.Substring(folderOffset);
+            DirectoryInfo fi = new(path);
+            string EntryName = path[folderOffset..];
             EntryName = ZipEntry.CleanName(EntryName + "/empty.txt");   // It seems the only way to mantain an empty folder...
-            ZipEntry NewEntry = new ZipEntry(EntryName);
-            NewEntry.DateTime = fi.LastWriteTime;
+            ZipEntry NewEntry = new(EntryName)
+            {
+                DateTime = fi.LastWriteTime
+            };
             zipStream.PutNextEntry(NewEntry);
             zipStream.CloseEntry();
         }
@@ -66,32 +68,33 @@ public class ZipTask : IterationTask
 
     private void CompressFile(string filePathName, ZipOutputStream zipStream, int folderOffset)
     {
-        FileInfo fi = new FileInfo(filePathName);
+        FileInfo fi = new(filePathName);
 
         // Make the name in zip based on the folder
-        string entryName = filePathName.Substring(folderOffset);
+        string entryName = filePathName[folderOffset..];
 
         // Remove drive from name and fix slash direction
         entryName = ZipEntry.CleanName(entryName);
 
-        ZipEntry newEntry = new ZipEntry(entryName);
+        ZipEntry newEntry = new(entryName)
+        {
+            // Note the zip format stores 2 second granularity
+            DateTime = fi.LastWriteTime,
 
-        // Note the zip format stores 2 second granularity
-        newEntry.DateTime = fi.LastWriteTime;
+            // Specifying the AESKeySize triggers AES encryption. 
+            // Allowable values are 0 (off), 128 or 256.
+            // A password on the ZipOutputStream is required if using AES.
+            //   newEntry.AESKeySize = 256;
 
-        // Specifying the AESKeySize triggers AES encryption. 
-        // Allowable values are 0 (off), 128 or 256.
-        // A password on the ZipOutputStream is required if using AES.
-        //   newEntry.AESKeySize = 256;
-
-        // To permit the zip to be unpacked by built-in extractor in WinXP and Server2003,
-        // WinZip 8, Java, and other older code, you need to do one of the following: 
-        // Specify UseZip64.Off, or set the Size.
-        // If the file may be bigger than 4GB, or you do not need WinXP built-in compatibility, 
-        // you do not need either, but the zip will be in Zip64 format which
-        // not all utilities can understand.
-        //   zipStream.UseZip64 = UseZip64.Off;
-        newEntry.Size = fi.Length;
+            // To permit the zip to be unpacked by built-in extractor in WinXP and Server2003,
+            // WinZip 8, Java, and other older code, you need to do one of the following: 
+            // Specify UseZip64.Off, or set the Size.
+            // If the file may be bigger than 4GB, or you do not need WinXP built-in compatibility, 
+            // you do not need either, but the zip will be in Zip64 format which
+            // not all utilities can understand.
+            //   zipStream.UseZip64 = UseZip64.Off;
+            Size = fi.Length
+        };
 
         zipStream.PutNextEntry(newEntry);
 
@@ -107,34 +110,32 @@ public class ZipTask : IterationTask
 
     private void CompressItem(string itemPathName, string zipFileName, bool includeSubFolders, bool storeFullPath, bool skipEmptyFolder, int compressionLevel)
     {
-        using (FileStream fsOut = File.Create(zipFileName))
-        using (ZipOutputStream zipStream = new ZipOutputStream(fsOut))
+        using FileStream fsOut = File.Create(zipFileName);
+        using ZipOutputStream zipStream = new(fsOut);
+
+        //0-9, 9 being the highest level of compression
+        zipStream.SetLevel(compressionLevel);
+
+        string itemName = Path.GetFileName(itemPathName);       // It might contain a pattern!
+        string itemFolderName = Path.GetDirectoryName(itemPathName) ?? string.Empty;
+
+        // This setting will strip the leading part of the folder path in the entries, 
+        // to make the entries relative to the starting folder.
+        // To include the full path for each entry up to the drive root, assign to 0.
+        int folderOffset = storeFullPath ? 0 : (itemFolderName.Length + (itemFolderName.EndsWith('\\') ? 0 : 1));
+
+        string[] files = Directory.GetFiles(itemFolderName, itemName);
+        foreach (string fileName in files)
         {
+            CompressFile(fileName, zipStream, folderOffset);
+        }
 
-            //0-9, 9 being the highest level of compression
-            zipStream.SetLevel(compressionLevel);
-
-            string itemName = Path.GetFileName(itemPathName);       // It might contain a pattern!
-            string itemFolderName = Path.GetDirectoryName(itemPathName) ?? string.Empty;
-
-            // This setting will strip the leading part of the folder path in the entries, 
-            // to make the entries relative to the starting folder.
-            // To include the full path for each entry up to the drive root, assign to 0.
-            int folderOffset = storeFullPath ? 0 : (itemFolderName.Length + (itemFolderName.EndsWith("\\") ? 0 : 1));
-
-            string[] files = Directory.GetFiles(itemFolderName, itemName);
-            foreach (string fileName in files)
+        if (includeSubFolders)
+        {
+            string[] folders = Directory.GetDirectories(itemFolderName, itemName);
+            foreach (string folderName in folders)
             {
-                CompressFile(fileName, zipStream, folderOffset);
-            }
-
-            if (includeSubFolders)
-            {
-                string[] folders = Directory.GetDirectories(itemFolderName, itemName);
-                foreach (string folderName in folders)
-                {
-                    CompressFolder(folderName, zipStream, folderOffset, skipEmptyFolder);
-                }
+                CompressFolder(folderName, zipStream, folderOffset, skipEmptyFolder);
             }
         }
     }

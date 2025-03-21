@@ -26,7 +26,7 @@ public static class JobsPersistence
     public static void SaveXML(string dataPath, string fileName, Folder rootFolderData)
     {
         string filePathName = Path.Combine(dataPath, fileName);
-        XmlSerialization serializer = new XmlSerialization();
+        XmlSerialization serializer = new();
         XmlDocument xmlDoc = serializer.Serialize(rootFolderData, "OSRobot");
 
         xmlDoc.Save(filePathName);
@@ -38,10 +38,10 @@ public static class JobsPersistence
         if (!File.Exists(filePathName))
             return null;
 
-        XmlDocument xmlDoc = new XmlDocument();
+        XmlDocument xmlDoc = new();
         xmlDoc.Load(filePathName);
 
-        XmlDeserialization deserializer = new XmlDeserialization(xmlDoc);
+        XmlDeserialization deserializer = new(xmlDoc);
         return (Folder?)deserializer.Deserialize();
     }
 
@@ -53,7 +53,7 @@ public static class JobsPersistence
 
         string jsonFile = File.ReadAllText(filePathName);
         using JsonDocument jsonDoc = JsonDocument.Parse(jsonFile);
-        JsonDeserialization deserializer = new JsonDeserialization(jsonDoc);
+        JsonDeserialization deserializer = new(jsonDoc);
 
         return (Folder?)deserializer.Deserialize();
     }

@@ -23,22 +23,17 @@
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging;
+using OSRobot.Server.Core.Logging.Abstract;
 using System.ComponentModel;
 using System.Diagnostics;
 
 namespace OSRobot.Server.Plugins.CpuEvent;
 
-public class CpuUsageSample
+public class CpuUsageSample(float sampleValue)
 {
-    public CpuUsageSample(float sampleValue)
-    {
-        SampleDateTime = DateTime.Now;
-        SampleValue = sampleValue;
-    }
+    public DateTime SampleDateTime { get; set; } = DateTime.Now;
 
-    public DateTime SampleDateTime { get; set; }
-
-    public float SampleValue { get; set; }
+    public float SampleValue { get; set; } = sampleValue;
 }
 
 public class CpuEvent : IEvent
@@ -46,17 +41,17 @@ public class CpuEvent : IEvent
     public IFolder? ParentFolder { get; set; }
     public IPluginInstanceConfig Config { get; set; } = new CpuEventConfig();
 
-    public List<PluginInstanceConnection> Connections { get; set; } = new List<PluginInstanceConnection>();
+    public List<PluginInstanceConnection> Connections { get; set; } = [];
 
     public event EventTriggeredDelegate? EventTriggered;
 
-    private System.Timers.Timer _recurringTimer = new System.Timers.Timer();
+    private readonly System.Timers.Timer _recurringTimer = new();
 
     private PerformanceCounter? _perfCounter;
 
     private CounterSample _lastSample;
 
-    private List<CpuUsageSample> _cpuUsageSamples = new List<CpuUsageSample>();
+    private readonly List<CpuUsageSample> _cpuUsageSamples = [];
 
     private DateTime _dateLastTrigger;
 
@@ -69,11 +64,10 @@ public class CpuEvent : IEvent
         EventTriggeredDelegate? handler = EventTriggered;
         if (handler != null)
         {
-            foreach (EventTriggeredDelegate singleCast in handler.GetInvocationList())
+            foreach (EventTriggeredDelegate singleCast in handler.GetInvocationList().Cast<EventTriggeredDelegate>())
             {
-                ISynchronizeInvoke? syncInvoke = singleCast.Target as ISynchronizeInvoke;
-                if ((syncInvoke != null) && (syncInvoke.InvokeRequired))
-                    syncInvoke.Invoke(singleCast, new object[] { this, e });
+                if ((singleCast.Target is ISynchronizeInvoke syncInvoke) && (syncInvoke.InvokeRequired))
+                    syncInvoke.Invoke(singleCast, [this, e]);
                 else
                     singleCast(this, e);
             }
@@ -84,7 +78,7 @@ public class CpuEvent : IEvent
     {
         _recurringTimer.Enabled = false;
         _recurringTimer.AutoReset = true;
-        _recurringTimer.Elapsed += _RecurringTimer_Elapsed;
+        _recurringTimer.Elapsed += RecurringTimer_Elapsed;
 
         CpuEventConfig tConfig = (CpuEventConfig)Config;
 
@@ -102,7 +96,7 @@ public class CpuEvent : IEvent
         _recurringTimer.Dispose();
     }
 
-    private void _RecurringTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
+    private void RecurringTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
     {
         IPluginInstanceLogger logger = PluginInstanceLogger.GetLogger(this);
 
@@ -115,8 +109,7 @@ public class CpuEvent : IEvent
 
             CpuEventConfig tConfig = (CpuEventConfig)Config;
 
-            if (_perfCounter == null)
-                _perfCounter = new PerformanceCounter("Processor information", "% processor utility", "_Total");
+            _perfCounter ??= new PerformanceCounter("Processor information", "% processor utility", "_Total");
 
             if (_dateFirstSample == DateTime.MinValue)
                 _dateFirstSample = DateTime.Now;

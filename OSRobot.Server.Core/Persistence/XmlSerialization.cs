@@ -27,24 +27,18 @@ namespace OSRobot.Server.Core.Persistence;
 
 public class XmlSerialization
 {
-    class ObjectSerialized
+    class ObjectSerialized(int id, object obj)
     {
-        public ObjectSerialized(int id, object obj) 
-        {
-            Id = id;
-            Obj = obj;
-        }
-
-        public int Id { get; set; }
-        public object Obj { get; set; }
+        public int Id { get; set; } = id;
+        public object Obj { get; set; } = obj;
     }
 
     public bool CheckSerializeAttribute { get; set; }
 
     private int _lastObjectID;
-    private List<ObjectSerialized> _objectsSerialized;
+    private readonly List<ObjectSerialized> _objectsSerialized;
     private int _lastTypeID;
-    private Dictionary<string, int> _referencedTypes;
+    private readonly Dictionary<string, int> _referencedTypes;
     private XmlDocument _xmlDoc;
 
     
@@ -54,8 +48,8 @@ public class XmlSerialization
     public XmlSerialization()
     {
         _xmlDoc = new XmlDocument();
-        _objectsSerialized = new List<ObjectSerialized>();
-        _referencedTypes = new Dictionary<string, int>();
+        _objectsSerialized = [];
+        _referencedTypes = [];
     }
 
     private bool TrackObject(object objectRef, out int objectID)
@@ -81,11 +75,8 @@ public class XmlSerialization
     private XmlAttribute CreateTypeAttribute(object objectToSerialize)
     {
         int refTypeID;
-        string? objectType = objectToSerialize.GetType().AssemblyQualifiedName;
-        if (objectType == null)
-            throw new ApplicationException("Assembly name is null.");
-
-        if (!_referencedTypes.ContainsKey(objectType))
+        string? objectType = objectToSerialize.GetType().AssemblyQualifiedName ?? throw new ApplicationException("Assembly name is null.");
+        if (!_referencedTypes.TryGetValue(objectType, out int value))
         {
             _lastTypeID++;
             _referencedTypes.Add(objectType, _lastTypeID);
@@ -98,7 +89,7 @@ public class XmlSerialization
         }
         else
         {
-            refTypeID = _referencedTypes[objectType];
+            refTypeID = value;
         }
 
         XmlAttribute xmlTypeAttr = _xmlDoc.CreateAttribute(XmlCommon.RefTypeIDAttributeName);

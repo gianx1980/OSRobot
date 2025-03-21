@@ -18,16 +18,9 @@
 ======================================================================================*/
 namespace OSRobot.Server.Models.DTO.User;
 
-public class UserChangePasswordRequest
+public class UserChangePasswordRequest(string currentPassword, string newPassword, string confirmPassword)
 {
-    public UserChangePasswordRequest(string currentPassword, string newPassword, string confirmPassword)
-    {
-        CurrentPassword = currentPassword;
-        NewPassword = newPassword;
-        ConfirmPassword = confirmPassword;
-    }
-
-    public string CurrentPassword { get; set; }
-    public string NewPassword { get; set; }
-    public string ConfirmPassword { get; set; }
+    public string CurrentPassword { get; set; } = currentPassword;
+    public string NewPassword { get; set; } = newPassword;
+    public string ConfirmPassword { get; set; } = confirmPassword;
 }

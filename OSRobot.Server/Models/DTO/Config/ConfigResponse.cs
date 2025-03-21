@@ -18,23 +18,13 @@
 ======================================================================================*/
 namespace OSRobot.Server.Models.DTO.Config;
 
-public class ConfigResponse
+public class ConfigResponse(int requestNewTokenIfMinutesLeft, string appTitle, string staticFilesUrl, int heartBeatInterval,
+                        bool notificationServerSentEventsEnabled, int notificationPollingInterval)
 {
-    public ConfigResponse(int requestNewTokenIfMinutesLeft, string appTitle, string staticFilesUrl, int heartBeatInterval,
-                            bool notificationServerSentEventsEnabled, int notificationPollingInterval)
-    {
-        RequestNewTokenIfMinutesLeft = requestNewTokenIfMinutesLeft;    
-        AppTitle = appTitle;
-        StaticFilesUrl = staticFilesUrl;
-        HeartBeatInterval = heartBeatInterval;
-        NotificationServerSentEventsEnabled = notificationServerSentEventsEnabled;
-        NotificationPollingInterval = notificationPollingInterval;
-    }
-
-    public int RequestNewTokenIfMinutesLeft { get; set; }
-    public string AppTitle { get; set; } = string.Empty;
-    public string StaticFilesUrl { get; set; } = string.Empty;
-    public int HeartBeatInterval { get; set; }
-    public bool NotificationServerSentEventsEnabled { get; set; }
-    public int NotificationPollingInterval { get; set; }
+    public int RequestNewTokenIfMinutesLeft { get; set; } = requestNewTokenIfMinutesLeft;
+    public string AppTitle { get; set; } = appTitle;
+    public string StaticFilesUrl { get; set; } = staticFilesUrl;
+    public int HeartBeatInterval { get; set; } = heartBeatInterval;
+    public bool NotificationServerSentEventsEnabled { get; set; } = notificationServerSentEventsEnabled;
+    public int NotificationPollingInterval { get; set; } = notificationPollingInterval;
 }

@@ -16,7 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
-namespace OSRobot.Server.Core.Logging;
+namespace OSRobot.Server.Core.Logging.Abstract;
 
 public enum PlugingInstanceLoggerStatus
 {

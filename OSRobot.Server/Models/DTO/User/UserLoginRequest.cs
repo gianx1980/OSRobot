@@ -18,14 +18,8 @@
 ======================================================================================*/
 namespace OSRobot.Server.Models.DTO.User;
 
-public class UserLoginRequest
+public class UserLoginRequest(string username, string password)
 {
-    public UserLoginRequest(string username, string password)
-    {
-        Username = username;
-        Password = password;
-    }
-
-    public string Username { get; set; }
-    public string Password { get; set; }
+    public string Username { get; set; } = username;
+    public string Password { get; set; } = password;
 }

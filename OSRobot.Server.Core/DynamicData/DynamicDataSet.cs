@@ -24,7 +24,7 @@ namespace OSRobot.Server.Core.DynamicData;
 public class DynamicDataSet : IEnumerable
 {
     [XmlSerializeField]
-    private Dictionary<string, object> _data = new Dictionary<string, object>();
+    private readonly Dictionary<string, object> _data = [];
 
     public void Add(string key, object value)
     {

@@ -17,20 +17,14 @@
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
 using OSRobot.Server.Core.DynamicData;
-using OSRobot.Server.Core.Logging;
+using OSRobot.Server.Core.Logging.Abstract;
 
 namespace OSRobot.Server.Core;
 
-public class EventTriggeredEventArgs : EventArgs
+public class EventTriggeredEventArgs(DynamicDataSet dynamicData, IPluginInstanceLogger logger) : EventArgs
 {
-    public DynamicDataSet DynamicData { get; set; }
-    public IPluginInstanceLogger Logger { get; set; }
-
-    public EventTriggeredEventArgs(DynamicDataSet dynamicData, IPluginInstanceLogger logger)
-    {
-        DynamicData = dynamicData;
-        Logger = logger;
-    }
+    public DynamicDataSet DynamicData { get; set; } = dynamicData;
+    public IPluginInstanceLogger Logger { get; set; } = logger;
 }
 
 public delegate void EventTriggeredDelegate(object sender, EventTriggeredEventArgs e);

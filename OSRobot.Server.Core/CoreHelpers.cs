@@ -23,7 +23,7 @@ namespace OSRobot.Server.Core;
 
 public static class CoreHelpers
 {
-    public static object _objectCloning = new object();
+    private readonly static object _objectCloning = new();
 
     public static string ToIsoDate(this DateTime date)
     {
@@ -32,16 +32,21 @@ public static class CoreHelpers
 
     public static object? CloneObjects(object pluginInstance)
     {
-        XmlSerialization serializer = new XmlSerialization();
-        serializer.CheckSerializeAttribute = true;
+        XmlSerialization serializer = new()
+        {
+            CheckSerializeAttribute = true
+        };
+        
         string output = serializer.SerializeToXmlString(pluginInstance, "OSRobot");
 
         lock (_objectCloning)
         {
-            XmlDocument xmlDoc = new XmlDocument();
+            XmlDocument xmlDoc = new();
             xmlDoc.LoadXml(output);
-            XmlDeserialization deserializer = new XmlDeserialization(xmlDoc);
-            deserializer.CheckSerializeAttribute = true;
+            XmlDeserialization deserializer = new(xmlDoc)
+            {
+                CheckSerializeAttribute = true
+            };
             return deserializer.Deserialize();            
         }
     }

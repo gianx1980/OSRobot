@@ -20,7 +20,7 @@
 using Microsoft.Data.SqlClient;
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
-using OSRobot.Server.Core.Logging;
+using OSRobot.Server.Core.Logging.Abstract;
 using OSRobot.Server.Plugins.Infrastructure.Utilities;
 using System.Data;
 
@@ -71,30 +71,26 @@ public class SqlServerBackupTask : IterationTask
             else if (compression == UseCompressionEnum.DoNotCompressBackup)
                 SqlCommandBackup += ", NO_COMPRESSION";
 
-            using (SqlConnection Cnt = new SqlConnection(connectionString))
+            using SqlConnection Cnt = new(connectionString);
+            ManualResetEvent WaitInfoMessage = new(false);
+            Cnt.InfoMessage += (sender, e) =>
             {
-                ManualResetEvent WaitInfoMessage = new ManualResetEvent(false);
-                Cnt.InfoMessage += (sender, e) =>
-                {
-                    if (e.Message.Contains("BACKUP WITH CONTINUE_AFTER_ERROR successfully"))
-                        Result = _backupSuccessChecksumError;
-                    else if (e.Message.Contains("BACKUP DATABASE successfully"))
-                        Result = _backupSuccess;
+                if (e.Message.Contains("BACKUP WITH CONTINUE_AFTER_ERROR successfully"))
+                    Result = _backupSuccessChecksumError;
+                else if (e.Message.Contains("BACKUP DATABASE successfully"))
+                    Result = _backupSuccess;
 
-                    WaitInfoMessage.Set();
-                };
+                WaitInfoMessage.Set();
+            };
 
-                Cnt.Open();
+            Cnt.Open();
 
-                using (SqlCommand Cmd = new SqlCommand(SqlCommandBackup, Cnt))
-                {
-                    Cmd.Parameters.Add("@P_DBNAME", SqlDbType.NVarChar).Value = databaseName;
-                    Cmd.Parameters.Add("@P_PATH", SqlDbType.NVarChar).Value = FullPathDestination;
-                    Cmd.Parameters.Add("@P_MEDIANAME", SqlDbType.NVarChar).Value = mediaName;
-                    Cmd.ExecuteNonQuery();
-                    WaitInfoMessage.WaitOne();
-                }
-            }
+            using SqlCommand Cmd = new(SqlCommandBackup, Cnt);
+            Cmd.Parameters.Add("@P_DBNAME", SqlDbType.NVarChar).Value = databaseName;
+            Cmd.Parameters.Add("@P_PATH", SqlDbType.NVarChar).Value = FullPathDestination;
+            Cmd.Parameters.Add("@P_MEDIANAME", SqlDbType.NVarChar).Value = mediaName;
+            Cmd.ExecuteNonQuery();
+            WaitInfoMessage.WaitOne();
         }
         catch (Exception ex)
         {
@@ -141,30 +137,26 @@ public class SqlServerBackupTask : IterationTask
             else if (compression == UseCompressionEnum.DoNotCompressBackup)
                 sqlCommandBackup += ", NO_COMPRESSION";
 
-            using (SqlConnection cnt = new SqlConnection(connectionString))
+            using SqlConnection cnt = new(connectionString);
+            ManualResetEvent waitInfoMessage = new(false);
+            cnt.InfoMessage += (sender, e) =>
             {
-                ManualResetEvent waitInfoMessage = new ManualResetEvent(false);
-                cnt.InfoMessage += (sender, e) =>
-                {
-                    if (e.Message.Contains("BACKUP WITH CONTINUE_AFTER_ERROR successfully"))
-                        result = _backupSuccessChecksumError;
-                    else if (e.Message.Contains("BACKUP LOG successfully"))
-                        result = _backupSuccess;
+                if (e.Message.Contains("BACKUP WITH CONTINUE_AFTER_ERROR successfully"))
+                    result = _backupSuccessChecksumError;
+                else if (e.Message.Contains("BACKUP LOG successfully"))
+                    result = _backupSuccess;
 
-                    waitInfoMessage.Set();
-                };
+                waitInfoMessage.Set();
+            };
 
-                cnt.Open();
+            cnt.Open();
 
-                using (SqlCommand cmd = new SqlCommand(sqlCommandBackup, cnt))
-                {
-                    cmd.Parameters.Add("@P_DBNAME", SqlDbType.NVarChar).Value = databaseName;
-                    cmd.Parameters.Add("@P_PATH", SqlDbType.NVarChar).Value = fullPathDestination;
-                    cmd.Parameters.Add("@P_MEDIANAME", SqlDbType.NVarChar).Value = mediaName;
-                    cmd.ExecuteNonQuery();
-                    waitInfoMessage.WaitOne();
-                }
-            }
+            using SqlCommand cmd = new(sqlCommandBackup, cnt);
+            cmd.Parameters.Add("@P_DBNAME", SqlDbType.NVarChar).Value = databaseName;
+            cmd.Parameters.Add("@P_PATH", SqlDbType.NVarChar).Value = fullPathDestination;
+            cmd.Parameters.Add("@P_MEDIANAME", SqlDbType.NVarChar).Value = mediaName;
+            cmd.ExecuteNonQuery();
+            waitInfoMessage.WaitOne();
         }
         catch (Exception ex)
         {
@@ -207,28 +199,24 @@ public class SqlServerBackupTask : IterationTask
                 IF @@ERROR <> 0 BEGIN RAISERROR(N'Verify failed. RESTORE command issued an error.', 16, 1) END
             ";
 
-            using (SqlConnection cnt = new SqlConnection(connectionString))
+            using SqlConnection cnt = new(connectionString);
+            ManualResetEvent WaitInfoMessage = new(false);
+            cnt.InfoMessage += (sender, e) =>
             {
-                ManualResetEvent WaitInfoMessage = new ManualResetEvent(false);
-                cnt.InfoMessage += (sender, e) =>
-                {
-                    if (e.Message.Contains("is valid."))
-                        result = true;
-                    
-                    WaitInfoMessage.Set();
-                };
+                if (e.Message.Contains("is valid."))
+                    result = true;
+
+                WaitInfoMessage.Set();
+            };
 
 
-                cnt.Open();
+            cnt.Open();
 
-                using (SqlCommand cmd = new SqlCommand(sqlCommandVerifyBackup, cnt))
-                {
-                    cmd.Parameters.Add("@P_DBNAME", SqlDbType.NVarChar).Value = databaseName;
-                    cmd.Parameters.Add("@P_PATH", SqlDbType.NVarChar).Value = fullPathDestination;
-                    cmd.ExecuteNonQuery();
-                    WaitInfoMessage.WaitOne();
-                }
-            }
+            using SqlCommand cmd = new(sqlCommandVerifyBackup, cnt);
+            cmd.Parameters.Add("@P_DBNAME", SqlDbType.NVarChar).Value = databaseName;
+            cmd.Parameters.Add("@P_PATH", SqlDbType.NVarChar).Value = fullPathDestination;
+            cmd.ExecuteNonQuery();
+            WaitInfoMessage.WaitOne();
         }
         catch (Exception ex)
         {
@@ -256,11 +244,11 @@ public class SqlServerBackupTask : IterationTask
             return;
         }
 
-        List<string> dbToBackupList = currentDbList.Select(t => t.Name).ToList();
+        List<string> dbToBackupList = [.. currentDbList.Select(t => t.Name)];
 
         if (tConfig.DatabasesToBackup == DatabasesToBackupEnum.SelectedDatabases)
         {
-            dbToBackupList = dbToBackupList.Where(t => tConfig.SelectedDatabases.Contains(t)).ToList();
+            dbToBackupList = [.. dbToBackupList.Where(t => tConfig.SelectedDatabases.Contains(t))];
         }
 
         string prevFileNameTemplate = tConfig.FileNameTemplate;

@@ -47,9 +47,9 @@ public class FileSystemTaskConfig : ITaskConfig
     public FileSystemTaskCommandType Command { get; set; }
 
 
-    public List<FileSystemTaskCopyItem> CopyItems { get; set; } = new List<FileSystemTaskCopyItem>();
+    public List<FileSystemTaskCopyItem> CopyItems { get; set; } = [];
 
-    public List<FileSystemTaskDeleteItem> DeleteItems { get; set; } = new List<FileSystemTaskDeleteItem>();
+    public List<FileSystemTaskDeleteItem> DeleteItems { get; set; } = [];
 
     [DynamicData]
     public string CheckExistenceFilePath { get; set; } = string.Empty;

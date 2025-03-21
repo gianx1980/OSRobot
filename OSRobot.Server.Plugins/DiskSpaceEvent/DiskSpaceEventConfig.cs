@@ -30,7 +30,7 @@ public class DiskSpaceEventConfig : IEventConfig
     public bool Enabled { get; set; } = true;
     public bool Log { get; set; } = true;
 
-    public List<DiskThreshold> DiskThresholds { get; set; } = new List<DiskThreshold>();
+    public List<DiskThreshold> DiskThresholds { get; set; } = [];
 
     public int CheckIntervalSeconds { get; set; } = _defaultCheckIntervalSeconds;
 }

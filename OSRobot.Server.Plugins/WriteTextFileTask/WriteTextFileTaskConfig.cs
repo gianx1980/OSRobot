@@ -46,7 +46,7 @@ public class WriteTextFileTaskConfig : ITaskConfig
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public WriteTextFileTaskType TaskType { get; set; }
 
-    public List<WriteTextFileColumnDefinition> ColumnsDefinition { get; set; } = new List<WriteTextFileColumnDefinition>();
+    public List<WriteTextFileColumnDefinition> ColumnsDefinition { get; set; } = [];
 
     public bool FormatAsDelimitedFile { get; set; }
 

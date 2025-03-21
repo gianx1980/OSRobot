@@ -35,10 +35,10 @@ public class SendEMailTaskConfig : ITaskConfig
     public bool Log { get; set; } = true;
 
     [DynamicData]
-    public List<string> Recipients { get; } = new List<string>();
+    public List<string> Recipients { get; } = [];
     
     [DynamicData]
-    public List<string> CC { get; } = new List<string>();
+    public List<string> CC { get; } = [];
 
     [DynamicData]
     public string Subject { get; set; } = string.Empty;
@@ -47,7 +47,7 @@ public class SendEMailTaskConfig : ITaskConfig
     public string Message { get; set; } = string.Empty;
     
     [DynamicData]
-    public List<string> Attachments { get; } = new List<string>();
+    public List<string> Attachments { get; } = [];
 
     [DynamicData]
     public string Sender { get; set; } = string.Empty;

@@ -20,14 +20,8 @@ using OSRobot.Server.Core.DynamicData;
 
 namespace OSRobot.Server.Core;
 
-public class ExecResult
+public class ExecResult(bool result, DynamicDataSet data)
 {
-    public ExecResult(bool result, DynamicDataSet data)
-    {
-        Result = result;
-        Data = data;
-    }
-
-    public bool Result { get; private set; }
-    public DynamicDataSet Data { get; private set; }
+    public bool Result { get; private set; } = result;
+    public DynamicDataSet Data { get; private set; } = data;
 }

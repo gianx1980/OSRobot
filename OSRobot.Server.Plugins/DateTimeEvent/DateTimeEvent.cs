@@ -19,6 +19,7 @@
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging;
+using OSRobot.Server.Core.Logging.Abstract;
 using System.ComponentModel; 
 
 namespace OSRobot.Server.Plugins.DateTimeEvent;  
@@ -28,24 +29,23 @@ public class DateTimeEvent : IEvent
     public IFolder? ParentFolder { get; set; }
     public IPluginInstanceConfig Config { get; set; } = new DateTimeEventConfig();
 
-    public List<PluginInstanceConnection> Connections { get; set; } = new List<PluginInstanceConnection>();
+    public List<PluginInstanceConnection> Connections { get; set; } = [];
 
     public event EventTriggeredDelegate? EventTriggered;
 
-    private System.Timers.Timer _oneTimeTimer = new System.Timers.Timer();
+    private readonly System.Timers.Timer _oneTimeTimer = new();
 
-    private System.Timers.Timer _recurringTimer = new System.Timers.Timer();
+    private readonly System.Timers.Timer _recurringTimer = new();
 
     protected virtual void OnEventTriggered(EventTriggeredEventArgs e)
     {
         EventTriggeredDelegate? handler = EventTriggered;
         if (handler != null)
         {
-            foreach (EventTriggeredDelegate singleCast in handler.GetInvocationList())
+            foreach (EventTriggeredDelegate singleCast in handler.GetInvocationList().Cast<EventTriggeredDelegate>())
             {
-                ISynchronizeInvoke? syncInvoke = singleCast.Target as ISynchronizeInvoke;
-                if ((syncInvoke != null) && (syncInvoke.InvokeRequired))
-                    syncInvoke.Invoke(singleCast, new object[] { this, e });
+                if ((singleCast.Target is ISynchronizeInvoke syncInvoke) && (syncInvoke.InvokeRequired))
+                    syncInvoke.Invoke(singleCast, [this, e]);
                 else
                     singleCast(this, e);
             }
@@ -57,11 +57,11 @@ public class DateTimeEvent : IEvent
     {
         _oneTimeTimer.Enabled = false;
         _oneTimeTimer.AutoReset = false;
-        _oneTimeTimer.Elapsed += _OnTimeTimer_Elapsed;
+        _oneTimeTimer.Elapsed += OnTimeTimer_Elapsed;
 
         _recurringTimer.Enabled = false;
         _recurringTimer.AutoReset = true;
-        _recurringTimer.Elapsed += _RecurringTimer_Elapsed;
+        _recurringTimer.Elapsed += RecurringTimer_Elapsed;
 
         bool enableOneTimeTimer = false;
         bool enableRecurringTimer = false;
@@ -97,7 +97,7 @@ public class DateTimeEvent : IEvent
         _recurringTimer.Dispose();
     }
 
-    private void _OnTimeTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
+    private void OnTimeTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
     {
         IPluginInstanceLogger logger = PluginInstanceLogger.GetLogger(this);
 
@@ -124,7 +124,7 @@ public class DateTimeEvent : IEvent
         }
     }
 
-    private void _RecurringTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
+    private void RecurringTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
     {
         IPluginInstanceLogger logger = PluginInstanceLogger.GetLogger(this);
 
@@ -136,7 +136,7 @@ public class DateTimeEvent : IEvent
             DateTimeEventConfig tConfig = (DateTimeEventConfig)Config;
             DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, true, 0, now, now, 1);
 
-            if ((tConfig.OnDays.Where(i => i.Equals(now.DayOfWeek)).Count() > 0) || tConfig.OnAllDays)
+            if ((tConfig.OnDays.Where(i => i.Equals(now.DayOfWeek)).Any()) || tConfig.OnAllDays)
             {
                 if (Config.Log)
                     logger.EventTriggering(this);

@@ -94,5 +94,5 @@ public class ReadTextFileTaskConfig : ITaskConfig
     public bool UseDoubleQuotes { get; set; }
 
     public bool OverrideDefaultColumnsDefinition { get; set; }
-    public List<ReadTextFileColumnDefinition> ColumnsDefinition { get; } = new List<ReadTextFileColumnDefinition>();
+    public List<ReadTextFileColumnDefinition> ColumnsDefinition { get; } = [];
 }

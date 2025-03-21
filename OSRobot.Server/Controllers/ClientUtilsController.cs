@@ -47,7 +47,7 @@ public class ClientUtilsController : AppControllerBase
     {
         DriveInfo[] systemDrives = DriveInfo.GetDrives();
 
-        List<DriveListItem> responseList = new List<DriveListItem>();
+        List<DriveListItem> responseList = [];
         foreach (DriveInfo drive in systemDrives)
         {
             responseList.Add(new DriveListItem(drive.Name));
@@ -64,7 +64,7 @@ public class ClientUtilsController : AppControllerBase
     public IActionResult Folders(string path)
     {
         MainResponse<List<string>> mainResponse;
-        List<string> folders = new List<string>();
+        List<string> folders = [];
         int responseCode = MainResponse<string>.ResponseOk;
         string? responseMessage = null;
 
@@ -108,16 +108,15 @@ public class ClientUtilsController : AppControllerBase
     public IActionResult Files(string path)
     {
         MainResponse<List<string>> mainResponse;
-        List<string> fileList = new List<string>();
+        List<string> fileList = [];
         int responseCode = MainResponse<string>.ResponseOk;
         string? responseMessage = null;
 
         try
         {
-            fileList.AddRange(Directory
-                                .GetFiles(path)
-                                .Select(f => Path.GetFileName(f))
-                                .ToList());
+            fileList.AddRange([.. Directory
+                                    .GetFiles(path)
+                                    .Select(f => Path.GetFileName(f))]);
         }
         catch (UnauthorizedAccessException)
         {
@@ -151,7 +150,7 @@ public class ClientUtilsController : AppControllerBase
         int responseCode = testResult ? MainResponse<object>.ResponseOk : MainResponse<object>.ResponseGenericError;
         string responseMessage = testResult ? "Connection established" : "Connection error";
 
-        MainResponse<object> mainResponse = new MainResponse<object>(responseCode, responseMessage, null);
+        MainResponse<object> mainResponse = new(responseCode, responseMessage, null);
 
         return Ok(mainResponse);
     }
@@ -168,9 +167,9 @@ public class ClientUtilsController : AppControllerBase
 
         List<SqlServerDatabaseListItem>? sqlDatabaseList = SqlServer.GetDatabaseList(connectionInfo.Server, connectionInfo.Username, connectionInfo.Password, connectionInfo.ConnectionStringOptions);
         int responseCode = sqlDatabaseList != null ? MainResponse<object>.ResponseOk : MainResponse<object>.ResponseGenericError;
-        List<DatabaseListItem>? databaseList = sqlDatabaseList != null ? sqlDatabaseList.Select(t => new DatabaseListItem(t.Id, t.Name)).ToList() : null;
+        List<DatabaseListItem>? databaseList = sqlDatabaseList != null ? [.. sqlDatabaseList.Select(t => new DatabaseListItem(t.Id, t.Name))] : null;
 
-        MainResponse<List<DatabaseListItem>> mainResponse = new MainResponse<List<DatabaseListItem>>(responseCode, null, databaseList);
+        MainResponse<List<DatabaseListItem>> mainResponse = new(responseCode, null, databaseList);
 
         return Ok(mainResponse);
     }

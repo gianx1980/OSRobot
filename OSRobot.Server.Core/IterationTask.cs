@@ -49,17 +49,14 @@ public abstract class IterationTask : BaseTask
 
             try
             {
-                ITaskConfig? tempTaskConfig = (ITaskConfig?)CoreHelpers.CloneObjects(Config);
-                if (tempTaskConfig == null)
-                    throw new ApplicationException("Cloning configuration returned null");
-
+                ITaskConfig? tempTaskConfig = (ITaskConfig?)CoreHelpers.CloneObjects(Config) ?? throw new ApplicationException("Cloning configuration returned null");
                 _iterationConfig = tempTaskConfig;
                 DynamicDataParser.Parse(_iterationConfig, _dataChain, i);
 
                 RunIteration(i);
 
                 DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, true, 0, _startDateTime, DateTime.Now, _iterationsCount);
-                ExecResult result = new ExecResult(true, dDataSet);
+                ExecResult result = new(true, dDataSet);
 
                 PostIterationSucceded(i, result, dDataSet);
 
@@ -71,7 +68,7 @@ public abstract class IterationTask : BaseTask
                     _instanceLogger?.TaskError(this, ex);
 
                 DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, false, -1, _startDateTime, DateTime.Now, i + 1);
-                ExecResult result = new ExecResult(false, dDataSet);
+                ExecResult result = new(false, dDataSet);
 
                 PostIterationFailed(i, result, dDataSet);
 

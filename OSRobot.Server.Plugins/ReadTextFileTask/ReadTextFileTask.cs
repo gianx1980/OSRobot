@@ -30,7 +30,7 @@ public class ReadTextFileTask : IterationTask
 {
     private string[] BuildDelimitersArray(ReadTextFileTaskConfig config)
     {
-        List<string> delimiters = new List<string>();
+        List<string> delimiters = [];
 
         if (config.DelimiterTab)
             delimiters.Add("\t");
@@ -47,7 +47,7 @@ public class ReadTextFileTask : IterationTask
         if (config.DelimiterOther)
             delimiters.Add(config.DelimiterOtherChar);
 
-        return delimiters.ToArray();
+        return [.. delimiters];
     }
 
     private void BuildCustomDataTable(DataTable recordset, ReadTextFileTaskConfig config)
@@ -88,7 +88,7 @@ public class ReadTextFileTask : IterationTask
     private string[] ReadRow(TextFieldParser parser, ReadTextFileTaskConfig config)
     {
         if (config.SplitColumnsType == ReadTextFileSplitColumnsType.None || config.SplitColumnsType == ReadTextFileSplitColumnsType.UseFixedWidthColumns)
-            return new string[] { parser.ReadLine() ?? string.Empty };
+            return [parser.ReadLine() ?? string.Empty];
         else // TextFileReadSplitColumnsType.UseDelimiters
         {
             return parser.ReadFields() ?? new string[1];
@@ -197,143 +197,141 @@ public class ReadTextFileTask : IterationTask
     {
         // For this kind of objects consider only one iteration
         ReadTextFileTaskConfig TConfig = (ReadTextFileTaskConfig)_iterationConfig;
-        DataTable DefaultRecordset = new DataTable();
+        DataTable DefaultRecordset = new();
         _defaultRecordset = DefaultRecordset;
 
         // If columns definition have been overriden, build the datatable according to user definition
         if (TConfig.OverrideDefaultColumnsDefinition)
             BuildCustomDataTable(DefaultRecordset, TConfig);
 
-        using (TextFieldParser FileParser = new TextFieldParser(TConfig.FilePath))
+        using TextFieldParser FileParser = new(TConfig.FilePath);
+        if (TConfig.SplitColumnsType == ReadTextFileSplitColumnsType.UseDelimiters)
         {
-            if (TConfig.SplitColumnsType == ReadTextFileSplitColumnsType.UseDelimiters)
-            {
-                FileParser.TextFieldType = FieldType.Delimited;
-                FileParser.Delimiters = BuildDelimitersArray(TConfig);
-                FileParser.HasFieldsEnclosedInQuotes = TConfig.UseDoubleQuotes;
-            }
+            FileParser.TextFieldType = FieldType.Delimited;
+            FileParser.Delimiters = BuildDelimitersArray(TConfig);
+            FileParser.HasFieldsEnclosedInQuotes = TConfig.UseDoubleQuotes;
+        }
 
-            int ReadFromRow = 0;
-            int ReadToRow = 0;
-            int CurrentRow = 1;
+        int ReadFromRow = 0;
+        int ReadToRow = 0;
+        int CurrentRow = 1;
 
-            if (TConfig.ReadAllTheRowsOption)
+        if (TConfig.ReadAllTheRowsOption)
+        {
+            while (!FileParser.EndOfData)
             {
-                while (!FileParser.EndOfData)
+                try
                 {
-                    try
-                    {
-                        string[] Row = ReadRow(FileParser, TConfig);
+                    string[] Row = ReadRow(FileParser, TConfig);
 
-                        if (CurrentRow == 1 && TConfig.SkipFirstLine)
-                        {
-                            CurrentRow++;
-                            continue;
-                        }
-
-                        AddRow(CurrentRow, Row, TConfig, DefaultRecordset);
-                    }
-                    catch (MalformedLineException ex)
+                    if (CurrentRow == 1 && TConfig.SkipFirstLine)
                     {
-                        _instanceLogger?.Error(this, "Error parsing line", ex);
-                    }
-
-                    CurrentRow++;
-                }
-            }
-            else if (TConfig.ReadLastRowOption)
-            {
-                string[]? Row = null;
-                while (!FileParser.EndOfData)
-                {
-                    try
-                    {
-                        Row = ReadRow(FileParser, TConfig);
                         CurrentRow++;
+                        continue;
                     }
-                    catch (MalformedLineException ex)
-                    {
-                        _instanceLogger?.Error(this, "Error parsing line", ex);
-                    }
-                }
-                if (Row != null)
-                {
+
                     AddRow(CurrentRow, Row, TConfig, DefaultRecordset);
                 }
+                catch (MalformedLineException ex)
+                {
+                    _instanceLogger?.Error(this, "Error parsing line", ex);
+                }
+
+                CurrentRow++;
             }
-            else if (TConfig.ReadRowNumberOption || (TConfig.ReadIntervalOption && TConfig.ReadInterval == ReadTextFileIntervalType.ReadFromRowToRow))
+        }
+        else if (TConfig.ReadLastRowOption)
+        {
+            string[]? Row = null;
+            while (!FileParser.EndOfData)
             {
-                if (TConfig.ReadRowNumberOption)
+                try
                 {
-                    ReadFromRow = int.Parse(TConfig.ReadRowNumber);
-                    ReadToRow = ReadFromRow;
-                }
-                else
-                {
-                    ReadFromRow = int.Parse(TConfig.ReadFromRow);
-                    ReadToRow = int.Parse(TConfig.ReadToRow);
-                }
-
-                string[]? Row = null;
-                while (!FileParser.EndOfData)
-                {
-                    try
-                    {
-                        if (CurrentRow > ReadToRow)
-                            break;
-
-                        Row = ReadRow(FileParser, TConfig);
-                        if (CurrentRow >= ReadFromRow && CurrentRow <= ReadToRow)
-                        {
-                            AddRow(CurrentRow, Row, TConfig, DefaultRecordset);
-                        }
-                    }
-                    catch (MalformedLineException ex)
-                    {
-                        _instanceLogger?.Error(this, "Error parsing line", ex);
-                    }
-
+                    Row = ReadRow(FileParser, TConfig);
                     CurrentRow++;
                 }
+                catch (MalformedLineException ex)
+                {
+                    _instanceLogger?.Error(this, "Error parsing line", ex);
+                }
+            }
+            if (Row != null)
+            {
+                AddRow(CurrentRow, Row, TConfig, DefaultRecordset);
+            }
+        }
+        else if (TConfig.ReadRowNumberOption || (TConfig.ReadIntervalOption && TConfig.ReadInterval == ReadTextFileIntervalType.ReadFromRowToRow))
+        {
+            if (TConfig.ReadRowNumberOption)
+            {
+                ReadFromRow = int.Parse(TConfig.ReadRowNumber);
+                ReadToRow = ReadFromRow;
             }
             else
             {
-                List<string[]> Rows = new List<string[]>();
-                string[]? Row = null;
-                while (!FileParser.EndOfData)
+                ReadFromRow = int.Parse(TConfig.ReadFromRow);
+                ReadToRow = int.Parse(TConfig.ReadToRow);
+            }
+
+            string[]? Row = null;
+            while (!FileParser.EndOfData)
+            {
+                try
                 {
-                    try
+                    if (CurrentRow > ReadToRow)
+                        break;
+
+                    Row = ReadRow(FileParser, TConfig);
+                    if (CurrentRow >= ReadFromRow && CurrentRow <= ReadToRow)
                     {
-                        Row = ReadRow(FileParser, TConfig);
-                        Rows.Add(Row);
-                    }
-                    catch (MalformedLineException ex)
-                    {
-                        _instanceLogger?.Error(this, "Error parsing line", ex);
+                        AddRow(CurrentRow, Row, TConfig, DefaultRecordset);
                     }
                 }
-
-                if (Rows.Count > 0)
+                catch (MalformedLineException ex)
                 {
-                    if (TConfig.ReadInterval == ReadTextFileIntervalType.ReadFromRowToLastRow)
-                    {
-                        // From row to end
-                        ReadFromRow = int.Parse(TConfig.ReadFromRow);
-                        ReadFromRow--;
-                        if (ReadFromRow < 0) ReadFromRow = 0;
-                    }
-                    else
-                    {
-                        // Read N Last rows
-                        ReadFromRow = (Rows.Count - 1) - int.Parse(TConfig.ReadNumberOfRows);
-                    }
+                    _instanceLogger?.Error(this, "Error parsing line", ex);
+                }
 
-                    if (ReadFromRow <= (Rows.Count - 1))
+                CurrentRow++;
+            }
+        }
+        else
+        {
+            List<string[]> Rows = [];
+            string[]? Row = null;
+            while (!FileParser.EndOfData)
+            {
+                try
+                {
+                    Row = ReadRow(FileParser, TConfig);
+                    Rows.Add(Row);
+                }
+                catch (MalformedLineException ex)
+                {
+                    _instanceLogger?.Error(this, "Error parsing line", ex);
+                }
+            }
+
+            if (Rows.Count > 0)
+            {
+                if (TConfig.ReadInterval == ReadTextFileIntervalType.ReadFromRowToLastRow)
+                {
+                    // From row to end
+                    ReadFromRow = int.Parse(TConfig.ReadFromRow);
+                    ReadFromRow--;
+                    if (ReadFromRow < 0) ReadFromRow = 0;
+                }
+                else
+                {
+                    // Read N Last rows
+                    ReadFromRow = (Rows.Count - 1) - int.Parse(TConfig.ReadNumberOfRows);
+                }
+
+                if (ReadFromRow <= (Rows.Count - 1))
+                {
+                    for (int RowIndex = ReadFromRow; RowIndex < Rows.Count; RowIndex++)
                     {
-                        for (int RowIndex = ReadFromRow; RowIndex < Rows.Count; RowIndex++)
-                        {
-                            AddRow(RowIndex, Rows[RowIndex], TConfig, DefaultRecordset);
-                        }
+                        AddRow(RowIndex, Rows[RowIndex], TConfig, DefaultRecordset);
                     }
                 }
             }

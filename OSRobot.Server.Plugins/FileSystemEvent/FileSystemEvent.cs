@@ -20,6 +20,7 @@
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging;
+using OSRobot.Server.Core.Logging.Abstract;
 using OSRobot.Server.Plugins.DateTimeEvent;
 using System;
 using System.Collections.Generic;
@@ -34,7 +35,7 @@ public class FileSystemEvent : IEvent
 
     public IPluginInstanceConfig Config { get; set; } = new FileSystemEventConfig();
 
-    public List<PluginInstanceConnection> Connections { get; set; } = new List<PluginInstanceConnection>();
+    public List<PluginInstanceConnection> Connections { get; set; } = [];
 
     public event EventTriggeredDelegate? EventTriggered;
 
@@ -43,28 +44,29 @@ public class FileSystemEvent : IEvent
         EventTriggeredDelegate? handler = EventTriggered;
         if (handler != null)
         {
-            foreach (EventTriggeredDelegate singleCast in handler.GetInvocationList())
+            foreach (EventTriggeredDelegate singleCast in handler.GetInvocationList().Cast<EventTriggeredDelegate>())
             {
-                ISynchronizeInvoke? syncInvoke = singleCast.Target as ISynchronizeInvoke;
-                if ((syncInvoke != null) && (syncInvoke.InvokeRequired))
-                    syncInvoke.Invoke(singleCast, new object[] { this, e });
+                if ((singleCast.Target is ISynchronizeInvoke syncInvoke) && (syncInvoke.InvokeRequired))
+                    syncInvoke.Invoke(singleCast, [this, e]);
                 else
                     singleCast(this, e);
             }
         }
     }
 
-    private List<FileSystemWatcher> _fileSystemWatchers = new List<FileSystemWatcher>();
+    private readonly List<FileSystemWatcher> _fileSystemWatchers = [];
 
     public void Init()
     {
         FileSystemEventConfig tConfig = (FileSystemEventConfig)Config;
         foreach (FolderToMonitor folder in tConfig.FoldersToMonitor)
         {
-            FileSystemWatcher watcher = new FileSystemWatcher();
-            watcher.Path = folder.Path;
-            watcher.IncludeSubdirectories = folder.MonitorSubFolders;
-            
+            FileSystemWatcher watcher = new()
+            {
+                Path = folder.Path,
+                IncludeSubdirectories = folder.MonitorSubFolders
+            };
+
             if (folder.MonitorAction == MonitorActionType.NewFiles)
                 watcher.Created += WatcherEvent;
             else if (folder.MonitorAction == MonitorActionType.ModifiedFiles)
@@ -101,11 +103,11 @@ public class FileSystemEvent : IEvent
             FileSystemEventConfig tConfig = (FileSystemEventConfig)Config;
             DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, true, 0, now, now, 1);
             
-            FileInfo fi = new FileInfo(e.FullPath);
+            FileInfo fi = new(e.FullPath);
             dDataSet.Add(FileSystemEventCommon.DynDataKeyFullPathName, e.FullPath);
             dDataSet.Add(FileSystemEventCommon.DynDataKeyFileName, e.Name ?? string.Empty);
-            dDataSet.Add(FileSystemEventCommon.DynDataKeyFileNameWithoutExtension, e.Name == null ? string.Empty : e.Name.Substring(0, e.Name.Length - fi.Extension.Length));
-            dDataSet.Add(FileSystemEventCommon.DynDataKeyFileExtension, fi.Extension.Substring(1));
+            dDataSet.Add(FileSystemEventCommon.DynDataKeyFileNameWithoutExtension, e.Name == null ? string.Empty : e.Name[..^fi.Extension.Length]);
+            dDataSet.Add(FileSystemEventCommon.DynDataKeyFileExtension, fi.Extension[1..]);
             dDataSet.Add(FileSystemEventCommon.DynDataKeyChangeType, e.ChangeType.ToString());
             
             if (Config.Log)

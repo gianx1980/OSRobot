@@ -40,7 +40,7 @@ public class DateTimeEventConfig : IEventConfig
     public bool EverySeconds { get; set; }
     public int EveryNumSeconds { get; set; } = _defaultEveryNumSeconds;
 
-    public List<DayOfWeek> OnDays { get; set; } = new List<DayOfWeek>() { DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday,
-                                                                            DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday };
+    public List<DayOfWeek> OnDays { get; set; } = [ DayOfWeek.Monday, DayOfWeek.Tuesday, DayOfWeek.Wednesday,
+                                                                            DayOfWeek.Thursday, DayOfWeek.Friday, DayOfWeek.Saturday, DayOfWeek.Sunday ];
     public bool OnAllDays { get; set; } = true;
 }

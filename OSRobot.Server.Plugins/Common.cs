@@ -28,7 +28,7 @@ static class Common
         if (!File.Exists(filePathName))
             return filePathName;
 
-        FileInfo FI = new FileInfo(filePathName);
+        FileInfo FI = new(filePathName);
 
         string NewFileName;
         int Attempt = 1;

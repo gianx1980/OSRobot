@@ -27,45 +27,39 @@ public class UnzipTask : IterationTask
 {
     private bool UncompressArchive(string zipFileName, string outputFolder, IfDestFileExistsType ifDestFileExists)
     {
-        using (FileStream fs = File.OpenRead(zipFileName))
-        using (ZipFile zipFileToExtract = new ZipFile(fs))
+        using FileStream fs = File.OpenRead(zipFileName);
+        using ZipFile zipFileToExtract = new(fs);
+        foreach (ZipEntry zipItem in zipFileToExtract)
         {
-            foreach (ZipEntry zipItem in zipFileToExtract)
+            if (!zipItem.IsFile)
             {
-                if (!zipItem.IsFile)
-                {
-                    // Ignore directories
-                    continue;
-                }
-
-                string EntryFileName = zipItem.Name;
-
-                byte[] buffer = new byte[4096];
-                using (Stream ZipStream = zipFileToExtract.GetInputStream(zipItem))
-                {
-                    string fullZipToPath = Path.Combine(outputFolder, EntryFileName);
-                    string directoryName = Path.GetDirectoryName(fullZipToPath) ?? string.Empty;
-
-                    if (directoryName.Length > 0)
-                    {
-                        Directory.CreateDirectory(directoryName);
-                    }
-
-
-                    if (File.Exists(fullZipToPath))
-                    {
-                        if (ifDestFileExists == IfDestFileExistsType.Fail)
-                            return false;
-                        else if (ifDestFileExists == IfDestFileExistsType.CreateWithUniqueNames)
-                            fullZipToPath = Common.GetUniqueFileName(fullZipToPath);
-                    }
-                    
-                    using (FileStream streamWriter = File.Create(fullZipToPath))
-                    {
-                        StreamUtils.Copy(ZipStream, streamWriter, buffer);
-                    }
-                }
+                // Ignore directories
+                continue;
             }
+
+            string EntryFileName = zipItem.Name;
+
+            byte[] buffer = new byte[4096];
+            using Stream ZipStream = zipFileToExtract.GetInputStream(zipItem);
+            string fullZipToPath = Path.Combine(outputFolder, EntryFileName);
+            string directoryName = Path.GetDirectoryName(fullZipToPath) ?? string.Empty;
+
+            if (directoryName.Length > 0)
+            {
+                Directory.CreateDirectory(directoryName);
+            }
+
+
+            if (File.Exists(fullZipToPath))
+            {
+                if (ifDestFileExists == IfDestFileExistsType.Fail)
+                    return false;
+                else if (ifDestFileExists == IfDestFileExistsType.CreateWithUniqueNames)
+                    fullZipToPath = Common.GetUniqueFileName(fullZipToPath);
+            }
+
+            using FileStream streamWriter = File.Create(fullZipToPath);
+            StreamUtils.Copy(ZipStream, streamWriter, buffer);
         }
 
         return true;

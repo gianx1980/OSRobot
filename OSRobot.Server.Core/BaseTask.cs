@@ -18,7 +18,7 @@
 ======================================================================================*/
 
 using OSRobot.Server.Core.DynamicData;
-using OSRobot.Server.Core.Logging;
+using OSRobot.Server.Core.Logging.Abstract;
 using System.Data;
 
 namespace OSRobot.Server.Core;
@@ -28,10 +28,10 @@ public abstract class BaseTask : ITask
     protected bool _taskReturnsRecordset = false;
     protected object _defaultRecordset = new DataTable();
     protected int _iterationsCount;
-    protected DynamicDataChain _dataChain = new DynamicDataChain();
-    protected DynamicDataSet _lastDynamicDataSet = new DynamicDataSet();
+    protected DynamicDataChain _dataChain = [];
+    protected DynamicDataSet _lastDynamicDataSet = [];
     protected IPluginInstanceLogger? _instanceLogger;
-    protected List<ExecResult> _execResults = new List<ExecResult>();
+    protected List<ExecResult> _execResults = [];
 
     public IFolder? ParentFolder { get; set; }
 
@@ -39,7 +39,7 @@ public abstract class BaseTask : ITask
     public IPluginInstanceConfig Config { get; set; }
     #pragma warning restore CS8618
 
-    public List<PluginInstanceConnection> Connections { get; set; } = new List<PluginInstanceConnection>();
+    public List<PluginInstanceConnection> Connections { get; set; } = [];
 
     public void Init()
     {

@@ -64,7 +64,7 @@ public class ExcelFileTaskConfig : ITaskConfig
     [DynamicData]
     public string SheetName { get; set; } = string.Empty;
 
-    public List<ExcelFileColumnDefinition> ColumnsDefinition { get; set; } = new List<ExcelFileColumnDefinition>();
+    public List<ExcelFileColumnDefinition> ColumnsDefinition { get; set; } = [];
 
     public bool AddHeaderIfEmpty { get; set; }
     [DynamicData]

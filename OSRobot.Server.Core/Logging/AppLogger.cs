@@ -21,14 +21,9 @@ using Serilog;
 
 namespace OSRobot.Server.Core.Logging;
 
-public class AppLogger : IAppLogger
+public class AppLogger(ILogger logger) : IAppLogger
 {
-    private ILogger _logger;
-
-    public AppLogger(ILogger logger )
-    {
-          _logger = logger;
-    }
+    private readonly ILogger _logger = logger;
 
     public void Error(string message)
     {

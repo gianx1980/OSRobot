@@ -18,7 +18,7 @@
 ======================================================================================*/
 namespace OSRobot.Server.Models.DTO;
 
-public class MainResponse<T>
+public class MainResponse<T>(int responseCode, string? responseMessage, T? responseObject)
 {
     public const int ResponseOk = 0;
     public const int ResponseAccessDenied = -1;
@@ -26,14 +26,7 @@ public class MainResponse<T>
     public const int CannotReloadWhileRunningTasks = -3;
     public const int ResponseGenericError = int.MinValue;
 
-    public MainResponse(int responseCode, string? responseMessage, T? responseObject)
-    {
-        ResponseCode = responseCode;
-        ResponseMessage = responseMessage;
-        ResponseObject = responseObject;
-    }
-
-    public int ResponseCode { get; set; }
-    public string? ResponseMessage { get; set; }
-    public T? ResponseObject { get; set; }
+    public int ResponseCode { get; set; } = responseCode;
+    public string? ResponseMessage { get; set; } = responseMessage;
+    public T? ResponseObject { get; set; } = responseObject;
 }
