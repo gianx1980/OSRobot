@@ -387,6 +387,14 @@
               size="md"
               @click="_columnAddItemClick"
             />
+            <q-btn
+              color="primary"
+              icon="upload_file"
+              :label="_$t('parseAFile')"
+              class="q-mt-sm q-ml-sm"
+              size="md"
+              @click="_showParserDialog"
+            />
           </div>
         </div>
       </q-card-section>
@@ -575,6 +583,7 @@ import PluginGeneralConfigForm from "src/components/PluginGeneralConfigForm.vue"
 import PluginIterationConfigForm from "src/components/PluginIterationConfigForm.vue";
 import BtnDynamicDataBrowser from "src/components/BtnDynamicDataBrowser.vue";
 import BtnFileBrowser from "src/components/BtnFileBrowser.vue";
+import ReadTextFileParserDialog from "src/robotObjects/readTextFileTask/ReadTextFileParserDialog.vue";
 
 const _props = defineProps(["modelValue", "containingFolderItems"]);
 const _propsRef = ref(_props);
@@ -760,5 +769,17 @@ function _columnDialogFormSubmit() {
   }
 
   _columnDialogVisibility.value = false;
+}
+
+function _showParserDialog() {
+  _$q
+    .dialog({
+      component: ReadTextFileParserDialog,
+      componentProps: {
+        cancel: true,
+        persistent: true,
+      },
+    })
+    .onOk((ev) => {});
 }
 </script>
