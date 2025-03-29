@@ -169,6 +169,7 @@ const _stepPreview = 1;
 const _wizardCurrentStepIndex = ref(0);
 const _parseRowsRead = ref(0);
 const _parseStatus = ref("inProgress");
+let _parseResult = null;
 
 let _CSVParser = null;
 
@@ -248,14 +249,14 @@ function _parseCSV() {
             // Detect column names from first row
             for (let columnName of results.data) {
               detectedConfig.columns.push(
-                _createColumnInfoObject(columnName, "string")
+                _createColumnInfoObject(columnName, "String")
               );
             }
           } else {
             // If no header exists, set a default column name<
             for (let i = 0; i < results.data.length; i++) {
               detectedConfig.columns.push(
-                _createColumnInfoObject("Column_" + i.toString(), "string")
+                _createColumnInfoObject("Column_" + i.toString(), "String")
               );
             }
           }
@@ -294,14 +295,15 @@ async function _manageStepSelectFile() {
     _parseStatus.value = "inProgress";
     _parseRowsRead.value = 0;
 
-    const parseResult = await _parseCSV();
-    _numColumnsDetected.value = parseResult.data.columns.length;
-    _delimiterDetected.value = parseResult.data.delimiter;
+    _parseResult = await _parseCSV();
+
+    _numColumnsDetected.value = _parseResult.data.columns.length;
+    _delimiterDetected.value = _parseResult.data.delimiter;
 
     //_detectedConfig.value = config.data;
 
-    if (parseResult.status === "ok") {
-      _tableRows.value = parseResult.data.columns;
+    if (_parseResult.status === "ok") {
+      _tableRows.value = _parseResult.data.columns;
       _parseStatus.value = "completed";
     } else {
       _parseStatus.value = "error";
@@ -311,12 +313,24 @@ async function _manageStepSelectFile() {
   }
 }
 
-function _manageStepPreview() {}
+function _manageStepPreview() {
+  _$q
+    .dialog({
+      title: _$t("osRobot"),
+      message: _$t("theCurrentConfigurationWillBeLostContinue"),
+      cancel: true,
+      persistent: true,
+    })
+    .onOk(() => {
+      onDialogOK(_parseResult);
+    });
+}
 
 function _stepperNext() {
   switch (_wizardCurrentStepIndex.value) {
     case _stepSelectFileIndex:
       _manageStepSelectFile();
+      break;
 
     case _stepPreview:
       _manageStepPreview();

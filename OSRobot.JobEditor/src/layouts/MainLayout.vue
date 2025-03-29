@@ -147,7 +147,7 @@
             <GenericNode
               v-bind="taskNodeProps"
               @deleteNodeClick="_nodeDelete"
-              @taskExecute="_taskExecute"
+              @taskExecute="_taskExecuteClick"
             />
           </template>
           <template #node-folder="folderNodeProps">
@@ -515,6 +515,19 @@ function _nodeDelete(ev) {
 
         _deleteTreeNode(_rootFolder.value, ev.id);
       }
+    });
+}
+
+function _taskExecuteClick(ev) {
+  _$q
+    .dialog({
+      title: _$t("osRobot"),
+      message: _$t("doYouWantToStartTheTask"),
+      cancel: true,
+      persistent: true,
+    })
+    .onOk(async () => {
+      await _taskExecute(ev);
     });
 }
 

@@ -104,6 +104,7 @@ export default {
   dontExecuteConditions: "Don't execute conditions",
   doNotCompressBackup: "Do not compress backup",
   doYouWantToDeleteItem: "Do you want to delete the selected item?",
+  doYouWantToStartTheTask: "Do you want to start the task?",
   doYouWantToExit: "Do you want to exit?",
   dynamicData: "Dynamic data",
   dynamicDataCode: "Dynamic data code",
@@ -238,6 +239,7 @@ export default {
   openFolder: "Open folder",
   osRobot: "OSRobot",
   other: "Other",
+  otherDelimiter: "Other delimiter",
   overwrite: "Overwrite",
   overwriteFileIfExists: "Overwrite file if exists",
   paletteChanged: "Palette changed",
@@ -247,7 +249,7 @@ export default {
   passwordChanged: "Password changed",
   passNullValue: "Pass NULL value",
   parseAFile: "Parse a file",
-  parseDelimitedFile: "Parse delimited file",
+  parseDelimitedFile: "Parse a delimited file",
   path: "Path",
   pathToCheck: "Path to check",
   percentagePt: "Percentage (%)",
@@ -341,6 +343,8 @@ export default {
   terabytesTb: "Terabytes (Gb)",
   text: "Text",
   textEnclosedInDoubleQuotes: "Text is enclosed in double quotes",
+  theCurrentConfigurationWillBeLostContinue:
+    "The current configuration will be lost. Do you want to continue?",
   theFieldsNewPasswordAndConfirmPasswordDoNotMatch:
     'The fields "New password" and "Confirm password" do not match',
   theCurrentPasswordIsIncorrect: "The current password is incorrect",
