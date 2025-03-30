@@ -72,7 +72,7 @@ public class ReadTextFileTask : IterationTask
             int InitialColCount = dt.Columns.Count;
             for (int i = 1; i <= columnsCount - InitialColCount; i++)
             {
-                dt.Columns.Add("Column" + (dt.Columns.Count + i).ToString(), typeof(string));
+                dt.Columns.Add("Column" + (dt.Columns.Count + 1).ToString(), typeof(string));
             }
         }
     }

@@ -214,7 +214,8 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
                         if (!connection.Enabled)
                             continue;
 
-                        if (connection.WaitSeconds != null)
+                        if (connection.WaitSeconds != null
+                            && connection.WaitSeconds != 0)
                             Thread.Sleep((int)connection.WaitSeconds * 1000);
                         
                         ITask nextTask = (ITask)connection.ConnectTo;
@@ -270,7 +271,8 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
             if (!connection.Enabled)
                 continue;
 
-            if (connection.WaitSeconds != null)
+            if (connection.WaitSeconds != null
+                && connection.WaitSeconds != 0)
                 Thread.Sleep((int)connection.WaitSeconds * 1000);
 
             if (connection.EvaluateExecConditions(execResult))
