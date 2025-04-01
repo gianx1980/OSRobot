@@ -93,11 +93,11 @@ public class RESTApiTask : IterationTask
     private void PostIteration(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
     {
         RESTApiTaskConfig tConfig = (RESTApiTaskConfig)_iterationConfig;
-        dDataSet.Add(RESTApiTaskCommon.DynDataKeyURL, tConfig.URL);
-        dDataSet.Add(RESTApiTaskCommon.DynDataKeyRawContent, _rawContent);
-        dDataSet.Add(RESTApiTaskCommon.DynDataKeyHttpResult, _httpResult);
+        dDataSet.TryAdd(RESTApiTaskCommon.DynDataKeyURL, tConfig.URL);
+        dDataSet.TryAdd(RESTApiTaskCommon.DynDataKeyRawContent, _rawContent);
+        dDataSet.TryAdd(RESTApiTaskCommon.DynDataKeyHttpResult, _httpResult);
         if (tConfig != null && tConfig.ReturnsRecordset)
-            dDataSet.Add(CommonDynamicData.DefaultRecordsetName, _defaultRecordset);
+            dDataSet.TryAdd(CommonDynamicData.DefaultRecordsetName, _defaultRecordset);
     }
 
     protected override void PostIterationSucceded(int currentIteration, ExecResult result, DynamicDataSet dDataSet)

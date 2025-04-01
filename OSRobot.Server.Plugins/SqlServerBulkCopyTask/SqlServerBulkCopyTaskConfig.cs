@@ -37,8 +37,7 @@ public class SqlServerBulkCopyTaskConfig : ITaskConfig
     public string IterationObject { get; set; } = string.Empty;
     public int IterationsCount { get; set; }
 
-
-    [DynamicData]
+    // Don't need to mark as [DynamicData]
     public string SourceRecordset { get; set; } = string.Empty; 
 
     [DynamicData]

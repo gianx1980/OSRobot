@@ -157,7 +157,7 @@ public class CpuEvent : IEvent
             {
                 DateTime now = DateTime.Now;
                 DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, true, 0, now, now, 1);
-                dDataSet.Add("CpuUsagePercentage", cpuUsage);
+                dDataSet.TryAdd("CpuUsagePercentage", cpuUsage);
 
                 if (Config.Log)
                 {

@@ -104,11 +104,11 @@ public class FileSystemEvent : IEvent
             DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, true, 0, now, now, 1);
             
             FileInfo fi = new(e.FullPath);
-            dDataSet.Add(FileSystemEventCommon.DynDataKeyFullPathName, e.FullPath);
-            dDataSet.Add(FileSystemEventCommon.DynDataKeyFileName, e.Name ?? string.Empty);
-            dDataSet.Add(FileSystemEventCommon.DynDataKeyFileNameWithoutExtension, e.Name == null ? string.Empty : e.Name[..^fi.Extension.Length]);
-            dDataSet.Add(FileSystemEventCommon.DynDataKeyFileExtension, fi.Extension[1..]);
-            dDataSet.Add(FileSystemEventCommon.DynDataKeyChangeType, e.ChangeType.ToString());
+            dDataSet.TryAdd(FileSystemEventCommon.DynDataKeyFullPathName, e.FullPath);
+            dDataSet.TryAdd(FileSystemEventCommon.DynDataKeyFileName, e.Name ?? string.Empty);
+            dDataSet.TryAdd(FileSystemEventCommon.DynDataKeyFileNameWithoutExtension, e.Name == null ? string.Empty : e.Name[..^fi.Extension.Length]);
+            dDataSet.TryAdd(FileSystemEventCommon.DynDataKeyFileExtension, fi.Extension[1..]);
+            dDataSet.TryAdd(FileSystemEventCommon.DynDataKeyChangeType, e.ChangeType.ToString());
             
             if (Config.Log)
             {

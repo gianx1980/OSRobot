@@ -42,8 +42,8 @@ public class SqlServerBulkCopyTask : IterationTask
 
         if (dtSource == null)
         {
-            _instanceLogger?.Error(this, "Cannot access the requested source recordset.");
-            return;
+            _instanceLogger?.Error(this, $"Cannot access the requested source recordset {tConfig.SourceRecordset}.");
+            throw new ApplicationException("Cannot access the requested source recordset.");
         }
 
         _instanceLogger?.Info(this, $"About to bulk copy {dtSource.Rows.Count} rows to table {tConfig.DestinationTable}...");

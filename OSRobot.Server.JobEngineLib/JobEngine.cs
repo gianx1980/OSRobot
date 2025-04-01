@@ -196,13 +196,14 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
                 taskCopy = (ITask?)CoreHelpers.CloneObjects(task);
                 if (taskCopy == null)
                     throw new ApplicationException("Cloning configuration returned null");
-                DynamicDataSet? lastDataSetCopy = (DynamicDataSet?)CoreHelpers.CloneObjects(lastDynamicDataSet) ?? throw new ApplicationException("Cloning configuration returned null");
+                
+                //DynamicDataSet? lastDataSetCopy = (DynamicDataSet?)CoreHelpers.CloneObjects(lastDynamicDataSet) ?? throw new ApplicationException("Cloning configuration returned null");
                 if (taskCopy.Config.Log)
                     instanceLogger.TaskStarting(taskCopy);
 
                 instanceLogger.Info($"About to run task {taskCopy.Config.Id} with unique running id: {thisTaskId}");
                 _runningTasks.TryAdd(thisTaskId, taskCopy);
-                InstanceExecResult instExecResult = taskCopy.Run(dataChain, lastDataSetCopy, instanceLogger);
+                InstanceExecResult instExecResult = taskCopy.Run(dataChain, lastDynamicDataSet, instanceLogger);
                 
                 if (taskCopy.Config.Log)
                     instanceLogger.TaskEnded(taskCopy);
@@ -227,9 +228,9 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
                         {
                             if (connection.EvaluateExecConditions(execRes))
                             {
-                                DynamicDataChain? dataChainCopy = (DynamicDataChain?)CoreHelpers.CloneObjects(dataChain) ?? throw new ApplicationException("Cloning configuration returned null");
-                                dataChainCopy.Add(taskCopy.Config.Id, execRes.Data);
-                                ExecuteTask(nextTask, dataChainCopy, execRes.Data, instanceLogger);
+                                //DynamicDataChain? dataChainCopy = (DynamicDataChain?)CoreHelpers.CloneObjects(dataChain) ?? throw new ApplicationException("Cloning configuration returned null");
+                                dataChain.TryAdd(taskCopy.Config.Id, execRes.Data);
+                                ExecuteTask(nextTask, dataChain, execRes.Data, instanceLogger);
                             }
                         }
                     }
@@ -261,8 +262,8 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
         _log.Info($"Event triggered by object: {pluginEvent.Config.Id}:{pluginEvent.Config.Name}:{pluginEvent.GetType().Name}");
 
         _log.Info("Building dynamic data chain");
-        DynamicDataChain DataChain = [];
-        DataChain.Add(pluginEvent.Config.Id, e.DynamicData);
+        DynamicDataChain dataChain = [];
+        dataChain.TryAdd(pluginEvent.Config.Id, e.DynamicData);
 
         ExecResult execResult = new(true, e.DynamicData);
 
@@ -282,7 +283,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
                 if (taskToRun.Config.Enabled)
                 {
                     _log.Info($"Calling ExecuteTask for: {taskToRun.Config.Id}:{taskToRun.Config.Name}:{taskToRun.GetType().Name}");
-                    ExecuteTask(taskToRun, DataChain, e.DynamicData, e.Logger);
+                    ExecuteTask(taskToRun, dataChain, e.DynamicData, e.Logger);
                 }
                 else
                 {

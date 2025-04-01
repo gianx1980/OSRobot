@@ -58,36 +58,34 @@ public static class CommonDynamicData
                                                         DateTime executionStartDate, DateTime executionEndDate,
                                                         int numberOfIterations)
     {
-        DynamicDataSet dynDataSet = new()
-        {
-            { ObjectName, pluginInstance.Config.Name },
-            { ObjectID, pluginInstance.Config.Id },
-            { ExecutionResult, executionResult },
-            { ExecutionReturnValue, executionReturnValue },
-            { ExecutionStartDate, executionStartDate },
-            { ExecutionStartDateYear, executionStartDate.Year },
-            { ExecutionStartDateMonth, executionStartDate.Month },
-            { ExecutionStartDateDay, executionStartDate.Day },
-            { ExecutionStartDateHour, executionStartDate.Hour },
-            { ExecutionStartDateMinute, executionStartDate.Minute },
-            { ExecutionStartDateSecond, executionStartDate.Second },
-            { ExecutionStartDateTicks, executionStartDate.Ticks },
-            { ExecutionStartDateUnderscore, $"{executionStartDate:yyyy_MM_dd_HH_mm_ss}" },
-            { ExecutionStartDateUnderscoreDate, $"{executionStartDate:yyyy_MM_dd}" },
-            { ExecutionStartDateUnderscoreTime, $"{executionStartDate:HH_mm_ss}" },
-            { ExecutionEndDate, executionEndDate },
-            { ExecutionEndDateYear, executionEndDate.Year },
-            { ExecutionEndDateMonth, executionEndDate.Month },
-            { ExecutionEndDateDay, executionEndDate.Day },
-            { ExecutionEndDateHour, executionEndDate.Hour },
-            { ExecutionEndDateMinute, executionEndDate.Minute },
-            { ExecutionEndDateSecond, executionEndDate.Second },
-            { ExecutionEndDateTicks, executionEndDate.Ticks },
-            { ExecutionEndDateUnderscore, $"{executionEndDate:yyyy_MM_dd_HH_mm_ss}" },
-            { ExecutionEndDateUnderscoreDate, $"{executionEndDate:yyyy_MM_dd}" },
-            { ExecutionEndDateUnderscoreTime, $"{executionEndDate:HH_mm_ss}" },
-            { NumberOfIterations, numberOfIterations }
-        };
+        DynamicDataSet dynDataSet = new();
+        dynDataSet.TryAdd(ObjectName, pluginInstance.Config.Name);
+        dynDataSet.TryAdd(ObjectID, pluginInstance.Config.Id);
+        dynDataSet.TryAdd(ExecutionResult, executionResult);
+        dynDataSet.TryAdd(ExecutionReturnValue, executionReturnValue);
+        dynDataSet.TryAdd(ExecutionStartDate, executionStartDate);
+        dynDataSet.TryAdd(ExecutionStartDateYear, executionStartDate.Year);
+        dynDataSet.TryAdd(ExecutionStartDateMonth, executionStartDate.Month);
+        dynDataSet.TryAdd(ExecutionStartDateDay, executionStartDate.Day);
+        dynDataSet.TryAdd(ExecutionStartDateHour, executionStartDate.Hour);
+        dynDataSet.TryAdd(ExecutionStartDateMinute, executionStartDate.Minute);
+        dynDataSet.TryAdd(ExecutionStartDateSecond, executionStartDate.Second);
+        dynDataSet.TryAdd(ExecutionStartDateTicks, executionStartDate.Ticks);
+        dynDataSet.TryAdd(ExecutionStartDateUnderscore, $"{executionStartDate:yyyy_MM_dd_HH_mm_ss}");
+        dynDataSet.TryAdd(ExecutionStartDateUnderscoreDate, $"{executionStartDate:yyyy_MM_dd}");
+        dynDataSet.TryAdd(ExecutionStartDateUnderscoreTime, $"{executionStartDate:HH_mm_ss}");
+        dynDataSet.TryAdd(ExecutionEndDate, executionEndDate);
+        dynDataSet.TryAdd(ExecutionEndDateYear, executionEndDate.Year);
+        dynDataSet.TryAdd(ExecutionEndDateMonth, executionEndDate.Month);
+        dynDataSet.TryAdd(ExecutionEndDateDay, executionEndDate.Day);
+        dynDataSet.TryAdd(ExecutionEndDateHour, executionEndDate.Hour);
+        dynDataSet.TryAdd(ExecutionEndDateMinute, executionEndDate.Minute);
+        dynDataSet.TryAdd(ExecutionEndDateSecond, executionEndDate.Second);
+        dynDataSet.TryAdd(ExecutionEndDateTicks, executionEndDate.Ticks);
+        dynDataSet.TryAdd(ExecutionEndDateUnderscore, $"{executionEndDate:yyyy_MM_dd_HH_mm_ss}");
+        dynDataSet.TryAdd(ExecutionEndDateUnderscoreDate, $"{executionEndDate:yyyy_MM_dd}");
+        dynDataSet.TryAdd(ExecutionEndDateUnderscoreTime, $"{executionEndDate:HH_mm_ss}");
+        dynDataSet.TryAdd(NumberOfIterations, numberOfIterations);
 
         return dynDataSet;
     }

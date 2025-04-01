@@ -376,7 +376,7 @@ public class XmlDeserialization
             }
 
             PropertyInfo? propInfo = FindProperty(properties, xmlSubElement.Name);
-            if (propInfo != null)
+            if (propInfo != null && propInfo.CanWrite)
             {
                 if (xmlSubElement.HasAttribute(XmlCommon.RefIDAttributeName))
                 {

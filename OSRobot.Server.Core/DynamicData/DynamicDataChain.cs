@@ -16,40 +16,12 @@
     You should have received a copy of the GNU General Public License
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
-using System.Collections;
-using OSRobot.Server.Core.Persistence;
+
+using System.Collections.Concurrent;
 
 namespace OSRobot.Server.Core.DynamicData;
 
-public class DynamicDataChain : IEnumerable
+public class DynamicDataChain : ConcurrentDictionary<int, DynamicDataSet>
 {
-    [XmlSerializeField]
-    private readonly Dictionary<int, DynamicDataSet> _data = [];
-
-    public void Add(int key, DynamicDataSet value)
-    {
-        _data.Add(key, value);
-    }
-
-    public DynamicDataSet this[int key]
-    {
-        get
-        {
-            return _data[key];
-        }
-        set
-        {
-            _data[key] = value;
-        }
-    }
-
-    public bool Remove(int key)
-    {
-        return _data.Remove(key);
-    }
-
-    public IEnumerator GetEnumerator()
-    {
-        return _data.GetEnumerator();
-    }
+    
 }

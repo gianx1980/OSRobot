@@ -156,7 +156,7 @@ public class MemoryEvent : IEvent
             {
                 DateTime now = DateTime.Now;
                 DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, true, 0, now, now, 1);
-                dDataSet.Add("MemoryUsagePercentage", memoryUsage);
+                dDataSet.TryAdd("MemoryUsagePercentage", memoryUsage);
 
                 if (Config.Log)
                 {

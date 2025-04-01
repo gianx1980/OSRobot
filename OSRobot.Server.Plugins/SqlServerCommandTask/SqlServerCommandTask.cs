@@ -157,7 +157,7 @@ public class SqlServerCommandTask : IterationTask
         SqlServerCommandTaskConfig tConfig = (SqlServerCommandTaskConfig)_iterationConfig;
 
         if (tConfig.ReturnsRecordset)
-            dDataSet.Add(CommonDynamicData.DefaultRecordsetName, _defaultRecordset);
+            dDataSet.TryAdd(CommonDynamicData.DefaultRecordsetName, _defaultRecordset);
 
         dDataSet[CommonDynamicData.ExecutionReturnValue] = _executionReturnValue;
     }
