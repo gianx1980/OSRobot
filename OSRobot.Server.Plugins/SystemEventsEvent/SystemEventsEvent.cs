@@ -129,7 +129,7 @@ public class SystemEventsEvent : IEvent
 
             DateTime now = DateTime.Now;
             DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, true, 0, now, now, 1);
-            dDataSet.Add(SystemEventsEventCommon.DynDataKeyEventCode, eventCode);
+            dDataSet.TryAdd(SystemEventsEventCommon.DynDataKeyEventCode, eventCode);
 
             if (Config.Log)
             {

@@ -128,8 +128,8 @@ public class DiskSpaceEvent : IEvent
 
                         DateTime now = DateTime.Now;
                         DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, true, 0, now, now, 1);
-                        dDataSet.Add("DiskName", drive.Name);
-                        dDataSet.Add("DiskSpaceBytes", drive.AvailableFreeSpace);
+                        dDataSet.TryAdd("DiskName", drive.Name);
+                        dDataSet.TryAdd("DiskSpaceBytes", drive.AvailableFreeSpace);
 
                         if (Config.Log)
                         {

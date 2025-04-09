@@ -301,9 +301,9 @@ public class FileSystemTask : IterationTask
         if (tConfig.Command == FileSystemTaskCommandType.CheckExistence)
         {
             if (_filePathExists)
-                dDataSet.Add("FilePathExists", 1);
+                dDataSet.TryAdd("FilePathExists", 1);
             else
-                dDataSet.Add("FilePathExists", 0);
+                dDataSet.TryAdd("FilePathExists", 0);
         }
     }
 }

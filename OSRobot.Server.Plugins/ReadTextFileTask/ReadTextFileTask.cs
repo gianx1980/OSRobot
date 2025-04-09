@@ -52,16 +52,16 @@ public class ReadTextFileTask : IterationTask
 
     private void BuildCustomDataTable(DataTable recordset, ReadTextFileTaskConfig config)
     {
-        foreach (ReadTextFileColumnDefinition ColDef in config.ColumnsDefinition)
+        foreach (ReadTextFileColumnDefinition colDef in config.ColumnsDefinition)
         {
-            if (ColDef.ColumnDataType == ReadTextFileColumnDataType.String)
-                recordset.Columns.Add(ColDef.ColumnName, typeof(string));
-            else if (ColDef.ColumnDataType == ReadTextFileColumnDataType.Integer)
-                recordset.Columns.Add(ColDef.ColumnName, typeof(int));
-            else if (ColDef.ColumnDataType == ReadTextFileColumnDataType.Decimal)
-                recordset.Columns.Add(ColDef.ColumnName, typeof(decimal));
-            else if (ColDef.ColumnDataType == ReadTextFileColumnDataType.Datetime)
-                recordset.Columns.Add(ColDef.ColumnName, typeof(DateTime));
+            if (colDef.ColumnDataType == ReadTextFileColumnDataType.String)
+                recordset.Columns.Add(colDef.ColumnName, typeof(string));
+            else if (colDef.ColumnDataType == ReadTextFileColumnDataType.Integer)
+                recordset.Columns.Add(colDef.ColumnName, typeof(int));
+            else if (colDef.ColumnDataType == ReadTextFileColumnDataType.Decimal)
+                recordset.Columns.Add(colDef.ColumnName, typeof(decimal));
+            else if (colDef.ColumnDataType == ReadTextFileColumnDataType.Datetime)
+                recordset.Columns.Add(colDef.ColumnName, typeof(DateTime));
         }
     }
 
@@ -69,10 +69,10 @@ public class ReadTextFileTask : IterationTask
     {
         if (dt.Columns.Count < columnsCount)
         {
-            int InitialColCount = dt.Columns.Count;
-            for (int i = 1; i <= columnsCount - InitialColCount; i++)
+            int initialColCount = dt.Columns.Count;
+            for (int i = 1; i <= columnsCount - initialColCount; i++)
             {
-                dt.Columns.Add("Column" + (dt.Columns.Count + i).ToString(), typeof(string));
+                dt.Columns.Add("Column" + (dt.Columns.Count + 1).ToString(), typeof(string));
             }
         }
     }
@@ -121,74 +121,67 @@ public class ReadTextFileTask : IterationTask
 
     private void AddRow(int rowIndex, string[] row, ReadTextFileTaskConfig config, DataTable recordset)
     {
-        if (config.SplitColumnsType == ReadTextFileSplitColumnsType.None || !config.OverrideDefaultColumnsDefinition)
+        if (config.SplitColumnsType == ReadTextFileSplitColumnsType.None || config.ColumnsDefinition.Count == 0)
         {
             AdjustDataTableColumnsCount(recordset, row.Length);
             recordset.Rows.Add(row);
         }
         else if (config.SplitColumnsType == ReadTextFileSplitColumnsType.UseDelimiters)
         {
-            int ColumnPosition = int.MinValue;
+            int columnPosition = int.MinValue;
 
             try
             {
-                DataRow DR = recordset.NewRow();
+                DataRow dr = recordset.NewRow();
                 foreach (ReadTextFileColumnDefinition ColDef in config.ColumnsDefinition)
                 {
-                    // **** Only for logging purpose
-                    if (ColDef.ColumnPosition == null)
-                        ColumnPosition = int.MinValue;
-                    else
-                        ColumnPosition = (int)ColDef.ColumnPosition;
-
                     if (!ColDef.ColumnIsIdentity)
                     {
-                        string TempColumnValue = row[(int)ColDef.ColumnPosition! - 1];
-                        FillDataRowColumn(ColDef, TempColumnValue, DR);
+                        string TempColumnValue = row[(int)ColDef.ColumnPosition!];
+                        FillDataRowColumn(ColDef, TempColumnValue, dr);
                     }
-                    // **** 
                 }
-                recordset.Rows.Add(DR);
+                recordset.Rows.Add(dr);
             }
             catch (Exception ex)
             {
-                throw new ApplicationException($"An error occurred adding row into datatable. Row: {rowIndex} Column position: {ColumnPosition}", ex);
+                throw new ApplicationException($"An error occurred adding row into datatable. Row: {rowIndex} Column position: {columnPosition}", ex);
             }
         }
         else if (config.SplitColumnsType == ReadTextFileSplitColumnsType.UseFixedWidthColumns)
         {
-            int ColumnStartsFrom = int.MinValue;
-            int ColumnEndsTo = int.MinValue;
+            int columnStartsFrom = int.MinValue;
+            int columnEndsTo = int.MinValue;
 
             try
             {
-                DataRow DR = recordset.NewRow();
+                DataRow dr = recordset.NewRow();
                 string FullRow = row[0];
                 foreach (ReadTextFileColumnDefinition ColDef in config.ColumnsDefinition)
                 {
                     // **** Only for logging purpose
                     if (ColDef.ColumnStartsFromCharPos == null)
-                        ColumnStartsFrom = int.MinValue;
+                        columnStartsFrom = int.MinValue;
                     else
-                        ColumnStartsFrom = (int)ColDef.ColumnStartsFromCharPos;
+                        columnStartsFrom = (int)ColDef.ColumnStartsFromCharPos;
 
                     if (ColDef.ColumnEndsAtCharPos == null)
-                        ColumnEndsTo = int.MinValue;
+                        columnEndsTo = int.MinValue;
                     else
-                        ColumnEndsTo = (int)ColDef.ColumnEndsAtCharPos;
+                        columnEndsTo = (int)ColDef.ColumnEndsAtCharPos;
                     // **** 
 
                     if (!ColDef.ColumnIsIdentity)
                     {
                         string TempColumnValue = FullRow.Substring((int)ColDef.ColumnStartsFromCharPos! - 1, (int)((ColDef.ColumnEndsAtCharPos! - 1) - (ColDef.ColumnStartsFromCharPos - 1) + 1));
-                        FillDataRowColumn(ColDef, TempColumnValue, DR);
+                        FillDataRowColumn(ColDef, TempColumnValue, dr);
                     }
                 }
-                recordset.Rows.Add(DR);
+                recordset.Rows.Add(dr);
             }
             catch (Exception ex)
             {
-                throw new ApplicationException($"An error occurred adding row into datatable. Row: {rowIndex} Column starts from: {ColumnStartsFrom} Column ends to: {ColumnEndsTo}", ex);
+                throw new ApplicationException($"An error occurred adding row into datatable. Row: {rowIndex} Column starts from: {columnStartsFrom} Column ends to: {columnEndsTo}", ex);
             }
         }
     }
@@ -196,95 +189,105 @@ public class ReadTextFileTask : IterationTask
     protected override void RunIteration(int currentIteration)
     {
         // For this kind of objects consider only one iteration
-        ReadTextFileTaskConfig TConfig = (ReadTextFileTaskConfig)_iterationConfig;
-        DataTable DefaultRecordset = new();
-        _defaultRecordset = DefaultRecordset;
+        ReadTextFileTaskConfig tConfig = (ReadTextFileTaskConfig)_iterationConfig;
+        DataTable defaultRecordset = new();
+        _defaultRecordset = defaultRecordset;
 
         // If columns definition have been overriden, build the datatable according to user definition
-        if (TConfig.OverrideDefaultColumnsDefinition)
-            BuildCustomDataTable(DefaultRecordset, TConfig);
-
-        using TextFieldParser FileParser = new(TConfig.FilePath);
-        if (TConfig.SplitColumnsType == ReadTextFileSplitColumnsType.UseDelimiters)
+        if (tConfig.ColumnsDefinition.Count > 0)
         {
-            FileParser.TextFieldType = FieldType.Delimited;
-            FileParser.Delimiters = BuildDelimitersArray(TConfig);
-            FileParser.HasFieldsEnclosedInQuotes = TConfig.UseDoubleQuotes;
+            // Set a default column position if empty
+            for (int i = 0; i < tConfig.ColumnsDefinition.Count; i++)
+            {
+                if (tConfig.ColumnsDefinition[i].ColumnPosition == null)
+                    tConfig.ColumnsDefinition[i].ColumnPosition = i;
+            }
+
+            BuildCustomDataTable(defaultRecordset, tConfig);
+        }
+            
+
+        using TextFieldParser fileParser = new(tConfig.FilePath);
+        if (tConfig.SplitColumnsType == ReadTextFileSplitColumnsType.UseDelimiters)
+        {
+            fileParser.TextFieldType = FieldType.Delimited;
+            fileParser.Delimiters = BuildDelimitersArray(tConfig);
+            fileParser.HasFieldsEnclosedInQuotes = tConfig.UseDoubleQuotes;
         }
 
-        int ReadFromRow = 0;
-        int ReadToRow = 0;
-        int CurrentRow = 1;
+        int readFromRow = 0;
+        int readToRow = 0;
+        int currentRow = 1;
 
-        if (TConfig.ReadAllTheRowsOption)
+        if (tConfig.ReadAllTheRowsOption)
         {
-            while (!FileParser.EndOfData)
+            while (!fileParser.EndOfData)
             {
                 try
                 {
-                    string[] Row = ReadRow(FileParser, TConfig);
+                    string[] row = ReadRow(fileParser, tConfig);
 
-                    if (CurrentRow == 1 && TConfig.SkipFirstLine)
+                    if (currentRow == 1 && tConfig.SkipFirstLine)
                     {
-                        CurrentRow++;
+                        currentRow++;
                         continue;
                     }
 
-                    AddRow(CurrentRow, Row, TConfig, DefaultRecordset);
+                    AddRow(currentRow, row, tConfig, defaultRecordset);
                 }
                 catch (MalformedLineException ex)
                 {
                     _instanceLogger?.Error(this, "Error parsing line", ex);
                 }
 
-                CurrentRow++;
+                currentRow++;
             }
         }
-        else if (TConfig.ReadLastRowOption)
+        else if (tConfig.ReadLastRowOption)
         {
-            string[]? Row = null;
-            while (!FileParser.EndOfData)
+            string[]? row = null;
+            while (!fileParser.EndOfData)
             {
                 try
                 {
-                    Row = ReadRow(FileParser, TConfig);
-                    CurrentRow++;
+                    row = ReadRow(fileParser, tConfig);
+                    currentRow++;
                 }
                 catch (MalformedLineException ex)
                 {
                     _instanceLogger?.Error(this, "Error parsing line", ex);
                 }
             }
-            if (Row != null)
+            if (row != null)
             {
-                AddRow(CurrentRow, Row, TConfig, DefaultRecordset);
+                AddRow(currentRow, row, tConfig, defaultRecordset);
             }
         }
-        else if (TConfig.ReadRowNumberOption || (TConfig.ReadIntervalOption && TConfig.ReadInterval == ReadTextFileIntervalType.ReadFromRowToRow))
+        else if (tConfig.ReadRowNumberOption || (tConfig.ReadIntervalOption && tConfig.ReadInterval == ReadTextFileIntervalType.ReadFromRowToRow))
         {
-            if (TConfig.ReadRowNumberOption)
+            if (tConfig.ReadRowNumberOption)
             {
-                ReadFromRow = int.Parse(TConfig.ReadRowNumber);
-                ReadToRow = ReadFromRow;
+                readFromRow = int.Parse(tConfig.ReadRowNumber);
+                readToRow = readFromRow;
             }
             else
             {
-                ReadFromRow = int.Parse(TConfig.ReadFromRow);
-                ReadToRow = int.Parse(TConfig.ReadToRow);
+                readFromRow = int.Parse(tConfig.ReadFromRow);
+                readToRow = int.Parse(tConfig.ReadToRow);
             }
 
             string[]? Row = null;
-            while (!FileParser.EndOfData)
+            while (!fileParser.EndOfData)
             {
                 try
                 {
-                    if (CurrentRow > ReadToRow)
+                    if (currentRow > readToRow)
                         break;
 
-                    Row = ReadRow(FileParser, TConfig);
-                    if (CurrentRow >= ReadFromRow && CurrentRow <= ReadToRow)
+                    Row = ReadRow(fileParser, tConfig);
+                    if (currentRow >= readFromRow && currentRow <= readToRow)
                     {
-                        AddRow(CurrentRow, Row, TConfig, DefaultRecordset);
+                        AddRow(currentRow, Row, tConfig, defaultRecordset);
                     }
                 }
                 catch (MalformedLineException ex)
@@ -292,19 +295,19 @@ public class ReadTextFileTask : IterationTask
                     _instanceLogger?.Error(this, "Error parsing line", ex);
                 }
 
-                CurrentRow++;
+                currentRow++;
             }
         }
         else
         {
-            List<string[]> Rows = [];
-            string[]? Row = null;
-            while (!FileParser.EndOfData)
+            List<string[]> rows = [];
+            string[]? row = null;
+            while (!fileParser.EndOfData)
             {
                 try
                 {
-                    Row = ReadRow(FileParser, TConfig);
-                    Rows.Add(Row);
+                    row = ReadRow(fileParser, tConfig);
+                    rows.Add(row);
                 }
                 catch (MalformedLineException ex)
                 {
@@ -312,26 +315,26 @@ public class ReadTextFileTask : IterationTask
                 }
             }
 
-            if (Rows.Count > 0)
+            if (rows.Count > 0)
             {
-                if (TConfig.ReadInterval == ReadTextFileIntervalType.ReadFromRowToLastRow)
+                if (tConfig.ReadInterval == ReadTextFileIntervalType.ReadFromRowToLastRow)
                 {
                     // From row to end
-                    ReadFromRow = int.Parse(TConfig.ReadFromRow);
-                    ReadFromRow--;
-                    if (ReadFromRow < 0) ReadFromRow = 0;
+                    readFromRow = int.Parse(tConfig.ReadFromRow);
+                    readFromRow--;
+                    if (readFromRow < 0) readFromRow = 0;
                 }
                 else
                 {
                     // Read N Last rows
-                    ReadFromRow = (Rows.Count - 1) - int.Parse(TConfig.ReadNumberOfRows);
+                    readFromRow = (rows.Count - 1) - int.Parse(tConfig.ReadNumberOfRows);
                 }
 
-                if (ReadFromRow <= (Rows.Count - 1))
+                if (readFromRow <= (rows.Count - 1))
                 {
-                    for (int RowIndex = ReadFromRow; RowIndex < Rows.Count; RowIndex++)
+                    for (int RowIndex = readFromRow; RowIndex < rows.Count; RowIndex++)
                     {
-                        AddRow(RowIndex, Rows[RowIndex], TConfig, DefaultRecordset);
+                        AddRow(RowIndex, rows[RowIndex], tConfig, defaultRecordset);
                     }
                 }
             }
@@ -346,7 +349,7 @@ public class ReadTextFileTask : IterationTask
             _instanceLogger?.TaskCompleted(this);
         }
 
-        dDataSet.Add(CommonDynamicData.DefaultRecordsetName, _defaultRecordset);
+        dDataSet.TryAdd(CommonDynamicData.DefaultRecordsetName, _defaultRecordset);
     }
 
     protected override void PostIterationSucceded(int currentIteration, ExecResult result, DynamicDataSet dDataSet)

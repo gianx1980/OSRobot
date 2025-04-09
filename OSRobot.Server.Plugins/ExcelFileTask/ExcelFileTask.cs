@@ -206,7 +206,7 @@ public class ExcelFileTask : BaseTask
             DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, true, 0, startDateTime, DateTime.Now, _iterationsCount);
 
             if (tConfig_0.TaskType == ExcelFileTaskType.ReadRow)
-                dDataSet.Add(CommonDynamicData.DefaultRecordsetName, defaultRecordset);
+                dDataSet.TryAdd(CommonDynamicData.DefaultRecordsetName, defaultRecordset);
             ExecResult result = new(true, dDataSet);
             _execResults.Add(result);
 

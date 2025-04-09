@@ -314,13 +314,13 @@ public class SqlServerBackupTask : IterationTask
 
     protected override void PostIterationSucceded(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
     {
-        dDataSet.Add(SqlServerBackupTaskCommon.DynDataKeySuccessfulBackupsNumber, _successfulBackupsNumber);
-        dDataSet.Add(SqlServerBackupTaskCommon.DynDataKeyFailedBackupsNumber, _failedBackupsNumber);
+        dDataSet.TryAdd(SqlServerBackupTaskCommon.DynDataKeySuccessfulBackupsNumber, _successfulBackupsNumber);
+        dDataSet.TryAdd(SqlServerBackupTaskCommon.DynDataKeyFailedBackupsNumber, _failedBackupsNumber);
     }
 
     protected override void PostIterationFailed(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
     {
-        dDataSet.Add(SqlServerBackupTaskCommon.DynDataKeySuccessfulBackupsNumber, _successfulBackupsNumber);
-        dDataSet.Add(SqlServerBackupTaskCommon.DynDataKeyFailedBackupsNumber, _failedBackupsNumber);
+        dDataSet.TryAdd(SqlServerBackupTaskCommon.DynDataKeySuccessfulBackupsNumber, _successfulBackupsNumber);
+        dDataSet.TryAdd(SqlServerBackupTaskCommon.DynDataKeyFailedBackupsNumber, _failedBackupsNumber);
     }
 }

@@ -229,7 +229,9 @@
     </q-card>
     <q-card class="q-mt-sm q-mb-sm">
       <q-card-section>
-        <div class="text-h6">{{ _$t("columnsSplit") }}</div>
+        <div class="text-h6">
+          {{ _$t("columnsSplit") }}
+        </div>
       </q-card-section>
       <q-card-section>
         <div class="row">
@@ -291,12 +293,31 @@
           </div>
         </div>
         <div class="row q-mb-sm">
-          <div class="col">
+          <div class="col-4">
             <q-toggle
               right-label
               v-model="_propsRef.modelValue.delimiterOther"
               :label="_$t('other')"
               dense
+            />
+          </div>
+          <div class="col-4">
+            <q-input
+              ref="inputDelimitedOtherChar"
+              filled
+              maxlength="1"
+              :readonly="!_propsRef.modelValue.delimiterOther"
+              class="q-pr-xs"
+              v-model="_propsRef.modelValue.delimiterOtherChar"
+              :label="_$t('otherDelimiter')"
+              lazy-rules
+              dense
+              :rules="[
+                (val) =>
+                  !!val ||
+                  !_propsRef.modelValue.delimiterOther ||
+                  _$t('thisFieldIsMandatory'),
+              ]"
             />
           </div>
         </div>
@@ -386,6 +407,16 @@
               class="q-mt-sm"
               size="md"
               @click="_columnAddItemClick"
+            />
+          </div>
+          <div class="col" align="right">
+            <q-btn
+              color="primary"
+              icon="upload_file"
+              :label="_$t('parseDelimitedFile')"
+              class="q-mt-sm q-ml-sm"
+              size="md"
+              @click="_showParserDialog"
             />
           </div>
         </div>
@@ -575,9 +606,11 @@ import PluginGeneralConfigForm from "src/components/PluginGeneralConfigForm.vue"
 import PluginIterationConfigForm from "src/components/PluginIterationConfigForm.vue";
 import BtnDynamicDataBrowser from "src/components/BtnDynamicDataBrowser.vue";
 import BtnFileBrowser from "src/components/BtnFileBrowser.vue";
+import ReadTextFileParserDialog from "src/robotObjects/readTextFileTask/ReadTextFileParserDialog.vue";
 
 const _props = defineProps(["modelValue", "containingFolderItems"]);
 const _propsRef = ref(_props);
+const inputDelimitedOtherChar = ref(null);
 
 const _emit = defineEmits(["nodeNeedsUpdate"]);
 
@@ -732,6 +765,15 @@ watch(
   }
 );
 
+watch(
+  () => _propsRef.value.modelValue.delimiterOther,
+  () => {
+    // Reset validation of input delimitedOtherChar
+    _propsRef.value.modelValue.delimiterOtherChar = null;
+    inputDelimitedOtherChar.value.resetValidation();
+  }
+);
+
 // Dialog management
 const _columnDialogVisibility = ref(false);
 const _columnDialogFormData = ref({});
@@ -760,5 +802,60 @@ function _columnDialogFormSubmit() {
   }
 
   _columnDialogVisibility.value = false;
+}
+
+function _showParserDialog() {
+  _$q
+    .dialog({
+      component: ReadTextFileParserDialog,
+      componentProps: {
+        cancel: true,
+        persistent: true,
+      },
+    })
+    .onOk((ev) => {
+      // Reset current column configuration e set new configuration
+      _propsRef.value.modelValue.splitColumnsType = "UseDelimiters";
+      _propsRef.value.modelValue.delimiterTab = false;
+      _propsRef.value.modelValue.delimiterComma = false;
+      _propsRef.value.modelValue.delimiterSemicolon = false;
+      _propsRef.value.modelValue.delimiterSpace = false;
+      _propsRef.value.modelValue.delimiterOther = false;
+      _propsRef.value.modelValue.delimiterOtherChar = null;
+      _propsRef.value.modelValue.columnsDefinition.length = 0;
+
+      if (ev.data.delimiter === "\t")
+        _propsRef.value.modelValue.delimiterTab = true;
+      else if (ev.data.delimiter === ",")
+        _propsRef.value.modelValue.delimiterComma = true;
+      else if (ev.data.delimiter === ";")
+        _propsRef.value.modelValue.delimiterSemicolon = true;
+      else if (ev.data.delimiter === " ")
+        _propsRef.value.modelValue.delimiterSpace = true;
+      else {
+        _propsRef.value.modelValue.delimiterOther = true;
+        _propsRef.value.modelValue.delimiterOtherChar = ev.data.delimiter;
+      }
+
+      let columnCount = 0;
+      ev.data.columns.forEach((column) => {
+        const newColumnConfig = {
+          id: columnCount,
+          columnName: column.columnName,
+          columnDataType: column.columnType,
+          columnIsIdentity: false,
+          columnExpectedCulture: null,
+          columnExpectedFormat: null,
+          columnTreatNullStringAsNull: true,
+          columnNumber: columnCount,
+          columnStartsFromCharacterN: null,
+          columnEndsAtCharacterN: null,
+          isNew: false,
+        };
+        columnCount++;
+
+        _propsRef.value.modelValue.columnsDefinition.push(newColumnConfig);
+      });
+    });
 }
 </script>
