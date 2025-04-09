@@ -16,6 +16,7 @@
     You should have received a copy of the GNU General Public License
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
+using FluentFTP;
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging;
@@ -43,6 +44,7 @@ using OSRobot.Server.Plugins.UnzipTask;
 using OSRobot.Server.Plugins.WriteTextFileTask;
 using OSRobot.Server.Plugins.ZipTask;
 using System.Collections.Concurrent;
+using System.Data;
 using System.Text.RegularExpressions;
 
 namespace OSRobot.Server.JobEngineLib;
@@ -167,7 +169,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
             throw new ApplicationException("_logInfoItemFromLogName: input param 'logName' is empty");
 
         Match match = _logNameRegex.Match(logName);
-        
+
         if (!match.Success)
             throw new ApplicationException("_logInfoItemFromLogName: invalid string format");
 
@@ -179,80 +181,106 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
         return new LogInfo() { FolderId = folderId, EventId = eventId, ExecDateTime = execDateTime, FileName = logName };
     }
 
-    private Task ExecuteTask(ITask task, DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, IPluginInstanceLogger instanceLogger)
+    //private DynamicDataRecordset CreateInputRecordsetFromRow(DynamicDataRecordset inputRecordset, int row)
+    //{
+    //    DynamicDataRecordset outputRecordset = (DynamicDataRecordset)inputRecordset.Clone();
+    //    return outputRecordset;
+    //}
+
+    private void ExecuteTask(ITask task, DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, IPluginInstanceLogger instanceLogger)
     {
-        // Get running task id
+        // Get next running task id
         long thisTaskId;
-        lock (_lockRunningTasksCount) {
+        lock (_lockRunningTasksCount)
+        {
             _runningTasksCount++;
             thisTaskId = _runningTasksCount;
         }
 
-        Task t = new(() =>
+        // Get configuration of instance management for the task
+        ITaskConfig taskConfig = (ITaskConfig)task.Config;
+        DataTable? inputRecordset = null;
+        int? currentRecord = null;
+        if (!string.IsNullOrEmpty(taskConfig.InputRecordset))
         {
-            ITask? taskCopy = null;
-            try
+            inputRecordset = (DataTable?)DynamicDataParser.GetDynamicDataObject(taskConfig.InputRecordset, dataChain);
+            currentRecord = 0;
+        }
+
+        // Enter the loop that will run task instances
+        do
+        {
+            Task t = new(() =>
             {
-                taskCopy = (ITask?)CoreHelpers.CloneObjects(task);
-                if (taskCopy == null)
-                    throw new ApplicationException("Cloning configuration returned null");
-                
-                //DynamicDataSet? lastDataSetCopy = (DynamicDataSet?)CoreHelpers.CloneObjects(lastDynamicDataSet) ?? throw new ApplicationException("Cloning configuration returned null");
-                if (taskCopy.Config.Log)
-                    instanceLogger.TaskStarting(taskCopy);
-
-                instanceLogger.Info($"About to run task {taskCopy.Config.Id} with unique running id: {thisTaskId}");
-                _runningTasks.TryAdd(thisTaskId, taskCopy);
-                InstanceExecResult instExecResult = taskCopy.Run(dataChain, lastDynamicDataSet, instanceLogger);
-                
-                if (taskCopy.Config.Log)
-                    instanceLogger.TaskEnded(taskCopy);
-
-                if (taskCopy.Connections != null)
+                ITask? taskCopy = null;
+                try
                 {
-                    foreach (PluginInstanceConnection connection in taskCopy.Connections)
+                    taskCopy = (ITask?)CoreHelpers.CloneObjects(task);
+                    if (taskCopy == null)
+                        throw new ApplicationException("Cloning configuration returned null");
+
+                    if (taskCopy.Config.Log)
+                        instanceLogger.TaskStarting(taskCopy);
+
+                    instanceLogger.Info($"About to run task {taskCopy.Config.Id} with unique running id: {thisTaskId}");
+                    _runningTasks.TryAdd(thisTaskId, taskCopy);
+                    ExecResult execResult = taskCopy.Run(dataChain, lastDynamicDataSet, inputRecordset, currentRecord, instanceLogger);
+
+                    if (taskCopy.Config.Log)
+                        instanceLogger.TaskEnded(taskCopy);
+
+                    if (taskCopy.Connections != null)
                     {
-                        if (!connection.Enabled)
-                            continue;
-
-                        if (connection.WaitSeconds != null
-                            && connection.WaitSeconds != 0)
-                            Thread.Sleep((int)connection.WaitSeconds * 1000);
-                        
-                        ITask nextTask = (ITask)connection.ConnectTo;
-
-                        if (!nextTask.Config.Enabled)
-                            continue;
-
-                        foreach (ExecResult execRes in instExecResult.ExecResults)
+                        foreach (PluginInstanceConnection connection in taskCopy.Connections)
                         {
-                            if (connection.EvaluateExecConditions(execRes))
+                            if (!connection.Enabled)
+                                continue;
+
+                            if (connection.WaitSeconds != null
+                                && connection.WaitSeconds != 0)
+                                Thread.Sleep((int)connection.WaitSeconds * 1000);
+
+                            ITask nextTask = (ITask)connection.ConnectTo;
+
+                            if (!nextTask.Config.Enabled)
+                                continue;
+
+                            // The same task can be triggered many times, so each time we pass task's result to the next task
+                            // the datachain is cloned to avoid task is collision and then the new dynamic dataset is added
+                            // to the cloned datachain
+                            DynamicDataChain clonedDataChain = dataChain.Clone();
+                            clonedDataChain.TryAdd(taskCopy.Config.Id, execResult.Data);
+
+                            if (connection.EvaluateExecConditions(execResult))
                             {
-                                //DynamicDataChain? dataChainCopy = (DynamicDataChain?)CoreHelpers.CloneObjects(dataChain) ?? throw new ApplicationException("Cloning configuration returned null");
-                                dataChain.TryAdd(taskCopy.Config.Id, execRes.Data);
-                                ExecuteTask(nextTask, dataChain, execRes.Data, instanceLogger);
+                                ExecuteTask(nextTask, clonedDataChain, execResult.Data, instanceLogger);
                             }
                         }
                     }
                 }
-            }
-            catch (Exception ex)
+                catch (Exception ex)
+                {
+                    if (taskCopy != null)
+                        instanceLogger.Error(taskCopy, "ExecuteTask", ex);
+                    else
+                        instanceLogger.Error("ExecuteTask: TaskCopy object is null.", ex);
+                }
+            });
+            t.ContinueWith(t =>
             {
-                if (taskCopy != null)
-                    instanceLogger.Error(taskCopy, "ExecuteTask", ex);
-                else
-                    instanceLogger.Error("ExecuteTask: TaskCopy object is null.", ex);
-            }
-        });
-        t.ContinueWith(t => {
-            _runningTasks.Remove(thisTaskId, out _);
-        });
-        t.Start();
+                _runningTasks.Remove(thisTaskId, out _);
+            });
+            t.Start();
 
-        if (_config.SerialExecution)
-            t.Wait();
+            if (_config.SerialExecution)
+                t.Wait();
 
-        return t;
+            currentRecord++;
+        } while (taskConfig.PluginTaskInstanceMode == TaskInstanceMode.MultipleInstance
+                    && inputRecordset != null
+                    && currentRecord != null
+                    && currentRecord < inputRecordset.Rows.Count
+                );
     }
 
     private void Plugin_EventTriggered(object sender, EventTriggeredEventArgs e)
@@ -291,7 +319,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
                 }
             }
         }
-    }   
+    }
 
     private bool IsDirectoryEmpty(string directoryPath)
     {
@@ -549,9 +577,11 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
 
         string logFullPath = folder.GetPhysicalFullPath();
 
-        return new FolderInfo() {   Id = folderId, 
-                                    Name = folder.Config.Name,
-                                    LogPath = logFullPath
+        return new FolderInfo()
+        {
+            Id = folderId,
+            Name = folder.Config.Name,
+            LogPath = logFullPath
         };
     }
 

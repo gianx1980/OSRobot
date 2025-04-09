@@ -23,21 +23,13 @@ using System.Data;
 
 namespace OSRobot.Server.Core;
 
-public abstract class BaseTask : ITask
+public abstract class BaseTask2 : ITask
 {
-    protected bool _taskReturnsRecordset = false;
-    protected object _defaultRecordset = new DataTable();
-    protected int _iterationsCount;
-    protected DynamicDataChain _dataChain = [];
-    protected DynamicDataSet _lastDynamicDataSet = [];
-    protected IPluginInstanceLogger? _instanceLogger;
-    protected List<ExecResult> _execResults = [];
-
     public IFolder? ParentFolder { get; set; }
 
     #pragma warning disable CS8618
     public IPluginInstanceConfig Config { get; set; }
-    #pragma warning restore CS8618
+#pragma warning restore CS8618
 
     public List<PluginInstanceConnection> Connections { get; set; } = [];
 
@@ -61,33 +53,30 @@ public abstract class BaseTask : ITask
 
     }
 
-    protected abstract void RunTask();
+    protected abstract ExecResult RunTask(DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, DataTable? inputRecordset, int? recordNumber, IPluginInstanceLogger instanceLogger);
 
     public ExecResult Run(DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, DataTable? inputRecordset, int? recordNumber, IPluginInstanceLogger instanceLogger)
     {
-        _dataChain = dataChain;
-        _lastDynamicDataSet = lastDynamicDataSet;
-        _instanceLogger = instanceLogger;
+        ExecResult execResult;
 
         try
         {
             if (Config.Log)
                 instanceLogger.TaskStarted(this);
 
-            _iterationsCount = DynamicDataParser.GetIterationCount((ITaskConfig)Config, dataChain, lastDynamicDataSet);
-
-            if (_iterationsCount > 0)
-                RunTask();
+            execResult = RunTask(dataChain, lastDynamicDataSet, inputRecordset, recordNumber, instanceLogger);
 
             if (Config.Log)
                 instanceLogger.TaskCompleted(this);
         }
         catch (Exception ex)
         {
+            // TODO: check this step!!
+            execResult = new(false, new DynamicDataSet());
             if (Config.Log)
                 instanceLogger.TaskError(this, ex);
         }
 
-        return new InstanceExecResult(_execResults);
+        return execResult;
     }
 }

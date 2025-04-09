@@ -18,10 +18,11 @@
 ======================================================================================*/
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging.Abstract;
+using System.Data;
 
 namespace OSRobot.Server.Core;
 
 public interface ITask : IPluginInstance
 {
-    InstanceExecResult Run(DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, IPluginInstanceLogger instanceLogger);
+    ExecResult Run(DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, DataTable? inputRecordset, int? recordNumber, IPluginInstanceLogger instanceLogger);
 }

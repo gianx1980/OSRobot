@@ -1,0 +1,173 @@
+
+Test Backend Developer 
+glucadb@gmail.com Cambia account
+ 
+Bozza salvata
+* Indica una domanda obbligatoria
+Email
+*
+glucadb@gmail.com
+1.
+Come funziona il Garbage Collector nel framework .NET?
+1 punto
+Libera immediatamente la memoria non più usata
+Funziona in modo deterministico ogni volta che la memoria si esaurisce
+Usa un algoritmo di generazioni per ottimizzare la gestione della memoria
+Usa un algoritmo di compressione per ottimizzare la gestione della memoria
+Libera solo oggetti che implementano l'interfaccia IDisposable
+2.
+Qual è il vantaggio principale nell'uso di async/await in .NET?
+1 punto
+Riduce il numero di thread richiesti
+Elimina la necessità di gestire eccezioni
+Migliora le prestazioni della CPU
+Riduce il numero di thread e migliora la gestione della CPU
+Esegue le operazioni asincrone in parallelo
+3.
+Qual è lo scopo della Dependency Injection nel contesto dello sviluppo .NET?
+1 punto
+Migliorare le prestazioni di runtime
+Creare meno classi all'interno del progetto
+Rendere le classi più facili da testare e mantenere
+Ridurre il numero di classi e migliorare il runtime
+Aumentare la sicurezza dei componenti
+4.
+In Entity Framework, cosa significa il termine "Lazy Loading"?
+1 punto
+Caricare subito tutte le entità correlate
+Caricare i dati correlati solo quando sono effettivamente richiesti
+Evitare di caricare dati fino al salvataggio finale
+Caricare i dati correlati solo alla prima richiesta
+Nessuna delle precedenti
+5.
+Qual è lo scopo del rate limiting in un'API?
+1 punto
+Aumentare le prestazioni dell'API
+Limitare il numero di richieste che un client può fare in un certo periodo
+Aumentare il numero di utenti simultanei
+Limitare il numero di richieste in base alla latenza
+Prevenire la necessità di autenticazione
+6.
+Qual è lo scopo del caching in un'API?
+1 punto
+Ridurre la latenza nelle risposte dell'API
+Aumentare il numero di richieste che un client può fare
+Impedire le operazioni di autenticazione
+Aumentare la capacità di gestire richieste parallele
+Aumentare il traffico del server
+7.
+Quale tipo di lock permette di leggere una riga ma non di modificarla finché il lock non è rilasciato?
+1 punto
+Lock esclusivo (exclusive lock)
+Lock ottimistico
+Lock di sola lettura
+Deadlock
+Nessuna delle precedenti
+8.
+Qual è la funzione di LINQ in .NET?
+1 punto
+Ottimizzare il codice per le applicazioni distribuite
+Eseguire query direttamente su database solo SQL Server
+Offrire un linguaggio di query uniforme per diverse sorgenti dati
+Offrire un linguaggio di query basato solo su SQL
+Eseguire query asincrone su tabelle di database
+9.
+Cosa sono le Razor Pages in .NET Core?
+1 punto
+Un'estensione di ASP.NET per creare API RESTful
+Un modello di programmazione per applicazioni MVC
+Un modello di pagina basato su file singoli per le app web
+Un modello di pagina per app desktop
+Un framework per app desktop in .NET
+10.
+Qual è il vantaggio principale di utilizzare l'autenticazione basata su token (ad es. JWT) in un'API RESTful?
+1 punto
+I token sono memorizzati nel database per ogni richiesta
+I token permettono di evitare la gestione delle sessioni lato server
+I token garantiscono automaticamente la cifratura dei dati sensibili
+I token evitano la necessità di validare l'utente in ogni richiesta
+I token possono essere utilizzati solo con connessioni HTTP non cifrate
+11.
+Nell'autenticazione OAuth 2.0, quale ruolo ha il "Authorization Server"?
+1 punto
+Emette token di accesso e refresh per i client autorizzati
+Verifica le credenziali e aggiorna il token nel database
+Verifica le autorizzazioni del client ma non emette token
+Emette token di accesso solo per gli utenti amministratori
+Gestisce direttamente le richieste di API dopo l'autenticazione
+12.
+Qual è uno svantaggio principale nell'uso di Basic Authentication nelle API RESTful?
+1 punto
+Richiede sempre una connessione HTTPS
+Le credenziali devono essere inviate ad ogni richiesta, aumentando il rischio di esposizione
+Non permette di invalidare le credenziali una volta utilizzate
+Le credenziali non possono essere cifrate
+Non è compatibile con metodi di autenticazione come OAuth 2.0
+13.
+Nell'implementazione di un sistema di autenticazione API RESTful con HMAC (Hash-based Message Authentication Code), qual è il vantaggio di usare HMAC rispetto ai token tradizionali?
+1 punto
+Non richiede la memorizzazione di chiavi segrete sul server
+Fornisce un sistema di autenticazione che protegge l'integrità dei messaggi inviati
+Cripta automaticamente tutto il payload della richiesta
+Elimina la necessità di chiavi segrete condivise tra client e server
+Impedisce la scadenza dei token di autenticazione
+14.
+Qual è una delle caratteristiche distintive dell'architettura a microservizi rispetto a un'architettura monolitica?
+1 punto
+I microservizi sono sempre scritti nello stesso linguaggio di programmazione
+I microservizi sono indipendenti e possono essere distribuiti e scalati separatamente
+I microservizi non possono condividere alcuna base di dati
+I microservizi sono sempre più complessi da gestire
+I microservizi richiedono sempre un orchestratore come Kubernetes
+15.
+Qual è uno dei metodi più comuni per la comunicazione tra microservizi?
+1 punto
+Utilizzare solo chiamate dirette al database
+Trasmettere dati tramite file condivisi
+Solo comunicazione attraverso WebSocket
+Utilizzare solo RPC (Remote Procedure Call)
+Nessuna delle precedenti
+16.
+Quale delle seguenti pratiche è più efficace per prevenire attacchi di SQL Injection?
+1 punto
+Usare query dinamiche per la creazione di istruzioni SQL
+Utilizzare solo parametri di input numerici
+Ignorare la validazione dell'input se si utilizza un ORM
+Limitare l'uso di caratteri speciali nelle query SQL
+Nessuna delle precedenti
+17.
+Qual è il metodo più sicuro per memorizzare le password degli utenti in un'applicazione?
+1 punto
+Crittografare le password con AES
+Usare funzioni di hashing come bcrypt o Argon2 con salting
+Memorizzare le password in chiaro in un database sicuro
+Usare SHA-256 senza salting
+Nessuna delle precedenti
+18.
+Qual è lo scopo principale dei test unitari in un'applicazione?
+1 punto
+Testare l'interazione tra vari sistemi esterni
+Testare le prestazioni dell'intera applicazione
+Validare il comportamento del codice in scenari di produzione
+Assicurarsi che l'applicazione sia sempre in esecuzione senza errori
+Nessuna delle precedenti
+19.
+Quale dei seguenti è un esempio di test di integrazione?
+1 punto
+Verificare il funzionamento di una funzione che calcola la somma di due numeri
+Testare che un'API restituisca i dati corretti in risposta a una richiesta
+Eseguire un test di prestazioni su un'interfaccia utente
+Controllare che le eccezioni siano sollevate come previsto
+Verificare che il codice rispetti le linee guida di stile
+20.
+Qual è una delle migliori pratiche per prevenire attacchi di Cross-Site Scripting (XSS) in un'applicazione web?
+1 punto
+Disabilitare completamente l'uso di JavaScript nell'applicazione
+Usare Content Security Policy (CSP) e validare/sanitizzare tutti gli input dell'utente
+Limitare l'input dell'utente solo a caratteri numerici
+Non mostrare mai messaggi di errore dettagliati agli utenti
+Usare solo https:// per tutte le comunicazioni
+Questi contenuti non sono creati né avallati da Google. - Termini di servizio - Norme sulla privacy
+Questo elemento sembra sospetto? Segnala
+
+Google Moduli

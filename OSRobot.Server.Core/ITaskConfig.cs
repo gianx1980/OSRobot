@@ -20,16 +20,21 @@ using System.Text.Json.Serialization;
 
 namespace OSRobot.Server.Core;
 
-public enum IterationMode
-{
-    IterateDefaultRecordset,
-    IterateExactNumber,
-    IterateObjectRecordset
+//public enum IterationMode
+//{
+//    IterateDefaultRecordset,
+//    IterateExactNumber,
+//    IterateObjectRecordset
+//}
+
+public enum TaskInstanceMode
+{ 
+    SingleInstance,
+    MultipleInstance
 }
 
 public interface ITaskConfig : IPluginInstanceConfig
 {
-    IterationMode PluginIterationMode { get; set; }
-    string IterationObject { get; set; }
-    int IterationsCount { get; set; }
+    TaskInstanceMode PluginTaskInstanceMode { get; set; }
+    string? InputRecordset { get; set; }
 }
