@@ -197,7 +197,6 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
                 if (taskCopy == null)
                     throw new ApplicationException("Cloning configuration returned null");
                 
-                //DynamicDataSet? lastDataSetCopy = (DynamicDataSet?)CoreHelpers.CloneObjects(lastDynamicDataSet) ?? throw new ApplicationException("Cloning configuration returned null");
                 if (taskCopy.Config.Log)
                     instanceLogger.TaskStarting(taskCopy);
 
@@ -228,9 +227,9 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
                         {
                             if (connection.EvaluateExecConditions(execRes))
                             {
-                                //DynamicDataChain? dataChainCopy = (DynamicDataChain?)CoreHelpers.CloneObjects(dataChain) ?? throw new ApplicationException("Cloning configuration returned null");
-                                dataChain.TryAdd(taskCopy.Config.Id, execRes.Data);
-                                ExecuteTask(nextTask, dataChain, execRes.Data, instanceLogger);
+                                DynamicDataChain dataChainCopy = dataChain.Clone();
+                                dataChainCopy.TryAdd(taskCopy.Config.Id, execRes.Data);
+                                ExecuteTask(nextTask, dataChainCopy, execRes.Data, instanceLogger);
                             }
                         }
                     }
