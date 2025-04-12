@@ -30,6 +30,7 @@ public abstract class BaseTask : ITask
     protected int _iterationsCount;
     protected DynamicDataChain _dataChain = [];
     protected DynamicDataSet _lastDynamicDataSet = [];
+    protected int? _subInstanceIndex;
     protected IPluginInstanceLogger? _instanceLogger;
     protected List<ExecResult> _execResults = [];
 
@@ -63,10 +64,11 @@ public abstract class BaseTask : ITask
 
     protected abstract void RunTask();
 
-    public InstanceExecResult Run(DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, IPluginInstanceLogger instanceLogger)
+    public InstanceExecResult Run(DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, int? subInstanceIndex, IPluginInstanceLogger instanceLogger)
     {
         _dataChain = dataChain;
         _lastDynamicDataSet = lastDynamicDataSet;
+        _subInstanceIndex = subInstanceIndex;
         _instanceLogger = instanceLogger;
 
         try

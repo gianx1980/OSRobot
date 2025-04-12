@@ -95,7 +95,7 @@ public class SqlServerCommandTask : IterationTask
                 break;
         }
 
-        sqlParam.Value = DynamicDataParser.ReplaceDynamicData(paramDef.Value, dataChain, iterationNumber);
+        sqlParam.Value = DynamicDataParser.ReplaceDynamicData(paramDef.Value, dataChain, iterationNumber, _subInstanceIndex);
 
         return sqlParam;
     }

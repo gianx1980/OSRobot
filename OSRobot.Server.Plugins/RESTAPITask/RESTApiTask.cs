@@ -38,8 +38,8 @@ public class RESTApiTask : IterationTask
         foreach (RESTApiHeader apiHeader in tConfig.Headers)
         {
             client.DefaultRequestHeaders.Add(
-                DynamicDataParser.ReplaceDynamicData(apiHeader.Name, _dataChain, currentIteration),
-                DynamicDataParser.ReplaceDynamicData(apiHeader.Value, _dataChain, currentIteration)
+                DynamicDataParser.ReplaceDynamicData(apiHeader.Name, _dataChain, currentIteration, _subInstanceIndex),
+                DynamicDataParser.ReplaceDynamicData(apiHeader.Value, _dataChain, currentIteration, _subInstanceIndex)
                 );
         }
 
