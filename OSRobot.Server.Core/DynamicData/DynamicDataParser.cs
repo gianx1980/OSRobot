@@ -26,8 +26,22 @@ public static partial class DynamicDataParser
 {       
     private readonly static Regex _regExFieldValue = DetectObjectRegex();
 
-    public static string ReplaceDynamicData(string input, DynamicDataChain dynamicDataChain, int iterationNumber)
+    public static int GetRowIndex(string rowIndex, int iterationNumber, int? subInstanceIndex)
     {
+        if (rowIndex == string.Empty || rowIndex == "{iterationIndex}")
+            return iterationNumber;
+        else if (rowIndex == "{subInstanceIndex}")
+            return subInstanceIndex ?? 0;
+        else
+            return int.Parse(rowIndex);
+    }
+
+    public static string ReplaceDynamicData(string input, DynamicDataChain dynamicDataChain, int iterationNumber, int? subInstanceIndex)
+    {
+        // Given a placeholder in the format (for example):
+        //  {object[3].DefaultRecordset[1]['TableName']}
+        //  Extract the parameters needed to replace the placeholder with real data
+
         if (input == null)
             return string.Empty;
 
@@ -36,6 +50,7 @@ public static partial class DynamicDataParser
             int objectID = int.Parse(regExMatch.Groups["ObjectID"].Value);
             string fieldName = regExMatch.Groups["FieldName"].Value;
             string subFieldName;
+            string rowIndex;
             
             DynamicDataSet objectDataSet = dynamicDataChain[objectID];
 
@@ -45,17 +60,17 @@ public static partial class DynamicDataParser
             }
             else
             {
+                rowIndex = regExMatch.Groups["RowIndex"].Value;
                 subFieldName = regExMatch.Groups["SubFieldName"].Value;
 
-                if (objectDataSet[fieldName] is List<Dictionary<string, object>>)
+                if (objectDataSet[fieldName] is List<Dictionary<string, object>> dict)
                 {
-                    List<Dictionary<string, object>> list = (List<Dictionary<string, object>>)objectDataSet[fieldName];
-                    Dictionary<string, object> row = list[iterationNumber];
+                    Dictionary<string, object> row = dict[GetRowIndex(rowIndex, iterationNumber, subInstanceIndex)];
                     result = row[subFieldName].ToString() ?? string.Empty;
                 }
                 else if (objectDataSet[fieldName] is DataTable list)
                 {
-                    DataRow row = list.Rows[iterationNumber];
+                    DataRow row = list.Rows[GetRowIndex(rowIndex, iterationNumber, subInstanceIndex)];
                     result = row[subFieldName].ToString() ?? string.Empty;
                 }
             }
@@ -104,7 +119,7 @@ public static partial class DynamicDataParser
         }
         else if (config.PluginIterationMode == IterationMode.IterateObjectRecordset)
         {
-            count = int.Parse(ReplaceDynamicData(config.IterationObject, dynamicDataChain, 0));
+            count = int.Parse(ReplaceDynamicData(config.IterationObject, dynamicDataChain, 0, null));
         }
         else // Exact number of times
         {
@@ -119,7 +134,7 @@ public static partial class DynamicDataParser
         return _regExFieldValue.IsMatch(input);
     }
 
-    public static void Parse(IPluginInstanceConfig config, DynamicDataChain dynamicDataChain, int iterationNumber)
+    public static void Parse(IPluginInstanceConfig config, DynamicDataChain dynamicDataChain, int iterationNumber, int? subInstanceIndex)
     {
         Type configType = config.GetType();
 
@@ -138,7 +153,7 @@ public static partial class DynamicDataParser
                             string? propertyValue = (string?)prop.GetValue(config);
                             if (propertyValue == null)
                                 continue;
-                            string result = ReplaceDynamicData(propertyValue, dynamicDataChain, iterationNumber);
+                            string result = ReplaceDynamicData(propertyValue, dynamicDataChain, iterationNumber, subInstanceIndex);
                             prop.SetValue(config, result);
                         }
                         else if (prop.PropertyType == typeof(List<string>))
@@ -148,7 +163,7 @@ public static partial class DynamicDataParser
                                 continue;
                             for (int i = 0; i <= tempList.Count - 1; i++)
                             {
-                                string newT = ReplaceDynamicData(tempList[i], dynamicDataChain, iterationNumber);
+                                string newT = ReplaceDynamicData(tempList[i], dynamicDataChain, iterationNumber, subInstanceIndex);
                                 tempList[i] = newT;
                             }
                         }
@@ -158,12 +173,12 @@ public static partial class DynamicDataParser
         }
     }
 
-    public static void Parse(ITask task, DynamicDataChain dynamicDataChain, int iterationNumber)
+    public static void Parse(ITask task, DynamicDataChain dynamicDataChain, int iterationNumber, int? subInstanceIndex)
     {
         IPluginInstanceConfig config = task.Config;
-        Parse(config, dynamicDataChain, iterationNumber);
+        Parse(config, dynamicDataChain, iterationNumber, subInstanceIndex);
     }
 
-    [GeneratedRegex(@"\{object\[(?<ObjectID>\d+)\]\.(?<FieldName>\w+)(\[\'(?<SubFieldName>\w+)\'\])?\}", RegexOptions.IgnoreCase, "it-IT")]
+    [GeneratedRegex(@"\{object\[(?<ObjectID>\d+)\]\.(?<FieldName>\w+)(\[(?<RowIndex>\d+|\{iterationIndex\}|\{subInstanceIndex\})\])?(\[\'(?<SubFieldName>\w+)\'\])?\}", RegexOptions.IgnoreCase, "it-IT")]
     private static partial Regex DetectObjectRegex();
 }

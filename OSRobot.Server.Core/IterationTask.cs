@@ -51,7 +51,7 @@ public abstract class IterationTask : BaseTask
             {
                 ITaskConfig? tempTaskConfig = (ITaskConfig?)CoreHelpers.CloneObjects(Config) ?? throw new ApplicationException("Cloning configuration returned null");
                 _iterationConfig = tempTaskConfig;
-                DynamicDataParser.Parse(_iterationConfig, _dataChain, i);
+                DynamicDataParser.Parse(_iterationConfig, _dataChain, i, _subInstanceIndex);
 
                 RunIteration(i);
 

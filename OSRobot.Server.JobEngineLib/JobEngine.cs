@@ -179,7 +179,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
         return new LogInfo() { FolderId = folderId, EventId = eventId, ExecDateTime = execDateTime, FileName = logName };
     }
 
-    private Task ExecuteTask(ITask task, DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, IPluginInstanceLogger instanceLogger)
+    private Task ExecuteTask(ITask task, DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, int? subInstanceIndex, IPluginInstanceLogger instanceLogger)
     {
         // Get running task id
         long thisTaskId;
@@ -202,7 +202,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
 
                 instanceLogger.Info($"About to run task {taskCopy.Config.Id} with unique running id: {thisTaskId}");
                 _runningTasks.TryAdd(thisTaskId, taskCopy);
-                InstanceExecResult instExecResult = taskCopy.Run(dataChain, lastDynamicDataSet, instanceLogger);
+                InstanceExecResult instExecResult = taskCopy.Run(dataChain, lastDynamicDataSet, subInstanceIndex, instanceLogger);
                 
                 if (taskCopy.Config.Log)
                     instanceLogger.TaskEnded(taskCopy);
@@ -223,14 +223,17 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
                         if (!nextTask.Config.Enabled)
                             continue;
 
+                        int currentSubInstanceIndex = 0;
                         foreach (ExecResult execRes in instExecResult.ExecResults)
                         {
                             if (connection.EvaluateExecConditions(execRes))
                             {
                                 DynamicDataChain dataChainCopy = dataChain.Clone();
                                 dataChainCopy.TryAdd(taskCopy.Config.Id, execRes.Data);
-                                ExecuteTask(nextTask, dataChainCopy, execRes.Data, instanceLogger);
+                                ExecuteTask(nextTask, dataChainCopy, execRes.Data, currentSubInstanceIndex, instanceLogger);
                             }
+
+                            currentSubInstanceIndex++;
                         }
                     }
                 }
@@ -282,7 +285,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
                 if (taskToRun.Config.Enabled)
                 {
                     _log.Info($"Calling ExecuteTask for: {taskToRun.Config.Id}:{taskToRun.Config.Name}:{taskToRun.GetType().Name}");
-                    ExecuteTask(taskToRun, dataChain, e.DynamicData, e.Logger);
+                    ExecuteTask(taskToRun, dataChain, e.DynamicData, null, e.Logger);
                 }
                 else
                 {
@@ -450,7 +453,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
             DynamicDataChain dataChain = [];
             DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(taskObj, true, 0, now, now, 1);
 
-            ExecuteTask(taskObj, dataChain, dDataSet, logger);
+            ExecuteTask(taskObj, dataChain, dDataSet, null, logger);
 
             return true;
         }

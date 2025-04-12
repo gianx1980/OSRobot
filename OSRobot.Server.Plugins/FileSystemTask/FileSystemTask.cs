@@ -245,11 +245,11 @@ public class FileSystemTask : IterationTask
             foreach (FileSystemTaskCopyItem copyItem in tConfig.CopyItems)
             {
                 FileSystemTaskCopyItem? copyItemCopy = (FileSystemTaskCopyItem?)CoreHelpers.CloneObjects(copyItem) ?? throw new ApplicationException("Cloning configuration returned null");
-                copyItemCopy.SourcePath = DynamicDataParser.ReplaceDynamicData(copyItemCopy.SourcePath, _dataChain, currentIteration);
-                copyItemCopy.DestinationPath = DynamicDataParser.ReplaceDynamicData(copyItemCopy.DestinationPath, _dataChain, currentIteration);
-                copyItemCopy.FilesOlderThanDays = DynamicDataParser.ReplaceDynamicData(copyItemCopy.FilesOlderThanDays, _dataChain, currentIteration);
-                copyItemCopy.FilesOlderThanHours = DynamicDataParser.ReplaceDynamicData(copyItemCopy.FilesOlderThanHours, _dataChain, currentIteration);
-                copyItemCopy.FilesOlderThanMinutes = DynamicDataParser.ReplaceDynamicData(copyItemCopy.FilesOlderThanMinutes, _dataChain, currentIteration);
+                copyItemCopy.SourcePath = DynamicDataParser.ReplaceDynamicData(copyItemCopy.SourcePath, _dataChain, currentIteration, _subInstanceIndex);
+                copyItemCopy.DestinationPath = DynamicDataParser.ReplaceDynamicData(copyItemCopy.DestinationPath, _dataChain, currentIteration, _subInstanceIndex);
+                copyItemCopy.FilesOlderThanDays = DynamicDataParser.ReplaceDynamicData(copyItemCopy.FilesOlderThanDays, _dataChain, currentIteration, _subInstanceIndex);
+                copyItemCopy.FilesOlderThanHours = DynamicDataParser.ReplaceDynamicData(copyItemCopy.FilesOlderThanHours, _dataChain, currentIteration, _subInstanceIndex);
+                copyItemCopy.FilesOlderThanMinutes = DynamicDataParser.ReplaceDynamicData(copyItemCopy.FilesOlderThanMinutes, _dataChain, currentIteration, _subInstanceIndex);
                 ManageCopyItem(copyItemCopy, _instanceLogger);
             }
 
@@ -262,10 +262,10 @@ public class FileSystemTask : IterationTask
             foreach (FileSystemTaskDeleteItem deleteItem in tConfig.DeleteItems)
             {
                 FileSystemTaskDeleteItem? deleteItemCopy = (FileSystemTaskDeleteItem?)CoreHelpers.CloneObjects(deleteItem) ?? throw new ApplicationException("Cloning configuration returned null");
-                deleteItemCopy.DeletePath = DynamicDataParser.ReplaceDynamicData(deleteItemCopy.DeletePath, _dataChain, currentIteration);
-                deleteItemCopy.FilesOlderThanDays = DynamicDataParser.ReplaceDynamicData(deleteItemCopy.FilesOlderThanDays, _dataChain, currentIteration);
-                deleteItemCopy.FilesOlderThanHours = DynamicDataParser.ReplaceDynamicData(deleteItemCopy.FilesOlderThanHours, _dataChain, currentIteration);
-                deleteItemCopy.FilesOlderThanMinutes = DynamicDataParser.ReplaceDynamicData(deleteItemCopy.FilesOlderThanMinutes, _dataChain, currentIteration);
+                deleteItemCopy.DeletePath = DynamicDataParser.ReplaceDynamicData(deleteItemCopy.DeletePath, _dataChain, currentIteration, _subInstanceIndex);
+                deleteItemCopy.FilesOlderThanDays = DynamicDataParser.ReplaceDynamicData(deleteItemCopy.FilesOlderThanDays, _dataChain, currentIteration, _subInstanceIndex);
+                deleteItemCopy.FilesOlderThanHours = DynamicDataParser.ReplaceDynamicData(deleteItemCopy.FilesOlderThanHours, _dataChain, currentIteration, _subInstanceIndex);
+                deleteItemCopy.FilesOlderThanMinutes = DynamicDataParser.ReplaceDynamicData(deleteItemCopy.FilesOlderThanMinutes, _dataChain, currentIteration, _subInstanceIndex);
                 ManageDeleteItem(deleteItemCopy, _instanceLogger);
             }
 

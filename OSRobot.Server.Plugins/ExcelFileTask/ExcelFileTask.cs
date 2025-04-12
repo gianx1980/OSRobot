@@ -48,7 +48,7 @@ public class ExcelFileTask : BaseTask
 
         int actualIterations = 1;
         ExcelFileTaskConfig? tConfig_0 = (ExcelFileTaskConfig?)CoreHelpers.CloneObjects(Config) ?? throw new ApplicationException("Cloning configuration returned null");
-        DynamicDataParser.Parse(tConfig_0, _dataChain, 0);
+        DynamicDataParser.Parse(tConfig_0, _dataChain, 0, _subInstanceIndex);
 
         try
         {
@@ -70,7 +70,7 @@ public class ExcelFileTask : BaseTask
                         int lastRow = wksSheet.RowsUsed().Count();
 
                         ExcelFileTaskConfig? configCopy_0 = (ExcelFileTaskConfig?)CoreHelpers.CloneObjects(Config) ?? throw new ApplicationException("Cloning configuration returned null");
-                        DynamicDataParser.Parse(configCopy_0, _dataChain, 0);
+                        DynamicDataParser.Parse(configCopy_0, _dataChain, 0, _subInstanceIndex);
 
                         if (configCopy_0.AddHeaderIfEmpty && (!fileExists || lastRow == 0))
                         {
@@ -80,7 +80,7 @@ public class ExcelFileTask : BaseTask
                             int colIndex = 1;
                             foreach (ExcelFileColumnDefinition col in configCopy_0.ColumnsDefinition)
                             {
-                                wksSheet.Cell(lastRow, colIndex).Value = DynamicDataParser.ReplaceDynamicData(col.HeaderTitle, _dataChain, 1);
+                                wksSheet.Cell(lastRow, colIndex).Value = DynamicDataParser.ReplaceDynamicData(col.HeaderTitle, _dataChain, 0, _subInstanceIndex);
                                 colIndex++;
                             }
                         }
@@ -99,12 +99,12 @@ public class ExcelFileTask : BaseTask
                         for (int i = 0; i < _iterationsCount; i++)
                         {
                             ExcelFileTaskConfig? configCopy = (ExcelFileTaskConfig?)CoreHelpers.CloneObjects(Config) ?? throw new ApplicationException("Cloning configuration returned null");
-                            DynamicDataParser.Parse(configCopy, _dataChain, i);
+                            DynamicDataParser.Parse(configCopy, _dataChain, i, _subInstanceIndex);
 
                             int colIndex = 1;
                             foreach (ExcelFileColumnDefinition col in configCopy.ColumnsDefinition)
                             {
-                                wksSheet.Cell(lastRow, colIndex).Value = DynamicDataParser.ReplaceDynamicData(col.CellValue, _dataChain, i);
+                                wksSheet.Cell(lastRow, colIndex).Value = DynamicDataParser.ReplaceDynamicData(col.CellValue, _dataChain, i, _subInstanceIndex);
                                 colIndex++;
                             }
 

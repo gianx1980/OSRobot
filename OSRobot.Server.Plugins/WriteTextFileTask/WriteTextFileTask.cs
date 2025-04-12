@@ -43,13 +43,13 @@ public class WriteTextFileTask : BaseTask
     private WriteTextFileTaskConfig ParseDynamicData(int iterationNumber, WriteTextFileTaskConfig config, DynamicDataChain dataChain)
     {
         WriteTextFileTaskConfig? configCopy = (WriteTextFileTaskConfig?)CoreHelpers.CloneObjects(config) ?? throw new ApplicationException("Cloning configuration returned null");
-        DynamicDataParser.Parse(configCopy, dataChain, iterationNumber);
+        DynamicDataParser.Parse(configCopy, dataChain, iterationNumber, _subInstanceIndex);
         
         foreach (WriteTextFileColumnDefinition col in configCopy.ColumnsDefinition)
         {
-            col.FieldValue = DynamicDataParser.ReplaceDynamicData(col.FieldValue, dataChain, iterationNumber);
-            col.HeaderTitle = DynamicDataParser.ReplaceDynamicData(col.HeaderTitle, dataChain, iterationNumber);
-            col.FieldWidth = DynamicDataParser.ReplaceDynamicData(col.FieldWidth, dataChain, iterationNumber);
+            col.FieldValue = DynamicDataParser.ReplaceDynamicData(col.FieldValue, dataChain, iterationNumber, _subInstanceIndex);
+            col.HeaderTitle = DynamicDataParser.ReplaceDynamicData(col.HeaderTitle, dataChain, iterationNumber, _subInstanceIndex);
+            col.FieldWidth = DynamicDataParser.ReplaceDynamicData(col.FieldWidth, dataChain, iterationNumber, _subInstanceIndex);
         }
 
         return configCopy;
@@ -89,7 +89,7 @@ public class WriteTextFileTask : BaseTask
 
         foreach (WriteTextFileColumnDefinition col in config.ColumnsDefinition)
         {
-            fieldValues.Add(DynamicDataParser.ReplaceDynamicData(col.FieldValue, dataChain, iterationNumber));
+            fieldValues.Add(DynamicDataParser.ReplaceDynamicData(col.FieldValue, dataChain, iterationNumber, _subInstanceIndex));
         }
 
         return [.. fieldValues];

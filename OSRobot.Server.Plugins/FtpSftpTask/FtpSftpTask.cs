@@ -207,8 +207,8 @@ public partial class FtpSftpTask : IterationTask
             foreach (FtpSftpCopyItem copyItem in tConfig.CopyItems)
             {
                 FtpSftpCopyItem? copyItemCopy = (FtpSftpCopyItem?)CoreHelpers.CloneObjects(copyItem) ?? throw new ApplicationException("Cloning CopyItem returned null");
-                copyItemCopy.LocalPath = DynamicDataParser.ReplaceDynamicData(copyItemCopy.LocalPath, _dataChain, currentIteration);
-                copyItemCopy.RemotePath = DynamicDataParser.ReplaceDynamicData(copyItemCopy.RemotePath, _dataChain, currentIteration);
+                copyItemCopy.LocalPath = DynamicDataParser.ReplaceDynamicData(copyItemCopy.LocalPath, _dataChain, currentIteration, _subInstanceIndex);
+                copyItemCopy.RemotePath = DynamicDataParser.ReplaceDynamicData(copyItemCopy.RemotePath, _dataChain, currentIteration, _subInstanceIndex);
                 ManageCopyItem(fileTransferClient, copyItemCopy, _instanceLogger!);
             }
 
@@ -221,7 +221,7 @@ public partial class FtpSftpTask : IterationTask
             foreach (FtpSftpDeleteItem deleteItem in tConfig.DeleteItems)
             {
                 FtpSftpDeleteItem? deleteItemCopy = (FtpSftpDeleteItem?)CoreHelpers.CloneObjects(deleteItem) ?? throw new ApplicationException("Cloning DeleteItem returned null");
-                deleteItemCopy.RemotePath = DynamicDataParser.ReplaceDynamicData(deleteItemCopy.RemotePath, _dataChain, currentIteration);
+                deleteItemCopy.RemotePath = DynamicDataParser.ReplaceDynamicData(deleteItemCopy.RemotePath, _dataChain, currentIteration, _subInstanceIndex);
                 ManageDeleteItem(fileTransferClient, deleteItemCopy, _instanceLogger!);
             }
 
