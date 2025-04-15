@@ -598,12 +598,14 @@ const _recipientColumnsDef = [
   },
 ];
 
-const _recipientColumnVisibility = ref(["recipient", "actions"]);
+if (!_propsRef.value.modelValue.hasOwnProperty("_tempRecipients"))
+  _propsRef.value.modelValue._tempRecipients = [];
 
-const _recipientList = ref(_propsRef.value.modelValue.recipients);
+const _recipientColumnVisibility = ref(["recipient", "actions"]);
+const _recipientList = ref(_propsRef.value.modelValue._tempRecipients);
 
 function _recipientAddItemClick() {
-  const list = _propsRef.value.modelValue.recipients;
+  const list = _propsRef.value.modelValue._tempRecipients;
   const idList = list.map((v) => v.id);
   const maxId = (idList.length === 0 ? 0 : Math.max(...idList)) + 1;
 
@@ -624,7 +626,7 @@ function _recipientEditItemClick(row) {
 }
 
 function _recipientDeleteItemClick(row) {
-  const index = _propsRef.value.modelValue.recipients.findIndex(
+  const index = _propsRef.value.modelValue._tempRecipients.findIndex(
     (i) => i.id === row.id
   );
 
@@ -637,13 +639,16 @@ function _recipientDeleteItemClick(row) {
     })
     .onOk(() => {
       if (index >= 0) {
-        _propsRef.value.modelValue.recipients.splice(index, 1);
+        _propsRef.value.modelValue._tempRecipients.splice(index, 1);
+
+        _propsRef.value.modelValue.recipients =
+          _propsRef.value.modelValue._tempRecipients.map((x) => x.recipient);
       }
     });
 }
 
 function _recipientItemMoveUpClick(row) {
-  const list = _propsRef.value.modelValue.recipients;
+  const list = _propsRef.value.modelValue._tempRecipients;
   const itemIndex = list.findIndex((r) => r.id == row.id);
 
   if (itemIndex !== -1 && itemIndex > 0) {
@@ -653,7 +658,7 @@ function _recipientItemMoveUpClick(row) {
 }
 
 function _recipientItemMoveDownClick(row) {
-  const list = _propsRef.value.modelValue.recipients;
+  const list = _propsRef.value.modelValue._tempRecipients;
   const itemIndex = list.findIndex((r) => r.id == row.id);
 
   if (itemIndex !== -1 && itemIndex < list.length - 1) {
@@ -682,15 +687,20 @@ const _recipientDialogTitle = ref(_$t("addColumn"));
 function _recipientDialogFormSubmit() {
   if (_recipientDialogFormData.value.isNew) {
     _recipientDialogFormData.value.isNew = false;
-    _propsRef.value.modelValue.recipients.push(_recipientDialogFormData.value);
+    _propsRef.value.modelValue._tempRecipients.push(
+      _recipientDialogFormData.value
+    );
   } else {
-    const index = _propsRef.value.modelValue.recipients.findIndex(
+    const index = _propsRef.value.modelValue._tempRecipients.findIndex(
       (i) => i.id === _recipientDialogFormData.value.id
     );
 
-    _propsRef.value.modelValue.recipients[index] =
+    _propsRef.value.modelValue._tempRecipients[index] =
       _recipientDialogFormData.value;
   }
+
+  _propsRef.value.modelValue.recipients =
+    _propsRef.value.modelValue._tempRecipients.map((x) => x.recipient);
 
   _recipientDialogVisibility.value = false;
 }
@@ -716,10 +726,13 @@ const _CCColumnsDef = [
 
 const _CCColumnVisibility = ref(["cc", "actions"]);
 
-const _CCList = ref(_propsRef.value.modelValue.cc);
+if (!_propsRef.value.modelValue.hasOwnProperty("_tempCC"))
+  _propsRef.value.modelValue._tempCC = [];
+
+const _CCList = ref(_propsRef.value.modelValue._tempCC);
 
 function _CCAddItemClick() {
-  const list = _propsRef.value.modelValue.cc;
+  const list = _propsRef.value.modelValue._tempCC;
   const idList = list.map((v) => v.id);
   const maxId = (idList.length === 0 ? 0 : Math.max(...idList)) + 1;
 
@@ -740,7 +753,9 @@ function _CCEditItemClick(row) {
 }
 
 function _CCDeleteItemClick(row) {
-  const index = _propsRef.value.modelValue.cc.findIndex((i) => i.id === row.id);
+  const index = _propsRef.value.modelValue._tempCC.findIndex(
+    (i) => i.id === row.id
+  );
 
   _$q
     .dialog({
@@ -751,13 +766,17 @@ function _CCDeleteItemClick(row) {
     })
     .onOk(() => {
       if (index >= 0) {
-        _propsRef.value.modelValue.cc.splice(index, 1);
+        _propsRef.value.modelValue._tempCC.splice(index, 1);
+
+        _propsRef.value.modelValue.cc = _propsRef.value.modelValue._tempCC.map(
+          (x) => x.recipient
+        );
       }
     });
 }
 
 function _CCItemMoveUpClick(row) {
-  const list = _propsRef.value.modelValue.cc;
+  const list = _propsRef.value.modelValue._tempCC;
   const itemIndex = list.findIndex((r) => r.id == row.id);
 
   if (itemIndex !== -1 && itemIndex > 0) {
@@ -767,7 +786,7 @@ function _CCItemMoveUpClick(row) {
 }
 
 function _CCItemMoveDownClick(row) {
-  const list = _propsRef.value.modelValue.cc;
+  const list = _propsRef.value.modelValue._tempCC;
   const itemIndex = list.findIndex((r) => r.id == row.id);
 
   if (itemIndex !== -1 && itemIndex < list.length - 1) {
@@ -784,14 +803,18 @@ const _CCDialogTitle = ref(_$t("addColumn"));
 function _CCDialogFormSubmit() {
   if (_CCDialogFormData.value.isNew) {
     _CCDialogFormData.value.isNew = false;
-    _propsRef.value.modelValue.cc.push(_CCDialogFormData.value);
+    _propsRef.value.modelValue._tempCC.push(_CCDialogFormData.value);
   } else {
-    const index = _propsRef.value.modelValue.cc.findIndex(
+    const index = _propsRef.value.modelValue._tempCC.findIndex(
       (i) => i.id === _CCDialogFormData.value.id
     );
 
-    _propsRef.value.modelValue.cc[index] = _CCDialogFormData.value;
+    _propsRef.value.modelValue._tempCC[index] = _CCDialogFormData.value;
   }
+
+  _propsRef.value.modelValue.cc = _propsRef.value.modelValue._tempCC.map(
+    (x) => x.cc
+  );
 
   _CCDialogVisibility.value = false;
 }
@@ -817,10 +840,13 @@ const _attachmentColumnsDef = [
 
 const _attachmentColumnVisibility = ref(["attachment", "actions"]);
 
-const _attachmentList = ref(_propsRef.value.modelValue.attachments);
+if (!_propsRef.value.modelValue.hasOwnProperty("_tempAttachments"))
+  _propsRef.value.modelValue._tempAttachments = [];
+
+const _attachmentList = ref(_propsRef.value.modelValue._tempAttachments);
 
 function _attachmentAddItemClick() {
-  const list = _propsRef.value.modelValue.attachments;
+  const list = _propsRef.value.modelValue._tempAttachments;
   const idList = list.map((v) => v.id);
   const maxId = (idList.length === 0 ? 0 : Math.max(...idList)) + 1;
 
@@ -841,7 +867,7 @@ function _attachmentEditItemClick(row) {
 }
 
 function _attachmentDeleteItemClick(row) {
-  const index = _propsRef.value.modelValue.attachments.findIndex(
+  const index = _propsRef.value.modelValue._tempAttachments.findIndex(
     (i) => i.id === row.id
   );
 
@@ -854,13 +880,16 @@ function _attachmentDeleteItemClick(row) {
     })
     .onOk(() => {
       if (index >= 0) {
-        _propsRef.value.modelValue.attachments.splice(index, 1);
+        _propsRef.value.modelValue._tempAttachments.splice(index, 1);
+
+        _propsRef.value.modelValue.attachments =
+          _propsRef.value.modelValue._tempAttachments.map((x) => x.attachment);
       }
     });
 }
 
 function _attachmentItemMoveUpClick(row) {
-  const list = _propsRef.value.modelValue.attachments;
+  const list = _propsRef.value.modelValue._tempAttachments;
   const itemIndex = list.findIndex((r) => r.id == row.id);
 
   if (itemIndex !== -1 && itemIndex > 0) {
@@ -870,7 +899,7 @@ function _attachmentItemMoveUpClick(row) {
 }
 
 function _attachmentItemMoveDownClick(row) {
-  const list = _propsRef.value.modelValue.attachments;
+  const list = _propsRef.value.modelValue._tempAttachments;
   const itemIndex = list.findIndex((r) => r.id == row.id);
 
   if (itemIndex !== -1 && itemIndex < list.length - 1) {
@@ -887,17 +916,20 @@ const _attachmentDialogTitle = ref(_$t("addAttachment"));
 function _attachmentDialogFormSubmit() {
   if (_attachmentDialogFormData.value.isNew) {
     _attachmentDialogFormData.value.isNew = false;
-    _propsRef.value.modelValue.attachments.push(
+    _propsRef.value.modelValue._tempAttachments.push(
       _attachmentDialogFormData.value
     );
   } else {
-    const index = _propsRef.value.modelValue.attachments.findIndex(
+    const index = _propsRef.value.modelValue._tempAttachments.findIndex(
       (i) => i.id === _attachmentDialogFormData.value.id
     );
 
-    _propsRef.value.modelValue.attachments[index] =
+    _propsRef.value.modelValue._tempAttachments[index] =
       _attachmentDialogFormData.value;
   }
+
+  _propsRef.value.modelValue.attachments =
+    _propsRef.value.modelValue._tempAttachments.map((x) => x.attachment);
 
   _attachmentDialogVisibility.value = false;
 }

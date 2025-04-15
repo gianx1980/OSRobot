@@ -24,7 +24,7 @@ namespace OSRobot.Server.Core.DynamicData;
 
 public static partial class DynamicDataParser
 {       
-    private readonly static Regex _regExFieldValue = DetectObjectRegex();
+    private readonly static Regex _regExFieldValue = DynamicDataRegex();
 
     public static int GetRowIndex(string rowIndex, int iterationNumber, int? subInstanceIndex)
     {
@@ -105,6 +105,7 @@ public static partial class DynamicDataParser
         
         if (config.PluginIterationMode == IterationMode.IterateDefaultRecordset)
         {
+            // Look for default recordset of the previous task
             if (dynamicDataSet.ContainsKey(CommonDynamicData.DefaultRecordsetName))
             {
                 if (dynamicDataSet[CommonDynamicData.DefaultRecordsetName] is List<Dictionary<string, object>> list)
@@ -119,10 +120,23 @@ public static partial class DynamicDataParser
         }
         else if (config.PluginIterationMode == IterationMode.IterateObjectRecordset)
         {
-            count = int.Parse(ReplaceDynamicData(config.IterationObject, dynamicDataChain, 0, null));
+            // Look for the recordset contained in config.IterationObject
+            object? source = DynamicDataParser.GetDynamicDataObject(config.IterationObject, dynamicDataChain);
+            if (source != null)
+            {
+                if (source is List<Dictionary<string, object>> list)
+                {
+                    count = list.Count;
+                }
+                else if (source is DataTable dataTable)
+                {
+                    count = dataTable.Rows.Count;
+                }
+            }
         }
-        else // Exact number of times
+        else 
         {
+            // Exact number of times
             count = config.IterationsCount;
         }
 
@@ -179,6 +193,6 @@ public static partial class DynamicDataParser
         Parse(config, dynamicDataChain, iterationNumber, subInstanceIndex);
     }
 
-    [GeneratedRegex(@"\{object\[(?<ObjectID>\d+)\]\.(?<FieldName>\w+)(\[(?<RowIndex>\d+|\{iterationIndex\}|\{subInstanceIndex\})\])?(\[\'(?<SubFieldName>\w+)\'\])?\}", RegexOptions.IgnoreCase, "it-IT")]
-    private static partial Regex DetectObjectRegex();
+    [GeneratedRegex(@"\{object\[(?<ObjectID>\d+)\]\.(?<FieldName>\w+)(\[(?<RowIndex>\d+|\{iterationIndex\}|\{subInstanceIndex\})\])?(\[\'(?<SubFieldName>.*?)\'\])?\}", RegexOptions.IgnoreCase, "it-IT")]
+    private static partial Regex DynamicDataRegex();
 }
