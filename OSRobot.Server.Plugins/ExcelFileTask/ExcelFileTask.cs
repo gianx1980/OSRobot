@@ -122,7 +122,9 @@ public class ExcelFileTask : BaseTask
                 case ExcelFileTaskType.ReadRow:
                     {
                         using XLWorkbook wksBook = new(tConfig_0.FilePath);
-                        IXLWorksheet wksSheet = wksBook.Worksheet(tConfig_0.SheetName);
+                        IXLWorksheet wksSheet;
+
+                        wksSheet = !string.IsNullOrEmpty(tConfig_0.SheetName) ? wksBook.Worksheet(tConfig_0.SheetName) : wksSheet = wksBook.Worksheet(1);
 
                         int readFromRow = 0;
                         int readToRow = 0;

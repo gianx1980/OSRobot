@@ -277,8 +277,8 @@
                       dense
                       :rules="[
                         (val) =>
-                          (_propsRef.modelValue.readRowType ===
-                            'ReadRowNumber' &&
+                          (_propsRef.modelValue.readInterval ===
+                            'ReadFromRowToLastRow' &&
                             !!val) ||
                           _$t('thisFieldIsMandatory'),
                       ]"
