@@ -20,8 +20,6 @@ namespace OSRobot.Server.Models.DTO.User;
 
 public class UserLoginResponse(string username, string token, string refreshToken)
 {
-    public const int ResponseWrongCredentials = -10;
-
     public string Username { get; set; } = username;
 
     public string Token { get; set; } = token;

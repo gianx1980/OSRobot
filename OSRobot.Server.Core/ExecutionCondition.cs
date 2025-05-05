@@ -29,18 +29,15 @@ public class ExecutionCondition
     }
     #pragma warning restore CS8618
 
-    public ExecutionCondition(/*IPluginInstance pluginInstance,*/ string dynamicDataCode, EnumExecutionConditionOperator conditionOperator, 
+    public ExecutionCondition(string dynamicDataCode, EnumExecutionConditionOperator conditionOperator, 
                                 string minValue, string maxValue)
     {
-        //PluginInstance = pluginInstance;
         DynamicDataCode = dynamicDataCode;
         Operator = conditionOperator;
         MinValue = minValue;
         MaxValue = maxValue;
     }
 
-    //public IPluginInstance PluginInstance { get; set; }
-    //public int ObjectID { get; set; }
     public string DynamicDataCode { get; set; }
     
     [JsonConverter(typeof(JsonStringEnumConverter))]
@@ -65,22 +62,25 @@ public class ExecutionCondition
         if (Operator == EnumExecutionConditionOperator.ValueLessThan && (int)execResult.Data[DynamicDataCode] < int.Parse(MinValue))
             return true;
 
-        string dynamicDataValueString = execResult.Data[DynamicDataCode].ToString() ?? string.Empty;
+        if (!string.IsNullOrEmpty(DynamicDataCode))
+        {
+            string dynamicDataValueString = execResult.Data[DynamicDataCode].ToString() ?? string.Empty;
 
-        if (Operator == EnumExecutionConditionOperator.ValueContains && dynamicDataValueString.Contains(MinValue))
-            return true;
+            if (Operator == EnumExecutionConditionOperator.ValueContains && dynamicDataValueString.Contains(MinValue))
+                return true;
 
-        if (Operator == EnumExecutionConditionOperator.ValueStartsWith && dynamicDataValueString.StartsWith(MinValue))
-            return true;
+            if (Operator == EnumExecutionConditionOperator.ValueStartsWith && dynamicDataValueString.StartsWith(MinValue))
+                return true;
 
-        if (Operator == EnumExecutionConditionOperator.ValueEndsWith && dynamicDataValueString.EndsWith(MinValue))
-            return true;
+            if (Operator == EnumExecutionConditionOperator.ValueEndsWith && dynamicDataValueString.EndsWith(MinValue))
+                return true;
 
-        if (Operator == EnumExecutionConditionOperator.ValueBetween 
-                && (int)execResult.Data[DynamicDataCode] >= int.Parse(MinValue)
-                && (int)execResult.Data[DynamicDataCode] <= int.Parse(MaxValue)
-            )
-            return true;
+            if (Operator == EnumExecutionConditionOperator.ValueBetween
+                    && (int)execResult.Data[DynamicDataCode] >= int.Parse(MinValue)
+                    && (int)execResult.Data[DynamicDataCode] <= int.Parse(MaxValue)
+                )
+                return true;
+        }
 
         return false;
     }

@@ -28,7 +28,9 @@ public enum FileSystemTaskCommandType
     Copy,
     Delete,
     CreateFolder,
-    CheckExistence
+    CheckExistence,
+    List,
+    Rename
 }
 
 public class FileSystemTaskConfig : ITaskConfig
@@ -56,4 +58,19 @@ public class FileSystemTaskConfig : ITaskConfig
 
     [DynamicData]
     public string CreateFolderPath { get; set; } = string.Empty;
+
+
+    [DynamicData]
+    public string ListFolderPath { get; set; } = string.Empty;
+    public bool ListFiles { get; set; } = true;
+    public bool ListFolders { get; set; } = true;
+
+    public bool ListSubfoldersContent { get; set; }
+
+    [DynamicData]
+    public string RenameFromPath { get; set; } = string.Empty;
+
+    [DynamicData]
+    public string RenameToPath { get; set; } = string.Empty;
+
 }

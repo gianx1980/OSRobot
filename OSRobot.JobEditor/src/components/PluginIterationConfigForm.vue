@@ -75,7 +75,7 @@
               (val) =>
                 (_propsRef.modelValue.pluginIterationMode ===
                   'IterateExactNumber' &&
-                  !!val) ||
+                  (val === 0 || !!val)) ||
                 _$t('thisFieldIsMandatory'),
               (val) =>
                 (val >= 0 && val <= 100) ||

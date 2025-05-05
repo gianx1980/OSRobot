@@ -89,7 +89,7 @@
               min="1"
               max="9999"
               :rules="[
-                (val) => !!val || _$t('thisFieldIsMandatory'),
+                (val) => val === 0 || !!val || _$t('thisFieldIsMandatory'),
                 (val) =>
                   (val >= 1 && val <= 9999) ||
                   _$t('mustBeAValueBetweenXAndY', ['1', '9999']),
@@ -137,7 +137,7 @@
               min="0"
               max="2147483647"
               :rules="[
-                (val) => !!val || _$t('thisFieldIsMandatory'),
+                (val) => val === 0 || !!val || _$t('thisFieldIsMandatory'),
                 (val) =>
                   (val > 0 && val < 2147483647) ||
                   _$t('mustBeAValueBetweenXAndY', ['0', '2147483647']),

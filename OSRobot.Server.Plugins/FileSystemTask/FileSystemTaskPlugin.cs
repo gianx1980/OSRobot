@@ -42,6 +42,7 @@ public class FileSystemTaskPlugin : IPlugin
         {
             List<DynamicDataSample> Samples = CommonDynamicData.BuildStandardDynamicDataSamples("File system file task 1");
             Samples.Add(new DynamicDataSample("FilePathExists", Resource.TxtFilePathExists, "1"));
+            Samples.Add(new DynamicDataSample(CommonDynamicData.DefaultRecordsetName, Resource.TxtDynDataDefaultRecordset, Resource.TxtDynDataFieldXOfRecordsetsRow, true));
             return Samples;
         }
     }

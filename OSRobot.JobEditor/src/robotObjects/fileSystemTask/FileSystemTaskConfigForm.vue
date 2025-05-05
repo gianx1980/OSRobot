@@ -200,7 +200,7 @@
               </q-card-section>
               <q-card-section>
                 <div class="row">
-                  <div class="col-10">
+                  <div class="col-9">
                     <q-input
                       filled
                       v-model="_propsRef.modelValue.createFolderPath"
@@ -210,10 +210,16 @@
                       :rules="[(val) => !!val || _$t('thisFieldIsMandatory')]"
                     />
                   </div>
-                  <div class="col-2">
+                  <div class="col-3">
                     <BtnFolderBrowser
                       class="q-ml-sm"
                       v-model="_propsRef.modelValue"
+                      modelValueKey="createFolderPath"
+                    />
+                    <BtnDynamicDataBrowser
+                      class="q-ml-sm"
+                      v-model="_propsRef.modelValue"
+                      :folderItems="_propsRef.containingFolderItems"
                       modelValueKey="createFolderPath"
                     />
                   </div>
@@ -231,7 +237,7 @@
               </q-card-section>
               <q-card-section>
                 <div class="row">
-                  <div class="col-10">
+                  <div class="col-9">
                     <q-input
                       filled
                       v-model="_propsRef.modelValue.checkExistenceFilePath"
@@ -241,11 +247,149 @@
                       :rules="[(val) => !!val || _$t('thisFieldIsMandatory')]"
                     />
                   </div>
-                  <div class="col-2">
+                  <div class="col-3">
                     <BtnFileBrowser
                       class="q-ml-sm"
                       v-model="_propsRef.modelValue"
                       modelValueKey="checkExistenceFilePath"
+                    />
+                    <BtnDynamicDataBrowser
+                      class="q-ml-sm"
+                      v-model="_propsRef.modelValue"
+                      :folderItems="_propsRef.containingFolderItems"
+                      modelValueKey="checkExistenceFilePath"
+                    />
+                  </div>
+                </div>
+              </q-card-section>
+            </q-card>
+            <q-card
+              class="q-mt-sm"
+              v-if="_propsRef.modelValue.command === 'List'"
+            >
+              <q-card-section>
+                <div class="text-subtitle1">
+                  {{ _$t("listConfiguration") }}
+                </div>
+              </q-card-section>
+              <q-card-section>
+                <div class="row">
+                  <div class="col-9">
+                    <q-input
+                      filled
+                      v-model="_propsRef.modelValue.listFolderPath"
+                      :label="_$t('path')"
+                      dense
+                      lazy-rules
+                      :rules="[(val) => !!val || _$t('thisFieldIsMandatory')]"
+                    />
+                  </div>
+                  <div class="col-3">
+                    <BtnFolderBrowser
+                      class="q-ml-sm"
+                      v-model="_propsRef.modelValue"
+                      modelValueKey="listFolderPath"
+                    />
+                    <BtnDynamicDataBrowser
+                      class="q-ml-sm"
+                      v-model="_propsRef.modelValue"
+                      :folderItems="_propsRef.containingFolderItems"
+                      modelValueKey="listFolderPath"
+                    />
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-12">
+                    <q-toggle
+                      class="q-ml-sm"
+                      v-model="_propsRef.modelValue.listFiles"
+                      :label="_$t('listFiles')"
+                      left-label
+                      dense
+                    />
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-12">
+                    <q-toggle
+                      class="q-ml-sm"
+                      v-model="_propsRef.modelValue.listFolders"
+                      :label="_$t('listFolders')"
+                      left-label
+                      dense
+                    />
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-12">
+                    <q-toggle
+                      class="q-ml-sm"
+                      v-model="_propsRef.modelValue.listSubfoldersContent"
+                      :label="_$t('listSubfoldersContent')"
+                      left-label
+                      dense
+                    />
+                  </div>
+                </div>
+              </q-card-section>
+            </q-card>
+            <q-card
+              class="q-mt-sm"
+              v-if="_propsRef.modelValue.command === 'Rename'"
+            >
+              <q-card-section>
+                <div class="text-subtitle1">
+                  {{ _$t("renameConfiguration") }}
+                </div>
+              </q-card-section>
+              <q-card-section>
+                <div class="row">
+                  <div class="col-9">
+                    <q-input
+                      filled
+                      v-model="_propsRef.modelValue.renameFromPath"
+                      :label="_$t('renameFrom')"
+                      dense
+                      lazy-rules
+                      :rules="[(val) => !!val || _$t('thisFieldIsMandatory')]"
+                    />
+                  </div>
+                  <div class="col-3">
+                    <BtnFolderBrowser
+                      class="q-ml-sm"
+                      v-model="_propsRef.modelValue"
+                      modelValueKey="renameFromPath"
+                    />
+                    <BtnDynamicDataBrowser
+                      class="q-ml-sm"
+                      v-model="_propsRef.modelValue"
+                      :folderItems="_propsRef.containingFolderItems"
+                      modelValueKey="renameFromPath"
+                    />
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col-9">
+                    <q-input
+                      filled
+                      v-model="_propsRef.modelValue.renameToPath"
+                      :label="_$t('renameTo')"
+                      dense
+                      lazy-rules
+                      :rules="[(val) => !!val || _$t('thisFieldIsMandatory')]"
+                    />
+                  </div>
+                  <div class="col-3">
+                    <BtnFolderBrowser
+                      class="q-ml-sm"
+                      v-model="_propsRef.modelValue"
+                      modelValueKey="renameToPath"
+                    />
+                    <BtnDynamicDataBrowser
+                      class="q-ml-sm"
+                      v-model="_propsRef.modelValue"
+                      :folderItems="_propsRef.containingFolderItems"
+                      modelValueKey="renameToPath"
                     />
                   </div>
                 </div>
@@ -564,9 +708,11 @@ const _$t = _i18n.t;
 
 const _commands = [
   { label: _$t("copy"), value: "Copy" },
-  { label: _$t("delete"), value: "Delete" },
-  { label: _$t("createFolder"), value: "CreateFolder" },
   { label: _$t("checkExistence"), value: "CheckExistence" },
+  { label: _$t("createFolder"), value: "CreateFolder" },
+  { label: _$t("delete"), value: "Delete" },
+  { label: _$t("list"), value: "List" },
+  { label: _$t("rename"), value: "Rename" },
 ];
 
 // Copy path table management

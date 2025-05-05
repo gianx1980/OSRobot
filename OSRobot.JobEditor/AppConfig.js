@@ -1,4 +1,4 @@
 var AppConfig = {
   appTitle: "OSRobot",
-  apiUrl: "https://localhost:7098/api",
+  apiUrl: "http://localhost:7098/api",
 };

@@ -18,8 +18,10 @@
 ======================================================================================*/
 
 using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
+using System.Data;
 using System.Text;
 
 namespace OSRobot.Server.Plugins.RESTApiTask;
@@ -28,6 +30,7 @@ public class RESTApiTask : IterationTask
 {
     private string _rawContent = string.Empty;
     private string _httpResult = string.Empty;
+    private string _jsonPathData = string.Empty;
 
     protected override void RunIteration(int currentIteration)
     {
@@ -54,13 +57,13 @@ public class RESTApiTask : IterationTask
         else if (tConfig.Method == MethodType.Post)
         {
             _instanceLogger?.Info(this, $"Connecting to: {tConfig.URL} Method: POST");
-            StringContent contentParameters = new(tConfig.Parameters, Encoding.UTF8, "application/json");
+            StringContent contentParameters = new(tConfig.Body, Encoding.UTF8, "application/json");
             taskResponse = client.PostAsync(tConfig.URL, contentParameters);
         }
         else if (tConfig.Method == MethodType.Put)
         {
             _instanceLogger?.Info(this, $"Connecting to: {tConfig.URL} Method: PUT");
-            StringContent contentParameters = new(tConfig.Parameters, Encoding.UTF8, "application/json");
+            StringContent contentParameters = new(tConfig.Body, Encoding.UTF8, "application/json");
             taskResponse = client.PutAsync(tConfig.URL, contentParameters);
         }
         else if (tConfig.Method == MethodType.Delete)
@@ -81,12 +84,24 @@ public class RESTApiTask : IterationTask
             _httpResult = ((int)response.StatusCode).ToString();
         }
 
-        if (tConfig.ReturnsRecordset)
+        if (!string.IsNullOrEmpty(tConfig.JsonPathToData))
         {
-            _instanceLogger?.Info(this, "Trying to deserialize JSON response...");
-            List<Dictionary<string, object>>? temp = JsonConvert.DeserializeObject<List<Dictionary<string, object>>>(_rawContent) ?? throw new ApplicationException("Cannot deserialize JSON response");
-            _defaultRecordset = temp;
-            _instanceLogger?.Info(this, "Deserialization completed.");
+            _instanceLogger?.Info(this, $"Extracting data from path \"{tConfig.JsonPathToData}\"...");
+
+            JObject jParsedJson = JObject.Parse(_rawContent);
+            JToken? jJsonPathData = jParsedJson.SelectToken(tConfig.JsonPathToData);
+
+            if (jJsonPathData != null)
+            {
+                _jsonPathData = jJsonPathData.ToString();
+                if (tConfig.ReturnsRecordset)
+                {
+                    _instanceLogger?.Info(this, "Trying to deserialize JSON response...");
+                    DataTable temp = JsonConvert.DeserializeObject<DataTable>(_jsonPathData) ?? throw new ApplicationException("Cannot deserialize JSON response");
+                    _defaultRecordset = temp;
+                    _instanceLogger?.Info(this, "Deserialization completed.");
+                }
+            }
         }
     }
 
@@ -96,8 +111,16 @@ public class RESTApiTask : IterationTask
         dDataSet.TryAdd(RESTApiTaskCommon.DynDataKeyURL, tConfig.URL);
         dDataSet.TryAdd(RESTApiTaskCommon.DynDataKeyRawContent, _rawContent);
         dDataSet.TryAdd(RESTApiTaskCommon.DynDataKeyHttpResult, _httpResult);
-        if (tConfig != null && tConfig.ReturnsRecordset)
-            dDataSet.TryAdd(CommonDynamicData.DefaultRecordsetName, _defaultRecordset);
+        
+        if (tConfig != null && !string.IsNullOrEmpty(tConfig.JsonPathToData))
+        {
+            dDataSet.TryAdd(RESTApiTaskCommon.DynDataKeyJsonPathData, _jsonPathData);
+
+            if (tConfig.ReturnsRecordset)
+            {
+                dDataSet.TryAdd(CommonDynamicData.DefaultRecordsetName, _defaultRecordset);
+            }
+        }
     }
 
     protected override void PostIterationSucceded(int currentIteration, ExecResult result, DynamicDataSet dDataSet)

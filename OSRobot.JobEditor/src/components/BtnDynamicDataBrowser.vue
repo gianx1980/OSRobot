@@ -42,9 +42,12 @@ function _showDynamicDataBrowserClick() {
     .onOk((ev) => {
       /* Build dynamic data string like this {Object[55].ExecutionStartDateYear} */
       let dynamicData = `{object[${ev.objectSelected.id}].${ev.dynDataSelected.internalName}}`;
+
       _propsRef.value.modelValue[_propsRef.value.modelValueKey] =
-        _propsRef.value.modelValue[_propsRef.value.modelValueKey] ??
-        "" + dynamicData;
+        (_propsRef.value.modelValue[_propsRef.value.modelValueKey] ?? "") +
+        dynamicData;
+
+      console.log(_propsRef.value.modelValue[_propsRef.value.modelValueKey]);
     });
 }
 </script>

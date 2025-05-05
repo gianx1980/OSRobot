@@ -39,7 +39,7 @@
                 'TriggerIfStartsWithinNMinutes'
               "
               :rules="[
-                (val) => !!val || _$t('thisFieldIsMandatory'),
+                (val) => val === 0 || !!val || _$t('thisFieldIsMandatory'),
                 (val) =>
                   (val >= 1 && val <= 9999) ||
                   _$t('mustBeAValueBetweenXAndY', ['1', '9999']),
@@ -77,7 +77,7 @@
                 'TriggerIfStartsAfterNMinutes'
               "
               :rules="[
-                (val) => !!val || _$t('thisFieldIsMandatory'),
+                (val) => val === 0 || !!val || _$t('thisFieldIsMandatory'),
                 (val) =>
                   (val >= 1 && val <= 9999) ||
                   _$t('mustBeAValueBetweenXAndY', ['1', '9999']),

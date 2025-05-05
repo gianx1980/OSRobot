@@ -25,9 +25,9 @@
               lazy-rules
               dense
               :rules="[
-                (val) => !!val || _$t('thisFieldIsMandatory'),
+                (val) => val === 0 || !!val || _$t('thisFieldIsMandatory'),
                 (val) =>
-                  (val > 0 && val < 2147483647) ||
+                  (val >= 0 && val <= 2147483647) ||
                   _$t('mustBeAValueBetweenXAndY', ['0', '2147483647']),
               ]"
             />

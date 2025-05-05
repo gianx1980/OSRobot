@@ -1,3 +1,4 @@
+\
 <template>
   <div class="q-pa-md">
     <PluginGeneralConfigForm
@@ -118,14 +119,27 @@
                     />
                   </div>
                 </div>
-                <div class="row q-mt-md">
+              </q-card-section>
+            </q-card>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col">
+            <q-card class="q-mt-sm">
+              <q-card-section>
+                <div class="text-subtitle1">
+                  {{ _$t("input") }}
+                </div>
+              </q-card-section>
+              <q-card-section>
+                <div class="row">
                   <div class="col-11">
                     <q-input
                       type="textarea"
                       class="q-pr-xs"
                       filled
-                      v-model="_propsRef.modelValue.parameters"
-                      :label="_$t('parametersJSON')"
+                      v-model="_propsRef.modelValue.body"
+                      :label="_$t('body')"
                       lazy-rules
                       dense
                     />
@@ -134,7 +148,7 @@
                     <BtnDynamicDataBrowser
                       v-model="_propsRef.modelValue"
                       :folderItems="_propsRef.containingFolderItems"
-                      modelValueKey="parameters"
+                      modelValueKey="body"
                     />
                   </div>
                 </div>
@@ -142,14 +156,47 @@
             </q-card>
           </div>
         </div>
-        <div class="row q-mt-md">
+        <div class="row">
           <div class="col">
-            <q-toggle
-              v-model="_propsRef.modelValue.returnsRecordset"
-              :label="_$t('returnsRecordset')"
-              left-label
-              dense
-            />
+            <q-card class="q-mt-sm">
+              <q-card-section>
+                <div class="text-subtitle1">
+                  {{ _$t("output") }}
+                </div>
+              </q-card-section>
+              <q-card-section>
+                <div class="row q-mt-md">
+                  <div class="col-11">
+                    <q-input
+                      type="text"
+                      class="q-pr-xs"
+                      filled
+                      v-model="_propsRef.modelValue.jsonPathToData"
+                      :label="_$t('jsonPathToData')"
+                      lazy-rules
+                      dense
+                    />
+                  </div>
+                  <div class="col-1">
+                    <BtnDynamicDataBrowser
+                      v-model="_propsRef.modelValue"
+                      :folderItems="_propsRef.containingFolderItems"
+                      modelValueKey="jsonPathToData"
+                    />
+                  </div>
+                </div>
+                <div class="row q-mt-md">
+                  <div class="col">
+                    <q-toggle
+                      v-model="_propsRef.modelValue.returnsRecordset"
+                      :label="_$t('returnsRecordset')"
+                      left-label
+                      dense
+                    />
+                  </div>
+                </div>
+              </q-card-section>
+            </q-card>
           </div>
         </div>
       </q-card-section>
@@ -180,9 +227,10 @@
               </div>
               <div class="col-1">
                 <BtnDynamicDataBrowser
+                  class="q-ml-sm"
                   v-model="_headerDialogFormData"
                   :folderItems="_propsRef.containingFolderItems"
-                  modelValueKey="headerTitle"
+                  modelValueKey="name"
                 />
               </div>
             </div>
@@ -198,6 +246,7 @@
               </div>
               <div class="col-1">
                 <BtnDynamicDataBrowser
+                  class="q-ml-sm"
                   v-model="_headerDialogFormData"
                   :folderItems="_propsRef.containingFolderItems"
                   modelValueKey="value"

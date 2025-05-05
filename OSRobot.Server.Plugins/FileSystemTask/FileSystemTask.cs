@@ -17,10 +17,13 @@
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
 
+using DocumentFormat.OpenXml.Bibliography;
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.Data;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging.Abstract;
+using System.Data;
+using System.IO;
 
 
 namespace OSRobot.Server.Plugins.FileSystemTask;
@@ -279,7 +282,7 @@ public class FileSystemTask : IterationTask
 
             _instanceLogger?.Info(this, "Create directory completed");
         }
-        else
+        else if (tConfig.Command == FileSystemTaskCommandType.CheckExistence)
         {
             _instanceLogger?.Info(this, "Starting check existence of file/directory...");
             _filePathExists = false;
@@ -291,6 +294,140 @@ public class FileSystemTask : IterationTask
             }
 
             _instanceLogger?.Info(this, "Check existence completed");
+        }
+        else if (tConfig.Command == FileSystemTaskCommandType.List)
+        {
+            _instanceLogger?.Info(this, $"Starting enumeration of files and directories in {tConfig.ListFolderPath}...");
+
+            bool isListFolderPathANamePattern = IsNameAPattern(tConfig.ListFolderPath);
+            bool isListFolderPathADirectory = Directory.Exists(tConfig.ListFolderPath);
+
+            string listFolderPathName = Path.GetFileName(tConfig.ListFolderPath);
+            string? listFolderPathParent = Path.GetDirectoryName(tConfig.ListFolderPath);
+
+            if (!isListFolderPathADirectory && !isListFolderPathANamePattern)
+            {
+                _instanceLogger?.Info(this, $"{tConfig.ListFolderPath} is not a directory, cannot list content.");
+                return;
+            }
+
+            string? searchPattern;
+            DirectoryInfo listFolderPathDirInfo;
+
+            if (isListFolderPathADirectory)
+            {
+                searchPattern = "*";
+                listFolderPathDirInfo = new DirectoryInfo(tConfig.ListFolderPath);
+            }
+            else
+            {
+                searchPattern = listFolderPathName;
+                listFolderPathParent = Path.GetDirectoryName(tConfig.ListFolderPath);
+                listFolderPathDirInfo = new DirectoryInfo(listFolderPathParent!);
+            }
+
+            DataTable dtDirContent = (DataTable)_defaultRecordset;
+            dtDirContent.Columns.Add("FullName", typeof(string));
+            dtDirContent.Columns.Add("Name", typeof(string));
+            dtDirContent.Columns.Add("Extension", typeof(string));
+            dtDirContent.Columns.Add("Size", typeof(long));
+            dtDirContent.Columns.Add("CreationTime", typeof(DateTime));
+            dtDirContent.Columns.Add("LastAccessTime", typeof(DateTime));
+            dtDirContent.Columns.Add("LastWriteTime", typeof(DateTime));
+            dtDirContent.Columns.Add("IsDirectory", typeof(bool));
+
+            if (tConfig.ListFiles)
+            {
+                FileInfo[] fileList = listFolderPathDirInfo.GetFiles(searchPattern,
+                                                                    tConfig.ListSubfoldersContent ?
+                                                                            SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+                
+                foreach (FileInfo file in fileList)
+                {
+                    DataRow dr = dtDirContent.NewRow();
+                    dr["FullName"] = file.FullName;
+                    dr["Name"] = file.Name;
+                    dr["Extension"] = file.Extension;
+                    dr["Size"] = file.Length;
+                    dr["CreationTime"] = file.CreationTime;
+                    dr["LastAccessTime"] = file.LastAccessTime;
+                    dr["LastWriteTime"] = file.LastWriteTime;
+                    dr["IsDirectory"] = false;
+                    dtDirContent.Rows.Add(dr);
+                }
+            }
+
+            if (tConfig.ListFolders)
+            {
+                DirectoryInfo[] directoryList = listFolderPathDirInfo.GetDirectories(searchPattern,
+                                                                    tConfig.ListSubfoldersContent ?
+                                                                            SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+
+                foreach (DirectoryInfo dir in directoryList)
+                {
+                    DataRow dr = dtDirContent.NewRow();
+                    dr["FullName"] = dir.FullName;
+                    dr["Name"] = dir.Name;
+                    dr["Extension"] = dir.Extension;
+                    dr["Size"] = 0;
+                    dr["CreationTime"] = dir.CreationTime;
+                    dr["LastAccessTime"] = dir.LastAccessTime;
+                    dr["LastWriteTime"] = dir.LastWriteTime;
+                    dr["IsDirectory"] = true;
+                    dtDirContent.Rows.Add(dr);
+                }
+            }
+
+            _instanceLogger?.Info(this, "Enumeration completed");
+        }
+        else if (tConfig.Command == FileSystemTaskCommandType.Rename)
+        {
+            bool isRenameFromPathADirectory = Directory.Exists(tConfig.RenameFromPath);
+
+            if (!isRenameFromPathADirectory)
+            {
+                _instanceLogger?.Info(this, $"Renaming directory {tConfig.RenameFromPath} to {tConfig.RenameToPath}...");
+
+                FileInfo fileInfo = new(tConfig.RenameFromPath);
+
+                string itemName = fileInfo.Name;
+                string itemPath = fileInfo.DirectoryName ?? string.Empty;
+                string itemExtension = fileInfo.Extension;
+                string itemSeparator = Path.DirectorySeparatorChar.ToString();
+
+                string moveToPath = tConfig.RenameToPath.Replace("{ItemName}", itemName)
+                                                        .Replace("{ItemPath}", itemPath)
+                                                        .Replace("{ItemExtension}", itemExtension)
+                                                        .Replace("{ItemSeparator}", itemSeparator);
+                
+                fileInfo.MoveTo(moveToPath);
+
+                _instanceLogger?.Info(this, $"Renaming directory {tConfig.RenameFromPath} to {moveToPath} completed.");
+            }
+            else
+            {
+                _instanceLogger?.Info(this, $"Renaming file {tConfig.RenameFromPath} to {tConfig.RenameToPath}...");
+
+                DirectoryInfo directoryInfo = new(tConfig.RenameFromPath);
+
+                string itemName = directoryInfo.Name;
+                string itemPath = directoryInfo.Parent?.FullName ?? string.Empty; 
+                string itemExtension = directoryInfo.Extension;
+                string itemSeparator = Path.DirectorySeparatorChar.ToString();
+
+                string moveToPath = tConfig.RenameToPath.Replace("{ItemName}", itemName)
+                                                        .Replace("{ItemPath}", itemPath)
+                                                        .Replace("{ItemExtension}", itemExtension)
+                                                        .Replace("{ItemSeparator}", itemSeparator);
+
+                directoryInfo.MoveTo(moveToPath);
+
+                _instanceLogger?.Info(this, $"Renaming file {tConfig.RenameFromPath} to {moveToPath} completed.");
+            }                
+        }
+        else
+        {
+            throw new ApplicationException("FileSystemTask: unknown command type");
         }
     }
 
@@ -304,6 +441,10 @@ public class FileSystemTask : IterationTask
                 dDataSet.TryAdd("FilePathExists", 1);
             else
                 dDataSet.TryAdd("FilePathExists", 0);
+        }
+        else if (tConfig.Command == FileSystemTaskCommandType.List)
+        {
+            dDataSet.TryAdd(CommonDynamicData.DefaultRecordsetName, _defaultRecordset);
         }
     }
 }

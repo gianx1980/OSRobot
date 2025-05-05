@@ -38,6 +38,7 @@ public class RESTApiTaskPlugin : IPlugin
             Samples.Add(new DynamicDataSample(RESTApiTaskCommon.DynDataKeyURL, Resource.TxtURL, Resource.TxtURLExample));
             Samples.Add(new DynamicDataSample(RESTApiTaskCommon.DynDataKeyRawContent, Resource.TxtRawContent, Resource.TxtRawContentExample));
             Samples.Add(new DynamicDataSample(RESTApiTaskCommon.DynDataKeyHttpResult, Resource.TxtHttpResult, Resource.TxtHttpResultExample));
+            Samples.Add(new DynamicDataSample(RESTApiTaskCommon.DynDataKeyJsonPathData, Resource.TxtJsonPathToDataValue, "Value"));
             Samples.Add(new DynamicDataSample(CommonDynamicData.DefaultRecordsetName, Resource.TxtDynDataDefaultRecordset, Resource.TxtDynDataFieldXOfRecordsetsRow, true));
             return Samples;
         }

@@ -322,7 +322,7 @@
     <value>High</value>
   </data>
   <data name="TxtHttpResult" xml:space="preserve">
-    <value>200</value>
+    <value>Http result</value>
   </data>
   <data name="TxtHttpResultExample" xml:space="preserve">
     <value>200</value>
@@ -332,6 +332,9 @@
   </data>
   <data name="TxtInteger" xml:space="preserve">
     <value>Integer</value>
+  </data>
+  <data name="TxtJsonPathToDataValue" xml:space="preserve">
+    <value>JSON path to data value</value>
   </data>
   <data name="TxtLengthPrecision" xml:space="preserve">
     <value>Length / Precision</value>

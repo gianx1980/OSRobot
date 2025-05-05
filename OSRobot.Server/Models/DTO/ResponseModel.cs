@@ -16,13 +16,32 @@
     You should have received a copy of the GNU General Public License
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
+namespace OSRobot.Server.Models.DTO;
 
-namespace OSRobot.Server.Plugins.RESTApiTask;
-
-internal class RESTApiTaskCommon
+public enum ResponseCode : int
 {
-    public const string DynDataKeyURL = "URL";
-    public const string DynDataKeyRawContent = "RawContent";
-    public const string DynDataKeyHttpResult = "HttpResult";
-    public const string DynDataKeyJsonPathData = "JsonPathData";
+    ResponseOk = 0,
+    ResponseAccessDenied = -1,
+    ConfirmPasswordMismatch = -2,
+    CannotReloadWhileRunningTasks = -3,
+    ResponseWrongCredentials = -10,
+    ErrorLoadingJobs = -100,
+    ErrorSavingJobs = -101,
+    CannotStartTask = -200,
+    ResponseGenericError = int.MinValue
 }
+
+public class ResponseModel(ResponseCode responseCode, string? responseMessage)
+{
+    public ResponseCode ResponseCode { get; set; } = responseCode;
+    public string? ResponseMessage { get; set; } = responseMessage;
+}
+
+public class ResponseModel<T>(ResponseCode responseCode, string? responseMessage, T? responseObject)
+{
+    public ResponseCode ResponseCode { get; set; } = responseCode;
+    public string? ResponseMessage { get; set; } = responseMessage;
+    public T? ResponseObject { get; set; } = responseObject;
+}
+
+

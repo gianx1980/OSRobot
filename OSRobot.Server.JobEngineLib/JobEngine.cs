@@ -143,6 +143,9 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
 
     private IFolder? FindFolderRecursive(IFolder folder, int folderId)
     {
+        if (folder.Config.Id == folderId)
+            return folder;
+
         foreach (IPluginInstanceBase pluginInstanceBase in folder.Items)
         {
             if (pluginInstanceBase is IFolder innerFolder)
@@ -200,7 +203,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
                 if (taskCopy.Config.Log)
                     instanceLogger.TaskStarting(taskCopy);
 
-                instanceLogger.Info($"About to run task {taskCopy.Config.Id} with unique running id: {thisTaskId}");
+                instanceLogger.Info($"About to run task {taskCopy.Config.Id} with generated id: {thisTaskId}");
                 _runningTasks.TryAdd(thisTaskId, taskCopy);
                 InstanceExecResult instExecResult = taskCopy.Run(dataChain, lastDynamicDataSet, subInstanceIndex, instanceLogger);
                 

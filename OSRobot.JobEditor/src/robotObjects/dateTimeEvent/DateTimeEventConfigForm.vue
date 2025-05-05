@@ -56,7 +56,7 @@
               min="0"
               max="9999"
               :rules="[
-                (val) => !!val || _$t('thisFieldIsMandatory'),
+                (val) => val === 0 || !!val || _$t('thisFieldIsMandatory'),
                 (val) =>
                   (val >= 0 && val <= 9999) ||
                   _$t('mustBeAValueBetweenXAndY', ['0', '9999']),
@@ -77,7 +77,7 @@
               min="0"
               max="999"
               :rules="[
-                (val) => !!val || _$t('thisFieldIsMandatory'),
+                (val) => val === 0 || !!val || _$t('thisFieldIsMandatory'),
                 (val) =>
                   (val >= 0 && val <= 999) ||
                   _$t('mustBeAValueBetweenXAndY', ['0', '999']),
@@ -98,7 +98,7 @@
               min="0"
               max="999"
               :rules="[
-                (val) => !!val || _$t('thisFieldIsMandatory'),
+                (val) => val === 0 || !!val || _$t('thisFieldIsMandatory'),
                 (val) =>
                   (val >= 0 && val <= 999) ||
                   _$t('mustBeAValueBetweenXAndY', ['0', '999']),
@@ -130,7 +130,7 @@
               dense
               :disable="_formData.modelValue.periodicity !== 'EverySeconds'"
               :rules="[
-                (val) => !!val || _$t('thisFieldIsMandatory'),
+                (val) => val === 0 || !!val || _$t('thisFieldIsMandatory'),
                 (val) =>
                   (val >= 0 && val <= 999) ||
                   _$t('mustBeAValueBetweenXAndY', ['0', '9999']),

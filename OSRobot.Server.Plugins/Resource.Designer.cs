@@ -673,7 +673,7 @@ namespace OSRobot.Server.Plugins {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to 200.
+        ///   Looks up a localized string similar to Http result.
         /// </summary>
         internal static string TxtHttpResult {
             get {
@@ -705,6 +705,15 @@ namespace OSRobot.Server.Plugins {
         internal static string TxtInteger {
             get {
                 return ResourceManager.GetString("TxtInteger", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to JSON path to data value.
+        /// </summary>
+        internal static string TxtJsonPathToDataValue {
+            get {
+                return ResourceManager.GetString("TxtJsonPathToDataValue", resourceCulture);
             }
         }
         

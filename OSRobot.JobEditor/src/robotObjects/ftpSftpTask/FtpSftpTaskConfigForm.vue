@@ -39,11 +39,19 @@
           <div class="col">
             <q-input
               filled
+              type="number"
+              min="1"
+              max="9999"
               v-model="_propsRef.modelValue.port"
               :label="_$t('port')"
               lazy-rules
               dense
-              :rules="[(val) => !!val || _$t('thisFieldIsMandatory')]"
+              :rules="[
+                (val) => val === 0 || !!val || _$t('thisFieldIsMandatory'),
+                (val) =>
+                  (val >= 0 && val <= 9999) ||
+                  _$t('mustBeAValueBetweenXAndY', ['0', '65535']),
+              ]"
             />
           </div>
         </div>

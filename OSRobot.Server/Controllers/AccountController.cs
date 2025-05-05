@@ -91,27 +91,25 @@ public class AccountController(IJWTManager jWTManager, IOptions<AppSettings> app
     public async Task<IActionResult> Login([FromBody] UserLoginRequest userLogin)
     {
         var loginResult = await _userRepository.Users_Login(userLogin.Username, userLogin.Password);    
-        if (loginResult.ResultObject == null
-            || loginResult.ResultCode == UserRepositoryResult.WrongCredentials)
+        if (loginResult.ResultObject == null || loginResult.ResultCode == UserRepositoryResult.WrongCredentials)
         {
-            MainResponse<UserLoginResponse> errorResp = new(UserLoginResponse.ResponseWrongCredentials, null, null);
-            return Ok(errorResp);
+            ResponseModel errorResp = new(ResponseCode.ResponseWrongCredentials, null);
+            return BadRequest(errorResp);
         }
 
         Tokens token = _jWTManager.CreateToken(new UserConfig() { Id = loginResult.ResultObject.Id, Username = loginResult.ResultObject.UserName });
         if (token.Token == null)
         {
-            MainResponse<UserLoginResponse> errorResp = new(UserLoginResponse.ResponseWrongCredentials, "Error during the creation of the token", null);
-            return Ok(errorResp);
+            ResponseModel errorResp = new(ResponseCode.ResponseGenericError, "Error during the creation of the token");
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResp);
         }
 
         // Store the refresh token in the database
         await _userRepository.Users_RefreshTokenSave(loginResult.ResultObject.Id, token.RefreshToken);
 
         UserLoginResponse userLoginResponse = new(userLogin.Username, token.Token, token.RefreshToken);
-
-        MainResponse<UserLoginResponse> mainResponse = new(MainResponse<UserLoginResponse>.ResponseOk, null, userLoginResponse);
-        return Ok(mainResponse);
+        ResponseModel<UserLoginResponse> response = new(ResponseCode.ResponseOk, null, userLoginResponse);
+        return Ok(response);
     }
 
     [HttpPost]
@@ -121,23 +119,22 @@ public class AccountController(IJWTManager jWTManager, IOptions<AppSettings> app
     {
         if (userChangePassowordRequest.NewPassword != userChangePassowordRequest.ConfirmPassword)
         {
-            MainResponse<object?> errorResp = new(MainResponse<object?>.ConfirmPasswordMismatch, "New password / confirm password mismatch", null);
-            return Ok(errorResp);
+            ResponseModel errorResp = new(ResponseCode.ConfirmPasswordMismatch, "New password / confirm password mismatch");
+            return BadRequest(errorResp);
         }
 
         // Call Users_Login to check current credentials
         var loginResult = await _userRepository.Users_Login(AppUser!.Username, userChangePassowordRequest.CurrentPassword);
-        if (loginResult.ResultObject == null
-            || loginResult.ResultCode == UserRepositoryResult.WrongCredentials)
+        if (loginResult.ResultObject == null || loginResult.ResultCode == UserRepositoryResult.WrongCredentials)
         {
-            MainResponse<UserLoginResponse> errorResp = new(UserLoginResponse.ResponseWrongCredentials, "Wrong credentials", null);
-            return Ok(errorResp);
+            ResponseModel errorResp = new(ResponseCode.ResponseWrongCredentials, "Wrong credentials");
+            return BadRequest(errorResp);
         }
 
         await _userRepository.Users_ChangePassword(AppUser!.Id, userChangePassowordRequest.NewPassword);
 
-        MainResponse<object?> mainResponse = new(MainResponse<object?>.ResponseOk, null, null);
-        return Ok(mainResponse);
+        ResponseModel response = new(ResponseCode.ResponseOk, null);
+        return Ok(response);
     }
 
     [HttpPost]
@@ -146,33 +143,31 @@ public class AccountController(IJWTManager jWTManager, IOptions<AppSettings> app
     {        
         string? userName = GetPrincipalNameFromExpiredToken(userRefreshTokenRequest.Token);
         if (userName == null)
-            return Unauthorized();
+        {
+            ResponseModel errorResp = new(ResponseCode.ResponseAccessDenied, "Invalid token");
+            return Unauthorized(errorResp);
+        }
 
+        // Check refresh token
         var repResp = await _userRepository.Users_RefreshTokenValidate(userName, userRefreshTokenRequest.RefreshToken, _appSettings.RefreshToken.ExpireInMinutes);
-
         // Refresh token doesn't exist or doesn't belong to user or is expired
         if (repResp.ResultCode == UserRepositoryResult.InvalidRefreshToken)
-            return Unauthorized();
+        {
+            ResponseModel errorResp = new(ResponseCode.ResponseAccessDenied, "Invalid refresh token");
+            return Unauthorized(errorResp);
+        }
 
         Tokens token = _jWTManager.CreateToken(new UserConfig() { Username = userName });
         if (token.Token == null)
         {
-            MainResponse<UserRefreshTokenResponse> errorResp = new(MainResponse<UserRefreshTokenResponse>.ResponseGenericError, "Error during the creation of the token", null);
-            return Ok(errorResp);
+            ResponseModel errorResp = new(ResponseCode.ResponseGenericError, "Error during the creation of the token");
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResp);
         }
 
         UserRefreshTokenResponse userRefreshTokenResponse = new(token.Token);
-        MainResponse<UserRefreshTokenResponse> mainResponse = new(MainResponse<UserRefreshTokenResponse>.ResponseOk, null, userRefreshTokenResponse);
+        ResponseModel<UserRefreshTokenResponse> response = new(ResponseCode.ResponseOk, null, userRefreshTokenResponse);
 
-        return Ok(mainResponse);
-    }
-
-    [HttpPost]
-    [Authorize]
-    [Route("HeartBeat")]
-    public IActionResult HeartBeat()
-    {
-        return Ok();
+        return Ok(response);
     }
 }
 

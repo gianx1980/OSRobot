@@ -34,9 +34,8 @@ public class ClientUtilsController : AppControllerBase
     [Authorize]
     public IActionResult OSInfo()
     {
-        MainResponse<OSInfoResponse> mainResponse = new(MainResponse<OSInfoResponse>.ResponseOk, null, new OSInfoResponse());
-
-        return Ok(mainResponse);
+        ResponseModel<OSInfoResponse> response = new(ResponseCode.ResponseOk, null, new OSInfoResponse());
+        return Ok(response);
     }
 
 
@@ -46,16 +45,11 @@ public class ClientUtilsController : AppControllerBase
     public IActionResult Drives()
     {
         DriveInfo[] systemDrives = DriveInfo.GetDrives();
+        
+        List<DriveListItem> responseList = systemDrives.Select(drive => new DriveListItem(drive.Name)).ToList();
+        ResponseModel<List<DriveListItem>> response = new(ResponseCode.ResponseOk, null, responseList);
 
-        List<DriveListItem> responseList = [];
-        foreach (DriveInfo drive in systemDrives)
-        {
-            responseList.Add(new DriveListItem(drive.Name));
-        }
-
-        MainResponse<List<DriveListItem>> mainResponse = new(MainResponse<object>.ResponseOk, null, responseList);
-
-        return Ok(mainResponse);
+        return Ok(response);
     }
 
     [HttpGet]
@@ -63,43 +57,34 @@ public class ClientUtilsController : AppControllerBase
     [Authorize]
     public IActionResult Folders(string path)
     {
-        MainResponse<List<string>> mainResponse;
         List<string> folders = [];
-        int responseCode = MainResponse<string>.ResponseOk;
-        string? responseMessage = null;
 
         try
         {
             if (path == @"\" || path == "/")
             {
                 DriveInfo[] systemDrives = DriveInfo.GetDrives();
-                foreach (DriveInfo drive in systemDrives)
-                {
-                    folders.Add(drive.Name);
-                }
+                folders.AddRange(systemDrives.Select(drive => drive.Name));
             }
             else
             {
                 string[] tempFolders = Directory.GetDirectories(path, string.Empty, SearchOption.TopDirectoryOnly);
-                folders.AddRange(tempFolders.Select(t => new DirectoryInfo(t).Name));
+                folders.AddRange(tempFolders.Select(dir => new DirectoryInfo(dir).Name));
             }
         }
         catch (UnauthorizedAccessException)
         {
-            // TODO: log exception
-            responseCode = MainResponse<string>.ResponseAccessDenied;
-            responseMessage = "Access denied";
+            ResponseModel errorResp = new(ResponseCode.ResponseAccessDenied, "Access denied to the path");
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResp);
         }
         catch
         {
-            responseCode = MainResponse<string>.ResponseGenericError;
-
-            // TODO: log exception
+            ResponseModel errorResp = new(ResponseCode.ResponseGenericError, "Generic error occurred");
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResp);
         }
 
-        mainResponse = new(responseCode, responseMessage, folders);
-
-        return Ok(mainResponse);
+        ResponseModel<List<string>> response = new(ResponseCode.ResponseOk, null, folders);
+        return Ok(response);
     }
 
     [HttpGet]
@@ -107,11 +92,8 @@ public class ClientUtilsController : AppControllerBase
     [Authorize]
     public IActionResult Files(string path)
     {
-        MainResponse<List<string>> mainResponse;
         List<string> fileList = [];
-        int responseCode = MainResponse<string>.ResponseOk;
-        string? responseMessage = null;
-
+     
         try
         {
             fileList.AddRange([.. Directory
@@ -120,20 +102,17 @@ public class ClientUtilsController : AppControllerBase
         }
         catch (UnauthorizedAccessException)
         {
-            // TODO: log exception
-            responseCode = MainResponse<string>.ResponseAccessDenied;
-            responseMessage = "Access denied";
+            ResponseModel errorResp = new(ResponseCode.ResponseAccessDenied, "Access denied to the path");
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResp);
         }
         catch
         {
-            responseCode = MainResponse<string>.ResponseGenericError;
-
-            // TODO: log exception
+            ResponseModel errorResp = new(ResponseCode.ResponseGenericError, "Generic error occurred");
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResp);
         }
 
-        mainResponse = new(responseCode, responseMessage, fileList);
-
-        return Ok(mainResponse);
+        ResponseModel<List<string>> response = new(ResponseCode.ResponseOk, null, fileList);
+        return Ok(response);
     }
 
     [HttpGet]
@@ -144,15 +123,20 @@ public class ClientUtilsController : AppControllerBase
         if (connectionInfo.Server == null
             || connectionInfo.Username == null
             || connectionInfo.Password == null)
-            return BadRequest();
+        {
+            ResponseModel errorResp = new(ResponseCode.ResponseWrongCredentials, "Missing one or more parameters");
+            return BadRequest(errorResp);
+        }
 
         bool testResult = SqlServer.TestConnection(connectionInfo.Server, connectionInfo.Database, connectionInfo.Username, connectionInfo.Password, connectionInfo.ConnectionStringOptions);
-        int responseCode = testResult ? MainResponse<object>.ResponseOk : MainResponse<object>.ResponseGenericError;
-        string responseMessage = testResult ? "Connection established" : "Connection error";
-
-        MainResponse<object> mainResponse = new(responseCode, responseMessage, null);
-
-        return Ok(mainResponse);
+        if (!testResult)
+        {
+            ResponseModel errorResp = new(ResponseCode.ResponseGenericError, "Connection error");
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResp);
+        }
+        
+        ResponseModel response = new(ResponseCode.ResponseOk, "Connection established");
+        return Ok(response);
     }
 
     [HttpGet]
@@ -163,14 +147,21 @@ public class ClientUtilsController : AppControllerBase
         if (connectionInfo.Server == null
             || connectionInfo.Username == null
             || connectionInfo.Password == null)
-            return BadRequest();
+        {
+            ResponseModel errorResp = new(ResponseCode.ResponseWrongCredentials, "Missing one or more parameters");
+            return BadRequest(errorResp);
+        }
 
         List<SqlServerDatabaseListItem>? sqlDatabaseList = SqlServer.GetDatabaseList(connectionInfo.Server, connectionInfo.Username, connectionInfo.Password, connectionInfo.ConnectionStringOptions);
-        int responseCode = sqlDatabaseList != null ? MainResponse<object>.ResponseOk : MainResponse<object>.ResponseGenericError;
-        List<DatabaseListItem>? databaseList = sqlDatabaseList != null ? [.. sqlDatabaseList.Select(t => new DatabaseListItem(t.Id, t.Name))] : null;
+        if (sqlDatabaseList == null)
+        {
+            ResponseModel errorResp = new(ResponseCode.ResponseGenericError, "Connection error");
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResp);
+        }
 
-        MainResponse<List<DatabaseListItem>> mainResponse = new(responseCode, null, databaseList);
+        List<DatabaseListItem>? databaseList = [.. sqlDatabaseList.Select(t => new DatabaseListItem(t.Id, t.Name))];
+        ResponseModel<List<DatabaseListItem>> response = new(ResponseCode.ResponseOk, null, databaseList);
 
-        return Ok(mainResponse);
+        return Ok(response);
     }
 }

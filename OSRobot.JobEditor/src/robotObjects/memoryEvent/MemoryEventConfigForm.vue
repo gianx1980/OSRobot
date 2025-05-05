@@ -35,7 +35,7 @@
                 'TriggerIfUsageAboveThreshold'
               "
               :rules="[
-                (val) => !!val || _$t('thisFieldIsMandatory'),
+                (val) => val === 0 || !!val || _$t('thisFieldIsMandatory'),
                 (val) =>
                   (val >= 0 && val <= 100) ||
                   _$t('mustBeAValueBetweenXAndY', ['0', '100']),
@@ -69,7 +69,7 @@
                 'TriggerIfAverageUsageAboveThreshold'
               "
               :rules="[
-                (val) => !!val || _$t('thisFieldIsMandatory'),
+                (val) => val === 0 || !!val || _$t('thisFieldIsMandatory'),
                 (val) =>
                   (val >= 0 && val <= 100) ||
                   _$t('mustBeAValueBetweenXAndY', ['0', '100']),
@@ -92,7 +92,7 @@
                 'TriggerIfAverageUsageAboveThreshold'
               "
               :rules="[
-                (val) => !!val || _$t('thisFieldIsMandatory'),
+                (val) => val === 0 || !!val || _$t('thisFieldIsMandatory'),
                 (val) =>
                   (val >= 0 && val <= 999) ||
                   _$t('mustBeAValueBetweenXAndY', ['0', '999']),
@@ -124,7 +124,7 @@
                 !_formData.modelValue.triggerIfPassedXMinFromLastTrigger
               "
               :rules="[
-                (val) => !!val || _$t('thisFieldIsMandatory'),
+                (val) => val === 0 || !!val || _$t('thisFieldIsMandatory'),
                 (val) =>
                   (val >= 0 && val <= 999) ||
                   _$t('mustBeAValueBetweenXAndY', ['0', '999']),
@@ -149,7 +149,7 @@
               lazy-rules
               dense
               :rules="[
-                (val) => !!val || _$t('thisFieldIsMandatory'),
+                (val) => val === 0 || !!val || _$t('thisFieldIsMandatory'),
                 (val) =>
                   (val >= 1 && val <= 9999) ||
                   _$t('mustBeAValueBetweenXAndY', ['1', '9999']),

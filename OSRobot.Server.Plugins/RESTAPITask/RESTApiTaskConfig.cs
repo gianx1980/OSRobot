@@ -16,7 +16,6 @@
     You should have received a copy of the GNU General Public License
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
-
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
 using System.Text.Json.Serialization;
@@ -46,9 +45,11 @@ public class RESTApiTaskConfig : ITaskConfig
     public string URL { get; set; } = string.Empty;
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public MethodType Method { get; set; }
-    public List<RESTApiHeader> Headers { get; } = [];
+    public List<RESTApiHeader> Headers { get; set; } = [];
 
     [DynamicData]
-    public string Parameters { get; set; } = string.Empty;
+    public string Body { get; set; } = string.Empty;
+    [DynamicData]
+    public string JsonPathToData { get; set; } = string.Empty;
     public bool ReturnsRecordset { get; set; }
 }

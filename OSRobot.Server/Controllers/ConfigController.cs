@@ -37,12 +37,16 @@ namespace OSRobot.Server.Controllers
         [Authorize]
         public IActionResult GetConfig()
         {
-            ConfigResponse configResponse = new(_appSettings.JWT.RequestNewTokenIfMinutesLeft, _appSettings.ClientSettings.AppTitle, _appSettings.ClientSettings.StaticFilesUrl,
-                                                                _appSettings.ClientSettings.HeartBeatInterval, _appSettings.ClientSettings.NotificationServerSentEventsEnabled, _appSettings.ClientSettings.NotificationPollingInterval);
+            ConfigResponse configResponse = new(_appSettings.JWT.RequestNewTokenIfMinutesLeft, 
+                                                    _appSettings.ClientSettings.AppTitle, 
+                                                    _appSettings.ClientSettings.StaticFilesUrl,
+                                                    _appSettings.ClientSettings.HeartBeatInterval, 
+                                                    _appSettings.ClientSettings.NotificationServerSentEventsEnabled, 
+                                                    _appSettings.ClientSettings.NotificationPollingInterval);
 
-            MainResponse<ConfigResponse> mainResponse = new(MainResponse<ConfigResponse>.ResponseOk, null, configResponse);
+            ResponseModel<ConfigResponse> response = new(ResponseCode.ResponseOk, null, configResponse);
 
-            return Ok(mainResponse);
+            return Ok(response);
         }
     }
 }

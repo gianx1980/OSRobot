@@ -49,18 +49,18 @@ public class PluginInstanceConnection
     public bool EvaluateExecConditions(ExecResult execResult)
     {
         // First of all check DontExecuteCondtions
-        foreach (ExecutionCondition ExecCond in DontExecuteConditions)
+        foreach (ExecutionCondition execCond in DontExecuteConditions)
         {
-            if (ExecCond.EvaluateCondition(execResult))
+            if (execCond.EvaluateCondition(execResult))
             {
                 return false;
             }
         }
 
         // Now check ExecuteConditions
-        foreach (ExecutionCondition ExecCond in ExecuteConditions)
+        foreach (ExecutionCondition execCond in ExecuteConditions)
         {
-            if (ExecCond.EvaluateCondition(execResult))
+            if (execCond.EvaluateCondition(execResult))
             {
                 return true;
             }

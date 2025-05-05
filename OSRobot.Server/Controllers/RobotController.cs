@@ -26,6 +26,8 @@ using OSRobot.Server.Models.DTO;
 using OSRobot.Server.Models.DTO.Robot;
 using OSRobot.Server.Configuration;
 using System.Text.Json;
+using OSRobot.Server.Models.DTO.ClientUtils;
+using MySqlX.XDevAPI.Common;
 
 namespace OSRobot.Server.Controllers;
 
@@ -42,8 +44,8 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
     public IActionResult Objects()
     {
         List<PluginListItem> pluginList = [.. _jobEngine.GetPlugins().Select(t => new PluginListItem(t.Id, t.Title, t.PluginType.ToString().ToLowerInvariant(), t.GetPluginDefaultConfig(), t.SupportedOSPlatforms))];
-        MainResponse<List<PluginListItem>> mainResponse = new(MainResponse<List<PluginListItem>>.ResponseOk, null, pluginList);
-        return Ok(mainResponse);
+        ResponseModel<List<PluginListItem>> response = new(ResponseCode.ResponseOk, null, pluginList);
+        return Ok(response);
     }
 
     [HttpGet]
@@ -53,12 +55,15 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
     {
         IPlugin? plugin = _jobEngine.GetPlugin(pluginId);
         if (plugin == null)
-            return NotFound();
+        {
+            ResponseModel errorResp = new(ResponseCode.ResponseGenericError, "PluginId not found.");
+            return BadRequest(errorResp);
+        }
 
         List<PluginDynDataSampleListItem> dynDataSamplesList = [.. plugin.SampleDynamicData.Select(t => new PluginDynDataSampleListItem(t.Description, t.Example, t.InternalName))];
 
-        MainResponse<List<PluginDynDataSampleListItem>> mainResponse = new(MainResponse<List<PluginDynDataSampleListItem>>.ResponseOk, null, dynDataSamplesList);
-        return Ok(mainResponse);
+        ResponseModel<List<PluginDynDataSampleListItem>> response = new(ResponseCode.ResponseOk, null, dynDataSamplesList);
+        return Ok(response);
     }
 
     [HttpGet]
@@ -69,21 +74,21 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
         // Check the existence of data
         if (!System.IO.File.Exists(Path.Combine(_appSettings.JobEngineConfig.DataPath, "jobs.json")))
         {
-            MainResponse<object> responseNotExists = new(MainResponse<object>.ResponseOk, null, null);
-            return Ok(responseNotExists);
+            ResponseModel errorResp = new(ResponseCode.ErrorLoadingJobs, "Job configuration not found");
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResp);
         }
 
         string configuration = System.IO.File.ReadAllText(Path.Combine(_appSettings.JobEngineConfig.DataPath, "jobs.json"));
         if (string.IsNullOrEmpty(configuration))
         {
-            MainResponse<object> responseEmptyFile = new(MainResponse<object>.ResponseOk, null, null);
-            return Ok(responseEmptyFile);
+            ResponseModel errorResp = new(ResponseCode.ErrorLoadingJobs, "Job configuration empty");
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResp);
         }
 
         // Deserialize the json configuration and return to client
         var configJson = JsonSerializer.Deserialize<object>(configuration);        
-        MainResponse<object> mainResponse = new(MainResponse<object>.ResponseOk, null, configJson);
-        return Ok(mainResponse);
+        ResponseModel<object> response = new(ResponseCode.ResponseOk, null, configJson);
+        return Ok(response);
     }
 
     [HttpPost]
@@ -92,18 +97,23 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
     public IActionResult WorkspaceJobs([FromBody] object requestBody)
     {
         string? workspaceJobs = requestBody.ToString();
+        if (string.IsNullOrEmpty(workspaceJobs))
+        {
+            ResponseModel errorResp = new(ResponseCode.ErrorSavingJobs, "Jobs configuration is empty");
+            return BadRequest(errorResp);
+        }
 
         try
         {
             System.IO.File.WriteAllText(Path.Combine(_appSettings.JobEngineConfig.DataPath, "jobs.json"), workspaceJobs);
 
-            MainResponse<object> mainResponse = new(MainResponse<object>.ResponseOk, null, null);
-            return Ok(mainResponse);
+            ResponseModel response = new(ResponseCode.ResponseOk, null);
+            return Ok(response);
         }
         catch
         {
-            MainResponse<object> mainResponse = new(MainResponse<object>.ResponseGenericError, "An error occurred while saving jobs.", null);
-            return BadRequest(mainResponse);
+            ResponseModel errResp = new(ResponseCode.ErrorSavingJobs, "An error occurred while saving the jobs.");
+            return BadRequest(errResp);
         }
     }
 
@@ -114,22 +124,14 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
     {
         bool result = _jobEngine.StartTask(taskId);
 
-        MainResponse<object> mainResponse;
-        int responseCode;
-        string? responseMessage = null;
-
-        if (result)
+        if (!result)
         {
-            responseCode = MainResponse<object>.ResponseOk;
+            ResponseModel errorResp = new(ResponseCode.CannotStartTask, "An error occurred while starting the task");
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResp);
         }
-        else
-        {
-            responseCode = MainResponse<object>.ResponseGenericError;
-            responseMessage = "An error occurred while starting the task";
-        }
-        mainResponse = new MainResponse<object>(responseCode, responseMessage, null);
 
-        return Ok(mainResponse);
+        ResponseModel response = new(ResponseCode.ResponseOk, null);
+        return Ok(response);
     }
 
     [HttpPost]
@@ -139,26 +141,21 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
     {
         ReloadJobsReturnValues result = _jobEngine.ReloadJobs();
 
-        MainResponse<object> mainResponse;
-        int responseCode;
-        string? responseMessage = null;
+        if (result == ReloadJobsReturnValues.CannotReloadWhileRunningTask)
+        {
+            ResponseModel errorResp = new(ResponseCode.CannotStartTask, "Cannot reload jobs because there are running jobs, plese retry later.");
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResp);
+        }
 
-        if (result == ReloadJobsReturnValues.Ok)
+        if (result == ReloadJobsReturnValues.GenericError)
         {
-            responseCode = MainResponse<object>.ResponseOk;
+            ResponseModel errorResp = new(ResponseCode.ResponseGenericError, null);
+            return StatusCode(StatusCodes.Status500InternalServerError, errorResp);
         }
-        else if (result == ReloadJobsReturnValues.CannotReloadWhileRunningTask)
-        {
-            responseCode = MainResponse<object>.CannotReloadWhileRunningTasks;
-            responseMessage = "Cannot reload jobs because there are running jobs, plese retry later.";
-        }
-        else
-        {
-            responseCode = MainResponse<object>.ResponseGenericError;
-        }
-        mainResponse = new MainResponse<object>(responseCode, responseMessage, null);
 
-        return Ok(mainResponse);
+
+        ResponseModel response = new(ResponseCode.ResponseOk, null);
+        return Ok(response);
     }
 
     [HttpGet]
@@ -176,9 +173,9 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
                                                                    ))
         ];
 
-        MainResponse<List<LogInfoListItem>> mainResponse = new(MainResponse<object>.ResponseOk, null, logInfoList);
+        ResponseModel<List<LogInfoListItem>> response = new(ResponseCode.ResponseOk, null, logInfoList);
 
-        return Ok(mainResponse);
+        return Ok(response);
     }
 
     [HttpGet]
@@ -188,11 +185,14 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
     {
         FolderInfo? folderInfo = _jobEngine.GetFolderInfo(folderId);
         if (folderInfo == null)
-            return NotFound(null);
+        {
+            ResponseModel errorResp = new(ResponseCode.ResponseGenericError, "FolderId not found.");
+            return BadRequest(errorResp);
+        }
+            
+        ResponseModel<FolderInfo> response = new(ResponseCode.ResponseOk, null, (FolderInfo)folderInfo);
 
-        MainResponse<FolderInfo> mainResponse = new(MainResponse<FolderInfo>.ResponseOk, null, (FolderInfo)folderInfo);
-
-        return Ok(mainResponse);
+        return Ok(response);
     }
 
     [HttpGet]
@@ -202,10 +202,13 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
     {
         string? logContent = _jobEngine.GetLogContent(folderId, logFileName);
         if (logContent == null)
-            return NotFound(null);
+        {
+            ResponseModel errorResp = new(ResponseCode.ResponseGenericError, "Log file not found.");
+            return BadRequest(errorResp);
+        }
+        
+        ResponseModel<string> response = new(ResponseCode.ResponseOk, null, logContent);
 
-        MainResponse<string> mainResponse = new(MainResponse<object>.ResponseOk, null, logContent);
-
-        return Ok(mainResponse);
+        return Ok(response);
     }
 }
