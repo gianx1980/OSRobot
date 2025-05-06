@@ -34,10 +34,6 @@
   </ItemGroup>
 
   <ItemGroup>
-    <Folder Include="RobotObjects\" />
-  </ItemGroup>
-
-  <ItemGroup>
     <ProjectReference Include="..\OSRobot.Server.JobEngineLib\OSRobot.Server.JobEngineLib.csproj" />
   </ItemGroup>
 
