@@ -16,42 +16,37 @@
     You should have received a copy of the GNU General Public License
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
+using Microsoft.CodeAnalysis.CSharp.Scripting;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
+using Microsoft.CodeAnalysis.Scripting;
 using System.Data;
 using System.Reflection;
 using System.Text.RegularExpressions;
 
 namespace OSRobot.Server.Core.DynamicData;
 
+
+public class ScriptGlobals
+{
+    public DynamicDataChain dynamicDataChain { get; set; } = null!;
+    public int iterationNumber { get; set; }
+    public int? subInstanceIndex { get; set; }
+}
+
 public static partial class DynamicDataParser
-{       
+{
+    private const string _codePlaceholder = "[CODE]";
     private readonly static Regex _regExFieldValue = DynamicDataRegex();
 
-    public static int GetRowIndex(string rowIndex, int iterationNumber, int? subInstanceIndex)
+    private static string ParseBasic(string input, DynamicDataChain dynamicDataChain, int iterationNumber, int? subInstanceIndex)
     {
-        if (rowIndex == string.Empty || rowIndex == "{iterationIndex}")
-            return iterationNumber;
-        else if (rowIndex == "{subInstanceIndex}")
-            return subInstanceIndex ?? 0;
-        else
-            return int.Parse(rowIndex);
-    }
-
-    public static string ReplaceDynamicData(string input, DynamicDataChain dynamicDataChain, int iterationNumber, int? subInstanceIndex)
-    {
-        // Given a placeholder in the format (for example):
-        //  {object[3].DefaultRecordset[1]['TableName']}
-        //  Extract the parameters needed to replace the placeholder with real data
-
-        if (input == null)
-            return string.Empty;
-
         return _regExFieldValue.Replace(input, (regExMatch) => {
             string result = string.Empty;
             int objectID = int.Parse(regExMatch.Groups["ObjectID"].Value);
             string fieldName = regExMatch.Groups["FieldName"].Value;
             string subFieldName;
             string rowIndex;
-            
+
             DynamicDataSet objectDataSet = dynamicDataChain[objectID];
 
             if (regExMatch.Groups["SubFieldName"].Value == string.Empty)
@@ -77,6 +72,57 @@ public static partial class DynamicDataParser
 
             return result;
         });
+    }
+
+    private static string ParseCSharpCode(string input, DynamicDataChain dynamicDataChain, int iterationNumber, int? subInstanceIndex)
+    {
+        string code = input[_codePlaceholder.Length..];
+
+        ScriptGlobals globals = new()
+        {
+            dynamicDataChain = dynamicDataChain,
+            iterationNumber = iterationNumber,
+            subInstanceIndex = subInstanceIndex
+        };
+
+        // OSRobot.Server.Core.DynamicData
+        Assembly thisAssembly = typeof(DynamicDataSet).Assembly;
+        ScriptOptions options = ScriptOptions.Default
+                        .WithReferences(thisAssembly)
+                        .WithImports("OSRobot.Server.Core.DynamicData");
+
+        return CSharpScript.EvaluateAsync<string>(code, options, globals).Result;
+    }
+
+    public static int GetRowIndex(string rowIndex, int iterationNumber, int? subInstanceIndex)
+    {
+        if (rowIndex == string.Empty || rowIndex == "{iterationIndex}")
+            return iterationNumber;
+        else if (rowIndex == "{subInstanceIndex}")
+            return subInstanceIndex ?? 0;
+        else
+            return int.Parse(rowIndex);
+    }
+
+    public static string ReplaceDynamicData(string input, DynamicDataChain dynamicDataChain, int iterationNumber, int? subInstanceIndex)
+    {
+        if (input == null)
+            return string.Empty;
+
+        if (input.StartsWith(_codePlaceholder))
+        {
+            // C# dynamic data management
+            return ParseCSharpCode(input, dynamicDataChain, iterationNumber, subInstanceIndex);
+        }
+        else
+        {
+            // Basic dynamic data management
+            
+            // Given a placeholder in the format (for example):
+            //  {object[3].DefaultRecordset[1]['TableName']}
+            //  Extract the parameters needed to replace the placeholder with real data
+            return ParseBasic(input, dynamicDataChain, iterationNumber, subInstanceIndex);
+        }
     }
 
     public static object? GetDynamicDataObject(string input, DynamicDataChain dynamicDataChain)

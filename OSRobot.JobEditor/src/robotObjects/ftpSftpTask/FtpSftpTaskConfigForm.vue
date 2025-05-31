@@ -319,6 +319,7 @@
                   class="q-ml-sm"
                   v-model="_copyPathDialogFormData"
                   :folderItems="_propsRef.containingFolderItems"
+                  :pluginId="_propsRef.modelValue.id"
                   modelValueKey="localPath"
                 />
               </div>
@@ -339,6 +340,7 @@
                   class="q-ml-sm"
                   v-model="_copyPathDialogFormData"
                   :folderItems="_propsRef.containingFolderItems"
+                  :pluginId="_propsRef.modelValue.id"
                   modelValueKey="remotePath"
                 />
               </div>
@@ -407,6 +409,7 @@
                   class="q-ml-sm"
                   v-model="_deletePathDialogFormData"
                   :folderItems="_propsRef.containingFolderItems"
+                  :pluginId="_propsRef.modelValue.id"
                   modelValueKey="remotePath"
                 />
               </div>

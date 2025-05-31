@@ -64,7 +64,6 @@
             v-model="_propsRef.modelValue.connectionStringOptions"
             :label="_$t('connectionStringOptions')"
             lazy-rules
-            :rules="[(val) => !!val || _$t('thisFieldIsMandatory')]"
             dense
             maxlength="500"
           />

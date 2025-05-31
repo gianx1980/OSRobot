@@ -416,6 +416,7 @@
                   class="q-ml-sm"
                   v-model="_columnDialogFormData"
                   :folderItems="_propsRef.containingFolderItems"
+                  :pluginId="_propsRef.modelValue.id"
                   modelValueKey="headerTitle"
                 />
               </div>
@@ -435,6 +436,7 @@
                   class="q-ml-sm"
                   v-model="_columnDialogFormData"
                   :folderItems="_propsRef.containingFolderItems"
+                  :pluginId="_propsRef.modelValue.id"
                   modelValueKey="cellValue"
                 />
               </div>

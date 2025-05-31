@@ -27,6 +27,7 @@ export default {
   attachments: "Attachments",
   back: "Back",
   backupType: "Backup type",
+  basic: "Basic",
   basicConfiguration: "Basic configuration",
   between: "Between",
   body: "Body",
@@ -34,6 +35,7 @@ export default {
   browseDynamicData: "Browse dynamic data",
   browseFolder: "Browse folder",
   browseFiles: "Browse files",
+  csharp: "C#",
   cancel: "Cancel",
   cannotReloadServersConfigThereAreRunningJobs:
     "Cannot reload server's config because there are running jobs, please retry later",
@@ -48,6 +50,7 @@ export default {
   checkTheFollowingDisks: "Check the following disks",
   clickToSelectAFile: "Click to select a file",
   close: "Close",
+  codeEditor: "Code editor",
   columnNumber: "Column number",
   columnsToReadEmptyToReadAll: "Columns to read (empty to read all columns)",
   columnsSplit: "Columns split",
@@ -179,6 +182,8 @@ export default {
   interval: "Interval",
   inTheLast: "in the last",
   insertAtRow: "Insert at row",
+  insertPlaceholder: "Insert placeholder",
+  insertVariable: "Insert variable",
   installedFontsChanged: "Installed fonts changed",
   isIdentity: "Is identity",
   iterations: "Iterations",
@@ -215,6 +220,7 @@ export default {
   method: "Method",
   minutes: "Minutes",
   minValue: "Min value",
+  mode: "Mode",
   modifiedFiles: "Modified files",
   monday: "Monday",
   monitorSubFolders: "Monitor subfolders",
@@ -356,6 +362,8 @@ export default {
   terabytesTb: "Terabytes (Gb)",
   text: "Text",
   textEnclosedInDoubleQuotes: "Text is enclosed in double quotes",
+  theCurrentContentWillBeLost:
+    "The current content will be lost. Do you want to continue?",
   theCurrentConfigurationWillBeLostContinue:
     "The current configuration will be lost. Do you want to continue?",
   theFieldsNewPasswordAndConfirmPasswordDoNotMatch:

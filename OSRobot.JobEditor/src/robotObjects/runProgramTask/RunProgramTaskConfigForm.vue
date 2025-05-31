@@ -31,6 +31,7 @@
               class="q-ml-sm"
               v-model="_propsRef.modelValue"
               :folderItems="_propsRef.containingFolderItems"
+              :pluginId="_propsRef.modelValue.id"
               modelValueKey="programPath"
             />
           </div>
@@ -52,6 +53,7 @@
               class="q-ml-sm"
               v-model="_propsRef.modelValue"
               :folderItems="_propsRef.containingFolderItems"
+              :pluginId="_propsRef.modelValue.id"
               modelValueKey="parameters"
             />
           </div>
@@ -77,6 +79,7 @@
               class="q-ml-sm"
               v-model="_propsRef.modelValue"
               :folderItems="_propsRef.containingFolderItems"
+              :pluginId="_propsRef.modelValue.id"
               modelValueKey="workingFolder"
             />
           </div>
