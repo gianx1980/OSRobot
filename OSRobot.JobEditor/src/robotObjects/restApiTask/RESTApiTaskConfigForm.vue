@@ -230,6 +230,7 @@
                   class="q-ml-sm"
                   v-model="_headerDialogFormData"
                   :folderItems="_propsRef.containingFolderItems"
+                  :pluginId="_propsRef.modelValue.id"
                   modelValueKey="name"
                 />
               </div>
@@ -249,6 +250,7 @@
                   class="q-ml-sm"
                   v-model="_headerDialogFormData"
                   :folderItems="_propsRef.containingFolderItems"
+                  :pluginId="_propsRef.modelValue.id"
                   modelValueKey="value"
                 />
               </div>

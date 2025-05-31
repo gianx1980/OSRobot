@@ -439,6 +439,7 @@
                   class="q-ml-sm"
                   v-model="_recipientDialogFormData"
                   :folderItems="_propsRef.containingFolderItems"
+                  :pluginId="_propsRef.modelValue.id"
                   modelValueKey="recipient"
                 />
               </div>
@@ -487,6 +488,7 @@
                   class="q-ml-sm"
                   v-model="_CCDialogFormData"
                   :folderItems="_propsRef.containingFolderItems"
+                  :pluginId="_propsRef.modelValue.id"
                   modelValueKey="cc"
                 />
               </div>
@@ -540,6 +542,7 @@
                   class="q-ml-sm"
                   v-model="_attachmentDialogFormData"
                   :folderItems="_propsRef.containingFolderItems"
+                  :pluginId="_propsRef.modelValue.id"
                   modelValueKey="attachment"
                 />
               </div>
@@ -743,7 +746,7 @@ function _CCAddItemClick() {
 
   _CCDialogFormData.value = {
     id: maxId,
-    recipient: "",
+    cc: "",
     isNew: true,
   };
 

@@ -221,6 +221,7 @@
                   class="q-ml-sm"
                   v-model="_parameterDialogFormData"
                   :folderItems="_propsRef.containingFolderItems"
+                  :pluginId="_propsRef.modelValue.id"
                   modelValueKey="value"
                 />
               </div>

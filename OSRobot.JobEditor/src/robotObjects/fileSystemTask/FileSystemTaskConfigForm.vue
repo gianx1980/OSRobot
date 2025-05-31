@@ -434,6 +434,7 @@
                   class="q-ml-sm"
                   v-model="_copyPathDialogFormData"
                   :folderItems="_propsRef.containingFolderItems"
+                  :pluginId="_propsRef.modelValue.id"
                   modelValueKey="sourcePath"
                 />
               </div>
@@ -459,6 +460,7 @@
                   class="q-ml-sm"
                   v-model="_copyPathDialogFormData"
                   :folderItems="_propsRef.containingFolderItems"
+                  :pluginId="_propsRef.modelValue.id"
                   modelValueKey="destinationPath"
                 />
               </div>
@@ -483,6 +485,7 @@
                   class="q-ml-sm"
                   v-model="_copyPathDialogFormData"
                   :folderItems="_propsRef.containingFolderItems"
+                  :pluginId="_propsRef.modelValue.id"
                   modelValueKey="filesOlderThanDays"
                 />
               </div>
@@ -502,6 +505,7 @@
                   class="q-ml-sm"
                   v-model="_copyPathDialogFormData"
                   :folderItems="_propsRef.containingFolderItems"
+                  :pluginId="_propsRef.modelValue.id"
                   modelValueKey="filesOlderThanHours"
                 />
               </div>
@@ -521,6 +525,7 @@
                   class="q-ml-sm"
                   v-model="_copyPathDialogFormData"
                   :folderItems="_propsRef.containingFolderItems"
+                  :pluginId="_propsRef.modelValue.id"
                   modelValueKey="filesOlderThanMinutes"
                 />
               </div>
@@ -593,6 +598,7 @@
                   class="q-ml-sm"
                   v-model="_deletePathDialogFormData"
                   :folderItems="_propsRef.containingFolderItems"
+                  :pluginId="_propsRef.modelValue.id"
                   modelValueKey="path"
                 />
               </div>
@@ -617,6 +623,7 @@
                   class="q-ml-sm"
                   v-model="_deletePathDialogFormData"
                   :folderItems="_propsRef.containingFolderItems"
+                  :pluginId="_propsRef.modelValue.id"
                   modelValueKey="filesOlderThanDays"
                 />
               </div>
@@ -636,6 +643,7 @@
                   class="q-ml-sm"
                   v-model="_deletePathDialogFormData"
                   :folderItems="_propsRef.containingFolderItems"
+                  :pluginId="_propsRef.modelValue.id"
                   modelValueKey="filesOlderThanHours"
                 />
               </div>
@@ -655,6 +663,7 @@
                   class="q-ml-sm"
                   v-model="_deletePathDialogFormData"
                   :folderItems="_propsRef.containingFolderItems"
+                  :pluginId="_propsRef.modelValue.id"
                   modelValueKey="filesOlderThanMinutes"
                 />
               </div>
