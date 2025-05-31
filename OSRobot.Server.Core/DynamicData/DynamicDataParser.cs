@@ -35,6 +35,7 @@ public class ScriptGlobals
 
 public static partial class DynamicDataParser
 {
+    private const string _codePlaceholder = "[CODE]";
     private readonly static Regex _regExFieldValue = DynamicDataRegex();
 
     private static string ParseBasic(string input, DynamicDataChain dynamicDataChain, int iterationNumber, int? subInstanceIndex)
@@ -75,7 +76,7 @@ public static partial class DynamicDataParser
 
     private static string ParseCSharpCode(string input, DynamicDataChain dynamicDataChain, int iterationNumber, int? subInstanceIndex)
     {
-        string code = input["[CODE]".Length..];
+        string code = input[_codePlaceholder.Length..];
 
         ScriptGlobals globals = new()
         {
@@ -105,20 +106,21 @@ public static partial class DynamicDataParser
 
     public static string ReplaceDynamicData(string input, DynamicDataChain dynamicDataChain, int iterationNumber, int? subInstanceIndex)
     {
-        // Given a placeholder in the format (for example):
-        //  {object[3].DefaultRecordset[1]['TableName']}
-        //  Extract the parameters needed to replace the placeholder with real data
-
         if (input == null)
             return string.Empty;
 
-        if (input.StartsWith("[CODE]"))
+        if (input.StartsWith(_codePlaceholder))
         {
+            // C# dynamic data management
             return ParseCSharpCode(input, dynamicDataChain, iterationNumber, subInstanceIndex);
         }
         else
         {
             // Basic dynamic data management
+            
+            // Given a placeholder in the format (for example):
+            //  {object[3].DefaultRecordset[1]['TableName']}
+            //  Extract the parameters needed to replace the placeholder with real data
             return ParseBasic(input, dynamicDataChain, iterationNumber, subInstanceIndex);
         }
     }
