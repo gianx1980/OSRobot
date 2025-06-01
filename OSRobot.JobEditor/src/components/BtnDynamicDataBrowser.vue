@@ -5,7 +5,7 @@
     icon="bolt"
     color="primary"
     @click="_showCodeEditorDialogClick"
-    ><q-tooltip>{{ _$t("browseDynamicData") }}</q-tooltip></q-btn
+    ><q-tooltip>{{ _$t("dynamicDataEditor") }}</q-tooltip></q-btn
   >
 </template>
 

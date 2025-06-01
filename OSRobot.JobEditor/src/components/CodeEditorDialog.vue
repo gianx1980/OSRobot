@@ -2,7 +2,7 @@
   <q-dialog ref="dialogRef" @hide="onDialogHide">
     <q-card class="q-dialog-plugin" style="width: 1100px; max-width: 1100px">
       <q-card-section>
-        <div class="text-h6">{{ _$t("codeEditor") }}</div>
+        <div class="text-h6">{{ _$t("dynamicDataEditor") }}</div>
       </q-card-section>
       <q-card-section>
         <div class="row">

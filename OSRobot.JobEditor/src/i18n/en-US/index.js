@@ -112,6 +112,7 @@ export default {
   doYouWantToExit: "Do you want to exit?",
   dynamicData: "Dynamic data",
   dynamicDataCode: "Dynamic data code",
+  dynamicDataEditor: "Dynamic data editor",
   edit: "Edit",
   editAttachment: "Edit attachment",
   editEmail: "Edit email",
