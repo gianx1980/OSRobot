@@ -1258,6 +1258,15 @@ namespace OSRobot.Server.Plugins {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Threshold success rate (%).
+        /// </summary>
+        internal static string TxtThresholdSuccessRate {
+            get {
+                return ResourceManager.GetString("TxtThresholdSuccessRate", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Thursday.
         /// </summary>
         internal static string TxtThursday {

@@ -17,19 +17,56 @@
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
 
-using OSRobot.Server.Core;
-using OSRobot.Server.Plugins.PingTask;
 using System.Net.NetworkInformation;
+using OSRobot.Server.Core;
+using OSRobot.Server.Core.DynamicData;
 
 namespace OSRobot.Server.Plugins.PingTask;
 
 public class PingTask : IterationTask
 {
+    private float _thresholdSuccessRate;
+
     protected override void RunIteration(int currentIteration)
     {
         PingTaskConfig tConfig = (PingTaskConfig)_iterationConfig;
 
-        Ping ping = new Ping();
-        PingReply reply = ping.Send(tConfig.Host, tConfig.Timeout);
+        _thresholdSuccessRate = 0;
+        int attemptSuccessCount = 0;
+        Ping ping = new();
+
+        for (int i = 0; i <= tConfig.Attempts; i++)
+        {
+            try
+            {
+                _instanceLogger?.Info(this, $"Pinging host {tConfig.Host} (Attempt: {i})...");
+                PingReply reply = ping.Send(tConfig.Host, tConfig.Timeout);
+                _instanceLogger?.Info(this, $"Status: {reply.Status}");
+
+                if (reply.Status == IPStatus.Success)
+                    attemptSuccessCount++;
+            }
+            catch (Exception ex)
+            {
+                _instanceLogger?.Error(this, $"Ping attempt failed", ex);
+            }
+        }
+
+        _thresholdSuccessRate = (float)attemptSuccessCount / tConfig.Attempts;
+    }
+
+    private void PostIteration(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
+    {
+        dDataSet.TryAdd("ThresholdSuccessRate", _thresholdSuccessRate);
+    }
+
+    protected override void PostIterationSucceded(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
+    {
+        PostIteration(currentIteration, result, dDataSet);
+    }
+
+    protected override void PostIterationFailed(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
+    {
+        PostIteration(currentIteration, result, dDataSet);
     }
 }

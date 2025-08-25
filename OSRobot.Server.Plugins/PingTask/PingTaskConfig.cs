@@ -26,7 +26,7 @@ public class PingTaskConfig : ITaskConfig
 {
     private const int _defaultTimeout = 1000;
     private const int _defaultAttempts = 4;
-    private const float _defaultThresholdSuccessRate = 100;
+    
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
     public bool Enabled { get; set; } = true;
@@ -41,5 +41,4 @@ public class PingTaskConfig : ITaskConfig
     public string Host { get; set; } = string.Empty;
     public int Timeout { get; set; } = _defaultTimeout;
     public int Attempts { get; set; } = _defaultAttempts;
-    public float ThresholdSuccessRate { get; set; } = _defaultThresholdSuccessRate;
 }

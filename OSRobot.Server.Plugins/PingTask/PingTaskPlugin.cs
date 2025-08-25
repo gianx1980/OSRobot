@@ -34,7 +34,11 @@ public class PingTaskPlugin : IPlugin
     {
         get
         {
-            return CommonDynamicData.BuildStandardDynamicDataSamples("Ping task 1");
+            List<DynamicDataSample> Samples = CommonDynamicData.BuildStandardDynamicDataSamples("Ping task 1");
+
+            Samples.Add(new DynamicDataSample("ThresholdSuccessRate", Resource.TxtThresholdSuccessRate, @"50%"));
+
+            return Samples;
         }
     }
 

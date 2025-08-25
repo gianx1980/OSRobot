@@ -516,6 +516,9 @@
   <data name="TxtThisWillOverwriteCurrentColDef" xml:space="preserve">
     <value>This operation will overwrite your current columns definition. Do you want to continue?</value>
   </data>
+  <data name="TxtThresholdSuccessRate" xml:space="preserve">
+    <value>Threshold success rate (%)</value>
+  </data>
   <data name="TxtThursday" xml:space="preserve">
     <value>Thursday</value>
   </data>
