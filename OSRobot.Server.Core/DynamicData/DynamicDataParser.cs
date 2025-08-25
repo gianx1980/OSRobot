@@ -17,7 +17,6 @@
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
 using Microsoft.CodeAnalysis.CSharp.Scripting;
-using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.CodeAnalysis.Scripting;
 using System.Data;
 using System.Reflection;
@@ -37,10 +36,13 @@ public static partial class DynamicDataParser
 {
     private const string _codePlaceholder = "[CODE]";
     private readonly static Regex _regExFieldValue = DynamicDataRegex();
+    private readonly static Regex _regExEnvVarValue = DynamicDataRegex();
 
     private static string ParseBasic(string input, DynamicDataChain dynamicDataChain, int iterationNumber, int? subInstanceIndex)
     {
-        return _regExFieldValue.Replace(input, (regExMatch) => {
+        string tempParseResult;
+
+        tempParseResult = _regExFieldValue.Replace(input, (regExMatch) => {
             string result = string.Empty;
             int objectID = int.Parse(regExMatch.Groups["ObjectID"].Value);
             string fieldName = regExMatch.Groups["FieldName"].Value;
@@ -72,6 +74,14 @@ public static partial class DynamicDataParser
 
             return result;
         });
+
+        tempParseResult = _regExEnvVarValue.Replace(tempParseResult, (regExMatch) => {
+            string varName = regExMatch.Groups["VarName"].Value;
+
+            return Environment.GetEnvironmentVariable(varName) ?? string.Empty;
+        });
+
+        return tempParseResult;
     }
 
     private static string ParseCSharpCode(string input, DynamicDataChain dynamicDataChain, int iterationNumber, int? subInstanceIndex)
@@ -239,6 +249,11 @@ public static partial class DynamicDataParser
         Parse(config, dynamicDataChain, iterationNumber, subInstanceIndex);
     }
 
-    [GeneratedRegex(@"\{object\[(?<ObjectID>\d+)\]\.(?<FieldName>\w+)(\[(?<RowIndex>\d+|\{iterationIndex\}|\{subInstanceIndex\})\])?(\[\'(?<SubFieldName>.*?)\'\])?\}", RegexOptions.IgnoreCase, "it-IT")]
+    // Use Invariant Culture ("")
+    [GeneratedRegex(@"\{object\[(?<ObjectID>\d+)\]\.(?<FieldName>\w+)(\[(?<RowIndex>\d+|\{iterationIndex\}|\{subInstanceIndex\})\])?(\[\'(?<SubFieldName>.*?)\'\])?\}", RegexOptions.IgnoreCase, "")]
     private static partial Regex DynamicDataRegex();
+
+    // Use Invariant Culture ("")
+    [GeneratedRegex(@"\{environment\[\'(?<VarName>.*?)\'\]\}", RegexOptions.IgnoreCase, "")]
+    private static partial Regex EnvironmentRegex();
 }

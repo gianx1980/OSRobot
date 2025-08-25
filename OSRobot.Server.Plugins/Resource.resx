@@ -402,6 +402,9 @@
   <data name="TxtPercentage" xml:space="preserve">
     <value>%</value>
   </data>
+  <data name="TxtPingTask" xml:space="preserve">
+    <value>Ping task</value>
+  </data>
   <data name="TxtPost" xml:space="preserve">
     <value>Post</value>
   </data>

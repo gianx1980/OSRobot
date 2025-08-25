@@ -229,6 +229,7 @@ public partial class FtpSftpTask : IterationTask
         }
     }
 
-    [GeneratedRegex(@"[A-Z]:", RegexOptions.IgnoreCase, "it-IT")]
+    // Use Invariant Culture ("")
+    [GeneratedRegex(@"[A-Z]:", RegexOptions.IgnoreCase, "")]
     private static partial Regex BuildLocalPathRegex();
 }

@@ -916,6 +916,15 @@ namespace OSRobot.Server.Plugins {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Ping task.
+        /// </summary>
+        internal static string TxtPingTask {
+            get {
+                return ResourceManager.GetString("TxtPingTask", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Post.
         /// </summary>
         internal static string TxtPost {
