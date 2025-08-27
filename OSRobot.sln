@@ -13,6 +13,8 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OSRobot.Server.JobEngine", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "OSRobot.Server.Plugins", "OSRobot.Server.Plugins\OSRobot.Server.Plugins.csproj", "{FC05E516-CBD4-4981-8281-2AAEA598B0D4}"
 EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OSRobot.Tests", "OSRobot.Tests\OSRobot.Tests.csproj", "{C7381B3D-D0A6-4FE3-A5C5-61DF893993C9}"
+EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
 		Debug|Any CPU = Debug|Any CPU
@@ -39,6 +41,10 @@ Global
 		{FC05E516-CBD4-4981-8281-2AAEA598B0D4}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{FC05E516-CBD4-4981-8281-2AAEA598B0D4}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{FC05E516-CBD4-4981-8281-2AAEA598B0D4}.Release|Any CPU.Build.0 = Release|Any CPU
+		{C7381B3D-D0A6-4FE3-A5C5-61DF893993C9}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{C7381B3D-D0A6-4FE3-A5C5-61DF893993C9}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{C7381B3D-D0A6-4FE3-A5C5-61DF893993C9}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{C7381B3D-D0A6-4FE3-A5C5-61DF893993C9}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE

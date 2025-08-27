@@ -31,6 +31,7 @@ using OSRobot.Server.Plugins.FileSystemTask;
 using OSRobot.Server.Plugins.FtpSftpTask;
 using OSRobot.Server.Plugins.MemoryEvent;
 using OSRobot.Server.Plugins.OSRobotServiceStartEvent;
+using OSRobot.Server.Plugins.PingTask;
 using OSRobot.Server.Plugins.ReadTextFileTask;
 using OSRobot.Server.Plugins.RESTApiTask;
 using OSRobot.Server.Plugins.RunProgramTask;
@@ -508,7 +509,8 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
             new SystemEventsEventPlugin(),
             new UnzipTaskPlugin(),
             new WriteTextFileTaskPlugin(),
-            new ZipTaskPlugin()
+            new ZipTaskPlugin(),
+            new PingTaskPlugin()
         ];
     }
 

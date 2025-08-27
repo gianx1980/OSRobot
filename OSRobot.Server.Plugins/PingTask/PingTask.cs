@@ -35,7 +35,7 @@ public class PingTask : IterationTask
         int attemptSuccessCount = 0;
         Ping ping = new();
 
-        for (int i = 0; i <= tConfig.Attempts; i++)
+        for (int i = 1; i <= tConfig.Attempts; i++)
         {
             try
             {
@@ -52,7 +52,7 @@ public class PingTask : IterationTask
             }
         }
 
-        _thresholdSuccessRate = (float)attemptSuccessCount / tConfig.Attempts;
+        _thresholdSuccessRate = ((float)attemptSuccessCount / tConfig.Attempts) * 100;
     }
 
     private void PostIteration(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
