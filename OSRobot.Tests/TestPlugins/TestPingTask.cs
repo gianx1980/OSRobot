@@ -15,14 +15,7 @@ public sealed class TestPingTask
         // ---------
         // Arrange
         // ---------
-        Folder folder = new()
-        {
-            Config = new FolderConfig()
-            {
-                Id = 1,
-                Name = "RootFolder"
-            }
-        };
+        Folder folder = Common.CreateRootFolder();
 
         PingTaskConfig config = new()
         {
@@ -38,17 +31,15 @@ public sealed class TestPingTask
             Config = config
         };
 
-        task.Init();
-
-        DynamicDataChain dataChain = [];
-        DynamicDataSet dynamicDataSet = new();
-        PluginInstanceLogger.LogPath = @"Logs\";
-        IPluginInstanceLogger logger = PluginInstanceLogger.GetLogger(task);
-
+        Common.ConfigureLogPath();
+        (DynamicDataChain dataChain, 
+         DynamicDataSet dynamicDataSet, 
+         IPluginInstanceLogger logger) = Common.GetTaskDefaultParameters(task);
 
         // ---------
         // Act
         // ---------
+        task.Init();
         InstanceExecResult result = task.Run(dataChain, dynamicDataSet, 0, logger);
         task.Destroy();
 
