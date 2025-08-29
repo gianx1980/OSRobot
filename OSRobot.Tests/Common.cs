@@ -24,6 +24,11 @@ internal static class Common
         return (new DynamicDataChain(), new DynamicDataSet(), PluginInstanceLogger.GetLogger(task));
     }
 
+    public static (DynamicDataChain, DynamicDataSet, IPluginInstanceLogger) GetEventDefaultParameters(IEvent osrEvent)
+    {
+        return (new DynamicDataChain(), new DynamicDataSet(), PluginInstanceLogger.GetLogger(osrEvent));
+    }
+
     public static void ConfigureLogPath()
     {
         PluginInstanceLogger.LogPath = @"Logs\";

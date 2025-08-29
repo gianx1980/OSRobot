@@ -20,6 +20,7 @@ public sealed class TestPingTask
         PingTaskConfig config = new()
         {
             Id = 1,
+            Name = "Ping task 1",
             Host = "127.0.0.1",
             Attempts = 4,
             Timeout = 1000
@@ -65,6 +66,7 @@ public sealed class TestPingTask
         PingTaskConfig config = new()
         {
             Id = 1,
+            Name = "Ping task 1",
             Host = "192.168.5.5",   // Hope it doesn't exist!
             Attempts = 4,
             Timeout = 1000
