@@ -134,7 +134,7 @@ public sealed class TestDateTimeEvent
         // ---------
         lock (objSync)
         {
-            Assert.IsTrue(eventTriggered && (Math.Abs(DateTime.Now.Subtract(expectedLastTrigger).TotalSeconds) <= toleranceSec));
+            Assert.IsTrue(eventTriggered && (Math.Abs(DateTime.Now.Subtract(expectedLastTrigger).TotalSeconds) <= toleranceSec), "The event did not occur at the expected time.");
         }
     }
 
@@ -199,7 +199,7 @@ public sealed class TestDateTimeEvent
         // ---------
         lock (objSync)
         {
-            Assert.IsTrue(eventTriggeredInTime && (Math.Abs(DateTime.Now.Subtract(expectedLastTrigger).TotalSeconds) <= toleranceSec));
+            Assert.IsTrue(eventTriggeredInTime && (Math.Abs(DateTime.Now.Subtract(expectedLastTrigger).TotalSeconds) <= toleranceSec), "The event did not occur at the expected time.");
         }
     }
 
@@ -264,7 +264,7 @@ public sealed class TestDateTimeEvent
         // ---------
         lock (objSync)
         {
-            Assert.IsTrue(eventTriggered && (Math.Abs(DateTime.Now.Subtract(expectedLastTrigger).TotalSeconds) <= toleranceSec));
+            Assert.IsTrue(eventTriggered && (Math.Abs(DateTime.Now.Subtract(expectedLastTrigger).TotalSeconds) <= toleranceSec), "The event did not occur at the expected time.");
         }
     }
 
@@ -329,7 +329,7 @@ public sealed class TestDateTimeEvent
         // ---------
         lock (objSync)
         {
-            Assert.IsTrue(eventTriggered && (Math.Abs(DateTime.Now.Subtract(expectedLastTrigger).TotalSeconds) <= toleranceSec));
+            Assert.IsTrue(eventTriggered && (Math.Abs(DateTime.Now.Subtract(expectedLastTrigger).TotalSeconds) <= toleranceSec), "The event did not occur at the expected time.");
         }
     }
 
@@ -402,7 +402,7 @@ public sealed class TestDateTimeEvent
         // ---------
         lock (objSync)
         {
-            Assert.IsFalse(eventTriggered);
+            Assert.IsFalse(eventTriggered, "The event did not occur at the expected time.");
         }
     }
 }
