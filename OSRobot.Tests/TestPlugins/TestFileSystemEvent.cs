@@ -56,7 +56,9 @@ public sealed class TestFileSystemEvent
         };
         eventObj.Config = config;
 
+        // ---------
         // Act
+        // ---------
         eventObj.Init();
 
         string filePath = Path.Combine(testFileFolder, "TestAdd.txt");
@@ -66,7 +68,9 @@ public sealed class TestFileSystemEvent
         
         mre.WaitOne(new TimeSpan(0, 0, toleranceSec));
 
+        // ---------
         // Assert
+        // ---------
         lock (objSync)
         {
             Assert.IsTrue(eventTriggered, "The event did not occur at the expected time.");
@@ -130,7 +134,9 @@ public sealed class TestFileSystemEvent
         };
         eventObj.Config = config;
 
+        // ---------
         // Act
+        // ---------
         eventObj.Init();
 
         using (FileStream fs = new(filePath, FileMode.Append))
@@ -143,7 +149,9 @@ public sealed class TestFileSystemEvent
 
         mre.WaitOne(new TimeSpan(0, 0, toleranceSec));
 
+        // ---------
         // Assert
+        // ---------
         lock (objSync)
         {
             Assert.IsTrue(eventTriggered, "The event did not occur at the expected time.");
@@ -153,7 +161,9 @@ public sealed class TestFileSystemEvent
     [TestMethod]
     public void TestDeleteFile()
     {
+        // ---------
         // Arrange
+        // ---------
         int toleranceSec = 30;
         string appBasePath = AppDomain.CurrentDomain.BaseDirectory;
         string testFileFolder = Path.Combine(appBasePath, @"TestFileEvent\");
@@ -206,14 +216,18 @@ public sealed class TestFileSystemEvent
         };
         eventObj.Config = config;
 
+        // ---------
         // Act
+        // ---------
         eventObj.Init();
 
         File.Delete(filePath);
 
         mre.WaitOne(new TimeSpan(0, 0, toleranceSec));
 
+        // ---------
         // Assert
+        // ---------
         lock (objSync)
         {
             Assert.IsTrue(eventTriggered, "The event did not occur at the expected time.");
