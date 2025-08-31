@@ -11,8 +11,8 @@ public sealed class TestFtpSftpTask
 {
     private void WriteTestFile(string filePathName, string content)
     {
-        using FileStream fs = new FileStream(filePathName, FileMode.Create);
-        using StreamWriter sw = new StreamWriter(fs);
+        using FileStream fs = new(filePathName, FileMode.Create);
+        using StreamWriter sw = new(fs);
         sw.WriteLine(content);   
     }
 
@@ -101,10 +101,10 @@ public sealed class TestFtpSftpTask
         // -------------------
 
         ExecResult erTaskDelete = taskDelete.Run(dataChain, dynamicDataSet, 0, logger).ExecResults[0];
-        Assert.IsTrue(erTaskDelete.Result);
+        Assert.IsTrue(erTaskDelete.Result, "TaskDelete failed.");
 
         ExecResult erTaskUpload = taskUpload.Run(dataChain, dynamicDataSet, 0, logger).ExecResults[0];
-        Assert.IsTrue(erTaskUpload.Result);
+        Assert.IsTrue(erTaskUpload.Result, "TaskUpload failed.");
     }
 
     [TestMethod]
@@ -190,9 +190,9 @@ public sealed class TestFtpSftpTask
         // Act && Assert
         // ---------------
         ExecResult erTaskDelete = taskDelete.Run(dataChain, dynamicDataSet, 0, logger).ExecResults[0];
-        Assert.IsTrue(erTaskDelete.Result);
+        Assert.IsTrue(erTaskDelete.Result, "TaskDelete failed.");
 
         ExecResult erTaskUpload = taskUpload.Run(dataChain, dynamicDataSet, 0, logger).ExecResults[0];
-        Assert.IsTrue(erTaskUpload.Result);
+        Assert.IsTrue(erTaskUpload.Result, "TaskUpload failed.");
     }
 }

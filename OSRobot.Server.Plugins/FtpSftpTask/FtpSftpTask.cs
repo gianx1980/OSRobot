@@ -35,7 +35,7 @@ public partial class FtpSftpTask : IterationTask
         if (pathItems.Count > 0)
         {
             StringBuilder fullPath = new();
-            for (int i = 0; i < pathItems.Count - 1; i++)
+            for (int i = 0; i < pathItems.Count; i++)
             {
                 string item = pathItems[i];
                 if (!string.IsNullOrEmpty(item))
@@ -59,7 +59,7 @@ public partial class FtpSftpTask : IterationTask
         if (pathItems.Count > 0)
         {
             StringBuilder fullPath = new();
-            for (int i = 0; i < pathItems.Count - 1; i++)
+            for (int i = 0; i < pathItems.Count; i++)
             {
                 string item = pathItems[i];
                 if (!string.IsNullOrEmpty(item))

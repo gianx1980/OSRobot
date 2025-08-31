@@ -37,6 +37,8 @@ public class FtpSftpClient : IDisposable
         if (_protocol == ProtocolEnum.FTP)
         {
             _ftpClient = new FtpClient(host, new NetworkCredential(username, password), port);
+            _ftpClient.Config.EncryptionMode = FtpEncryptionMode.Auto;
+            _ftpClient.Config.ValidateAnyCertificate = true;
             _ftpClient.Connect();
         }
         else
