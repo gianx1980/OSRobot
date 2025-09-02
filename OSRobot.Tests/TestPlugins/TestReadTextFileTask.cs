@@ -31,7 +31,9 @@ public sealed class TestReadTextFileTask
     [TestMethod]
     public void TestReadTextFile_AllRows()
     {
+        // ---------
         // Arrange
+        // ---------
         string basePath = AppDomain.CurrentDomain.BaseDirectory;
         string testFilePath = Path.Combine(basePath, @"TestReadTextFileTask1.txt");
         Folder folder = Common.CreateRootFolder();
@@ -53,6 +55,10 @@ public sealed class TestReadTextFileTask
                 sw.WriteLine(r);
             }
         }
+
+        // ---------------
+        // Act && Assert
+        // ---------------
 
         {
             ReadTextFileTaskConfig taskConfig = new()
@@ -116,7 +122,7 @@ public sealed class TestReadTextFileTask
 
             DataTable dt = (DataTable)er.Data["DefaultRecordset"];
 
-            Assert.IsTrue(dt.Rows.Count == 1);
+            Assert.IsTrue(dt.Rows.Count == 4);
             Assert.IsTrue(testFileRows[testFileRows.Length - 1] == dt.Rows[dt.Rows.Count - 1]["Column1"].ToString());
         }
 
@@ -149,7 +155,6 @@ public sealed class TestReadTextFileTask
             ExecResult er = taskRead.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
 
             DataTable dt = (DataTable)er.Data["DefaultRecordset"];
-
 
             Assert.IsTrue(dt.Rows[0]["Column1"].ToString() == "A");
             Assert.IsTrue(dt.Rows[3]["Column4"].ToString() == "P");
