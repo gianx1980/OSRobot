@@ -34,6 +34,9 @@ public partial class FtpSftpTask : IterationTask
 
         if (pathItems.Count > 0)
         {
+            if (skipLastSegment)
+                pathItems.RemoveAt(pathItems.Count - 1);
+            
             StringBuilder fullPath = new();
             for (int i = 0; i < pathItems.Count; i++)
             {
@@ -45,9 +48,6 @@ public partial class FtpSftpTask : IterationTask
                     if (!fileTransferClient.RemoteDirectoryExists(fullPathString))
                         fileTransferClient.RemoteCreateDirectory(fullPathString);
                 }
-
-                if (skipLastSegment && (i == (pathItems.Count - 1)))
-                    break;
             }
         }
     }
@@ -58,6 +58,9 @@ public partial class FtpSftpTask : IterationTask
 
         if (pathItems.Count > 0)
         {
+            if (skipLastSegment)
+                pathItems.RemoveAt(pathItems.Count - 1);
+
             StringBuilder fullPath = new();
             for (int i = 0; i < pathItems.Count; i++)
             {
@@ -77,9 +80,6 @@ public partial class FtpSftpTask : IterationTask
                             fileTransferClient.RemoteCreateDirectory(fullPathString);
                     }
                 }
-
-                if (skipLastSegment && (i == (pathItems.Count - 1)))
-                    break;
             }
         }
     }

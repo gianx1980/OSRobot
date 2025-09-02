@@ -17,7 +17,6 @@
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
 
-using DocumentFormat.OpenXml.Drawing;
 using OSRobot.Server.Core;
 using OSRobot.Server.Plugins.DiskSpaceEvent;
 

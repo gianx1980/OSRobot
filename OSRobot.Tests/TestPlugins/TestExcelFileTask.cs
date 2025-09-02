@@ -71,7 +71,7 @@ public sealed class TestExcelFileTask
             ParentFolder = folder
         };
 
-        DataTable dt = new DataTable();
+        DataTable dt = new();
         dt.Columns.Add("ID", typeof(int));
         dt.Columns.Add("Value", typeof(string));
 
@@ -97,12 +97,12 @@ public sealed class TestExcelFileTask
 
 
         Common.ConfigureLogPath();
-        (DynamicDataChain dataChain,
-         DynamicDataSet dynamicDataSet,
+        (DynamicDataChain dynDataChain,
+         DynamicDataSet dynDataSet,
          IPluginInstanceLogger logger) = Common.GetTaskDefaultParameters(taskWrite);
 
-        dynamicDataSet.TryAdd("DefaultRecordset", dt);
-        dataChain.TryAdd(2, dynamicDataSet);
+        dynDataSet.TryAdd("DefaultRecordset", dt);
+        dynDataChain.TryAdd(2, dynDataSet);
 
         ExcelFileTaskConfig taskReadConfig = new()
         {
@@ -133,8 +133,8 @@ public sealed class TestExcelFileTask
         taskRead.Init();
 
 
-        taskWrite.Run(dataChain, dynamicDataSet, 0, logger);
-        ExecResult execResult = taskRead.Run(dataChain, dynamicDataSet, 0, logger).ExecResults[0];
+        taskWrite.Run(dynDataChain, dynDataSet, 0, logger);
+        ExecResult execResult = taskRead.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
 
         DataTable dtRead = (DataTable)execResult.Data["DefaultRecordset"];
 

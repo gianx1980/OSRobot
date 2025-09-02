@@ -51,12 +51,6 @@ public sealed class TestDateTimeEvent
             Config = config
         };
 
-
-        Common.ConfigureLogPath();
-        (DynamicDataChain dataChain,
-         DynamicDataSet dynamicDataSet,
-         IPluginInstanceLogger logger) = Common.GetEventDefaultParameters(eventObj);
-
         object objSync = new();
         ManualResetEvent mre = new(false);
         bool eventTriggered = false;
@@ -112,11 +106,6 @@ public sealed class TestDateTimeEvent
             ParentFolder = folder,
             Config = config
         };
-
-        Common.ConfigureLogPath();
-        (DynamicDataChain dataChain,
-         DynamicDataSet dynamicDataSet,
-         IPluginInstanceLogger logger) = Common.GetEventDefaultParameters(eventObj);
 
         object objSync = new();
         ManualResetEvent mre = new(false);

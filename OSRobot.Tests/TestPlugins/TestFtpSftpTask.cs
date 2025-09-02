@@ -17,13 +17,13 @@ public sealed class TestFtpSftpTask
     }
 
     [TestMethod]
-    public void TestSftp()
+    public void TestSftpCopyFolder()
     {
         // ---------
         // Arrange
         // ---------
         string basePath = AppDomain.CurrentDomain.BaseDirectory;
-        string testFileFolder = Path.Combine(basePath, @"TestSftp\");
+        string testFileFolder = Path.Combine(basePath, @"TestSftp1\");
         Folder folder = Common.CreateRootFolder();
 
         if (Directory.Exists(testFileFolder))
@@ -90,31 +90,119 @@ public sealed class TestFtpSftpTask
         taskDeleteConfig.DeleteItems.Add(deleteItem);
 
         Common.ConfigureLogPath();
-        (DynamicDataChain dataChain,
-         DynamicDataSet dynamicDataSet,
+        (DynamicDataChain dynDataChain,
+         DynamicDataSet dynDataSet,
          IPluginInstanceLogger logger) = Common.GetTaskDefaultParameters(taskUpload);
 
-        dataChain.TryAdd(2, dynamicDataSet);
+        dynDataChain.TryAdd(2, dynDataSet);
 
         // -------------------
         // Act && Assert
         // -------------------
 
-        ExecResult erTaskDelete = taskDelete.Run(dataChain, dynamicDataSet, 0, logger).ExecResults[0];
+        ExecResult erTaskDelete = taskDelete.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
         Assert.IsTrue(erTaskDelete.Result, "TaskDelete failed.");
 
-        ExecResult erTaskUpload = taskUpload.Run(dataChain, dynamicDataSet, 0, logger).ExecResults[0];
+        ExecResult erTaskUpload = taskUpload.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
         Assert.IsTrue(erTaskUpload.Result, "TaskUpload failed.");
     }
 
     [TestMethod]
-    public void TestFtp()
+    public void TestSftpCopyFile()
     {
         // ---------
         // Arrange
         // ---------
         string basePath = AppDomain.CurrentDomain.BaseDirectory;
-        string testFileFolder = Path.Combine(basePath, @"TestFtp\");
+        string testFileFolder = Path.Combine(basePath, @"TestSftp2\");
+        Folder folder = Common.CreateRootFolder();
+
+        if (Directory.Exists(testFileFolder))
+            Directory.Delete(testFileFolder, true);
+        Directory.CreateDirectory(testFileFolder);
+        Directory.CreateDirectory(testFileFolder + @"\SubFolderSingle");
+
+        WriteTestFile(Path.Combine(testFileFolder + @"\SubFolderSingle", "SftpSingleFile.txt"), "Test Sftp Single file");
+
+        FtpSftpTaskConfig taskUploadConfig = new()
+        {
+            Id = 1,
+            Name = "Sftp Upload",
+            Command = CommandEnum.Copy,
+            Protocol = ProtocolEnum.SFTP,
+            Host = "localhost",
+            Username = "test",
+            Password = "12345",
+            Port = "22"
+        };
+
+        FtpSftpTask taskUpload = new()
+        {
+            Config = taskUploadConfig,
+            ParentFolder = folder
+        };
+
+        FtpSftpCopyItem copyItem = new()
+        {
+            LocalToRemote = true,
+            LocalPath = Path.Combine(testFileFolder + @"\SubFolderSingle", "SftpSingleFile.txt"),
+            RemotePath = @"\RemoteFolderSingle\SftpSingleFile.txt",
+            OverwriteFileIfExists = true,
+            RecursivelyCopyDirectories = true
+        };
+        taskUploadConfig.CopyItems.Add(copyItem);
+
+
+        FtpSftpTaskConfig taskDeleteConfig = new()
+        {
+            Id = 2,
+            Name = "Sftp Delete",
+            Command = CommandEnum.Delete,
+            Protocol = ProtocolEnum.SFTP,
+            Host = "localhost",
+            Username = "test",
+            Password = "12345",
+            Port = "22"
+        };
+
+        FtpSftpTask taskDelete = new()
+        {
+            Config = taskDeleteConfig,
+            ParentFolder = folder
+        };
+
+        FtpSftpDeleteItem deleteItem = new()
+        {
+            RemotePath = @"\RemoteFolderSingle"
+        };
+        taskDeleteConfig.DeleteItems.Add(deleteItem);
+
+        Common.ConfigureLogPath();
+        (DynamicDataChain dynDataChain,
+         DynamicDataSet dynDataSet,
+         IPluginInstanceLogger logger) = Common.GetTaskDefaultParameters(taskUpload);
+
+        dynDataChain.TryAdd(2, dynDataSet);
+
+        // -------------------
+        // Act && Assert
+        // -------------------
+
+        ExecResult erTaskDelete = taskDelete.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        Assert.IsTrue(erTaskDelete.Result, "TaskDelete failed.");
+
+        ExecResult erTaskUpload = taskUpload.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        Assert.IsTrue(erTaskUpload.Result, "TaskUpload failed.");
+    }
+
+    [TestMethod]
+    public void TestFtpCopyFolder()
+    {
+        // ---------
+        // Arrange
+        // ---------
+        string basePath = AppDomain.CurrentDomain.BaseDirectory;
+        string testFileFolder = Path.Combine(basePath, @"TestFtp3\");
         Folder folder = Common.CreateRootFolder();
 
         if (Directory.Exists(testFileFolder))
@@ -180,19 +268,19 @@ public sealed class TestFtpSftpTask
         taskDeleteConfig.DeleteItems.Add(deleteItem);
 
         Common.ConfigureLogPath();
-        (DynamicDataChain dataChain,
-         DynamicDataSet dynamicDataSet,
+        (DynamicDataChain dynDataChain,
+         DynamicDataSet dynDataSet,
          IPluginInstanceLogger logger) = Common.GetTaskDefaultParameters(taskUpload);
 
-        dataChain.TryAdd(2, dynamicDataSet);
+        dynDataChain.TryAdd(2, dynDataSet);
 
         // ---------------
         // Act && Assert
         // ---------------
-        ExecResult erTaskDelete = taskDelete.Run(dataChain, dynamicDataSet, 0, logger).ExecResults[0];
+        ExecResult erTaskDelete = taskDelete.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
         Assert.IsTrue(erTaskDelete.Result, "TaskDelete failed.");
 
-        ExecResult erTaskUpload = taskUpload.Run(dataChain, dynamicDataSet, 0, logger).ExecResults[0];
+        ExecResult erTaskUpload = taskUpload.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
         Assert.IsTrue(erTaskUpload.Result, "TaskUpload failed.");
     }
 }

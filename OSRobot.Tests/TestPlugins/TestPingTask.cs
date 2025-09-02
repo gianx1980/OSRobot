@@ -51,15 +51,15 @@ public sealed class TestPingTask
         };
 
         Common.ConfigureLogPath();
-        (DynamicDataChain dataChain, 
-         DynamicDataSet dynamicDataSet, 
+        (DynamicDataChain dynDataChain, 
+         DynamicDataSet dynDataSet, 
          IPluginInstanceLogger logger) = Common.GetTaskDefaultParameters(task);
 
         // ---------
         // Act
         // ---------
         task.Init();
-        InstanceExecResult result = task.Run(dataChain, dynamicDataSet, 0, logger);
+        InstanceExecResult result = task.Run(dynDataChain, dynDataSet, 0, logger);
         task.Destroy();
 
         // ---------
@@ -97,15 +97,15 @@ public sealed class TestPingTask
         };
 
         Common.ConfigureLogPath();
-        (DynamicDataChain dataChain,
-         DynamicDataSet dynamicDataSet,
+        (DynamicDataChain dynDataChain,
+         DynamicDataSet dynDataSet,
          IPluginInstanceLogger logger) = Common.GetTaskDefaultParameters(task);
 
         // ---------
         // Act
         // ---------
         task.Init();
-        InstanceExecResult result = task.Run(dataChain, dynamicDataSet, 0, logger);
+        InstanceExecResult result = task.Run(dynDataChain, dynDataSet, 0, logger);
         task.Destroy();
 
         // ---------

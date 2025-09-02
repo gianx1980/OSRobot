@@ -33,8 +33,8 @@ public sealed class TestFileSystemEvent
         // ---------
         int toleranceSec = 30;
 
-        string appBasePath = AppDomain.CurrentDomain.BaseDirectory;
-        string testFileFolder = Path.Combine(appBasePath, @"TestFileEvent\");
+        string basePath = AppDomain.CurrentDomain.BaseDirectory;
+        string testFileFolder = Path.Combine(basePath, @"TestFileEvent1\");
         Folder folder = Common.CreateRootFolder();
 
         if (Directory.Exists(testFileFolder))
@@ -101,8 +101,8 @@ public sealed class TestFileSystemEvent
     {
         // Arrange
         int toleranceSec = 30;
-        string appBasePath = AppDomain.CurrentDomain.BaseDirectory;
-        string testFileFolder = Path.Combine(appBasePath, @"TestFileEvent\");
+        string basePath = AppDomain.CurrentDomain.BaseDirectory;
+        string testFileFolder = Path.Combine(basePath, @"TestFileEvent2\");
         Folder folder = Common.CreateRootFolder();
 
         if (Directory.Exists(testFileFolder))
@@ -140,7 +140,7 @@ public sealed class TestFileSystemEvent
         };
 
         object objSync = new();
-        ManualResetEvent mre = new ManualResetEvent(false);
+        ManualResetEvent mre = new(false);
         bool eventTriggered = false;
         eventObj.EventTriggered += (sender, e) =>
         {
@@ -184,8 +184,8 @@ public sealed class TestFileSystemEvent
         // Arrange
         // ---------
         int toleranceSec = 30;
-        string appBasePath = AppDomain.CurrentDomain.BaseDirectory;
-        string testFileFolder = Path.Combine(appBasePath, @"TestFileEvent\");
+        string basePath = AppDomain.CurrentDomain.BaseDirectory;
+        string testFileFolder = Path.Combine(basePath, @"TestFileEvent3\");
         Folder folder = Common.CreateRootFolder();
 
         if (Directory.Exists(testFileFolder))
@@ -193,9 +193,9 @@ public sealed class TestFileSystemEvent
         Directory.CreateDirectory(testFileFolder);
 
         string filePath = Path.Combine(testFileFolder, "TestDelete.txt");
-        using (FileStream fs = new FileStream(filePath, FileMode.Create))
+        using (FileStream fs = new(filePath, FileMode.Create))
         {
-            using (StreamWriter sw = new StreamWriter(fs))
+            using (StreamWriter sw = new(fs))
             {
                 sw.WriteLine("This is a test!");
             }
@@ -222,7 +222,7 @@ public sealed class TestFileSystemEvent
         };
 
         object objSync = new();
-        ManualResetEvent mre = new ManualResetEvent(false);
+        ManualResetEvent mre = new(false);
         bool eventTriggered = false;
         eventObj.EventTriggered += (sender, e) =>
         {
