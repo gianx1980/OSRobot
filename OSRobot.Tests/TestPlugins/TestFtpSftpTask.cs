@@ -9,13 +9,6 @@ namespace OSRobot.Tests.TestPlugins;
 [TestClass]
 public sealed class TestFtpSftpTask
 {
-    private void WriteTestFile(string filePathName, string content)
-    {
-        using FileStream fs = new(filePathName, FileMode.Create);
-        using StreamWriter sw = new(fs);
-        sw.WriteLine(content);   
-    }
-
     [TestMethod]
     public void TestSftpCopyFolder()
     {
@@ -31,10 +24,10 @@ public sealed class TestFtpSftpTask
         Directory.CreateDirectory(testFileFolder);
         Directory.CreateDirectory(testFileFolder + @"\SubFolder");
 
-        WriteTestFile(Path.Combine(testFileFolder, "Sftp1.txt"), "Test Sftp 1");
-        WriteTestFile(Path.Combine(testFileFolder, "Sftp2.txt"), "Test Sftp 2");
-        WriteTestFile(Path.Combine(testFileFolder, "Sftp3.txt"), "Test Sftp 3");
-        WriteTestFile(Path.Combine(testFileFolder + @"\SubFolder", "Sftp4.txt"), "Test Sftp 4");
+        Common.WriteTestFile(Path.Combine(testFileFolder, "Sftp1.txt"), "Test Sftp 1");
+        Common.WriteTestFile(Path.Combine(testFileFolder, "Sftp2.txt"), "Test Sftp 2");
+        Common.WriteTestFile(Path.Combine(testFileFolder, "Sftp3.txt"), "Test Sftp 3");
+        Common.WriteTestFile(Path.Combine(testFileFolder + @"\SubFolder", "Sftp4.txt"), "Test Sftp 4");
 
         FtpSftpTaskConfig taskUploadConfig = new()
         {
@@ -122,7 +115,7 @@ public sealed class TestFtpSftpTask
         Directory.CreateDirectory(testFileFolder);
         Directory.CreateDirectory(testFileFolder + @"\SubFolderSingle");
 
-        WriteTestFile(Path.Combine(testFileFolder + @"\SubFolderSingle", "SftpSingleFile.txt"), "Test Sftp Single file");
+        Common.WriteTestFile(Path.Combine(testFileFolder + @"\SubFolderSingle", "SftpSingleFile.txt"), "Test Sftp Single file");
 
         FtpSftpTaskConfig taskUploadConfig = new()
         {
@@ -210,10 +203,10 @@ public sealed class TestFtpSftpTask
         Directory.CreateDirectory(testFileFolder);
         Directory.CreateDirectory(testFileFolder + @"\SubFolder");
 
-        WriteTestFile(Path.Combine(testFileFolder, "Sftp1.txt"), "Test Sftp 1");
-        WriteTestFile(Path.Combine(testFileFolder, "Sftp2.txt"), "Test Sftp 2");
-        WriteTestFile(Path.Combine(testFileFolder, "Sftp3.txt"), "Test Sftp 3");
-        WriteTestFile(Path.Combine(testFileFolder + @"\SubFolder", "Sftp4.txt"), "Test Sftp 4");
+        Common.WriteTestFile(Path.Combine(testFileFolder, "Sftp1.txt"), "Test Sftp 1");
+        Common.WriteTestFile(Path.Combine(testFileFolder, "Sftp2.txt"), "Test Sftp 2");
+        Common.WriteTestFile(Path.Combine(testFileFolder, "Sftp3.txt"), "Test Sftp 3");
+        Common.WriteTestFile(Path.Combine(testFileFolder + @"\SubFolder", "Sftp4.txt"), "Test Sftp 4");
 
         FtpSftpTaskConfig taskUploadConfig = new()
         {

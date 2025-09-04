@@ -303,7 +303,7 @@ public sealed class TestDateTimeEvent
         };
 
         object objSync = new();
-        ManualResetEvent mre = new ManualResetEvent(false);
+        ManualResetEvent mre = new(false);
         bool eventTriggered = false;
         int repeatCount = 0;
         DateTime expectedLastTrigger = DateTime.Now.AddSeconds(everyNumSeconds * repeatNumber);

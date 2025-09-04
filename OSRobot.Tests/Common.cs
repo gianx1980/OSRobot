@@ -43,4 +43,11 @@ internal static class Common
         }
         return null;
     }
+
+    public static void WriteTestFile(string filePathName, string content)
+    {
+        using FileStream fs = new(filePathName, FileMode.Create);
+        using StreamWriter sw = new(fs);
+        sw.WriteLine(content);
+    }
 }
