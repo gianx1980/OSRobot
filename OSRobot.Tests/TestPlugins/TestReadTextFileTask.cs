@@ -119,6 +119,7 @@ public sealed class TestReadTextFileTask
 
             taskRead.Init();
             ExecResult er = taskRead.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+            taskRead.Destroy();
 
             DataTable dt = (DataTable)er.Data["DefaultRecordset"];
 
@@ -153,6 +154,7 @@ public sealed class TestReadTextFileTask
 
             taskRead.Init();
             ExecResult er = taskRead.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+            taskRead.Destroy();
 
             DataTable dt = (DataTable)er.Data["DefaultRecordset"];
 

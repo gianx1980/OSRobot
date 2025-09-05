@@ -79,6 +79,8 @@ public sealed class TestDateTimeEvent
         {
             Assert.IsTrue(eventTriggered && (Math.Abs(DateTime.Now.Subtract(config.AtDate).TotalSeconds) <= toleranceSec), "The event did not occur at the expected time.");
         }
+
+        eventObj.Destroy();
     }
 
     [TestMethod]
@@ -143,6 +145,8 @@ public sealed class TestDateTimeEvent
         {
             Assert.IsTrue(eventTriggered && (Math.Abs(DateTime.Now.Subtract(expectedLastTrigger).TotalSeconds) <= toleranceSec), "The event did not occur at the expected time.");
         }
+
+        eventObj.Destroy();
     }
 
     [TestMethod]
@@ -208,6 +212,8 @@ public sealed class TestDateTimeEvent
         {
             Assert.IsTrue(eventTriggeredInTime && (Math.Abs(DateTime.Now.Subtract(expectedLastTrigger).TotalSeconds) <= toleranceSec), "The event did not occur at the expected time.");
         }
+
+        eventObj.Destroy();
     }
 
     [TestMethod]
@@ -273,6 +279,8 @@ public sealed class TestDateTimeEvent
         {
             Assert.IsTrue(eventTriggered && (Math.Abs(DateTime.Now.Subtract(expectedLastTrigger).TotalSeconds) <= toleranceSec), "The event did not occur at the expected time.");
         }
+
+        eventObj.Destroy();
     }
 
     [TestMethod]
@@ -338,6 +346,8 @@ public sealed class TestDateTimeEvent
         {
             Assert.IsTrue(eventTriggered && (Math.Abs(DateTime.Now.Subtract(expectedLastTrigger).TotalSeconds) <= toleranceSec), "The event did not occur at the expected time.");
         }
+
+        eventObj.Destroy();
     }
 
     [TestMethod]
@@ -411,5 +421,7 @@ public sealed class TestDateTimeEvent
         {
             Assert.IsFalse(eventTriggered, "The event did not occur at the expected time.");
         }
+
+        eventObj.Destroy();
     }
 }

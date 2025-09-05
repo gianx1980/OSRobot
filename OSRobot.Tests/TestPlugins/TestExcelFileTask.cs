@@ -132,9 +132,11 @@ public sealed class TestExcelFileTask
         taskWrite.Init();
         taskRead.Init();
 
-
         taskWrite.Run(dynDataChain, dynDataSet, 0, logger);
         ExecResult execResult = taskRead.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+
+        taskWrite.Destroy();
+        taskRead.Destroy();
 
         DataTable dtRead = (DataTable)execResult.Data["DefaultRecordset"];
 

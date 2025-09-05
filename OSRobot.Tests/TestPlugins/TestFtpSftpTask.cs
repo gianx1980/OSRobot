@@ -93,10 +93,14 @@ public sealed class TestFtpSftpTask
         // Act && Assert
         // -------------------
 
+        taskDelete.Init();
         ExecResult erTaskDelete = taskDelete.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        taskDelete.Destroy();
         Assert.IsTrue(erTaskDelete.Result, "TaskDelete failed.");
 
+        taskUpload.Init();
         ExecResult erTaskUpload = taskUpload.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        taskUpload.Destroy();
         Assert.IsTrue(erTaskUpload.Result, "TaskUpload failed.");
     }
 
@@ -181,10 +185,14 @@ public sealed class TestFtpSftpTask
         // Act && Assert
         // -------------------
 
+        taskDelete.Init();    
         ExecResult erTaskDelete = taskDelete.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        taskDelete.Destroy();
         Assert.IsTrue(erTaskDelete.Result, "TaskDelete failed.");
 
+        taskUpload.Init();
         ExecResult erTaskUpload = taskUpload.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        taskUpload.Destroy();
         Assert.IsTrue(erTaskUpload.Result, "TaskUpload failed.");
     }
 
@@ -270,10 +278,14 @@ public sealed class TestFtpSftpTask
         // ---------------
         // Act && Assert
         // ---------------
+        taskDelete.Init();
         ExecResult erTaskDelete = taskDelete.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        taskDelete.Destroy();
         Assert.IsTrue(erTaskDelete.Result, "TaskDelete failed.");
 
+        taskUpload.Init();
         ExecResult erTaskUpload = taskUpload.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        taskUpload.Destroy();
         Assert.IsTrue(erTaskUpload.Result, "TaskUpload failed.");
     }
 }

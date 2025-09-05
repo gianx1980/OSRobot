@@ -17,11 +17,11 @@
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
 
+using System.Data;
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging.Abstract;
 using OSRobot.Server.Plugins.FileSystemTask;
-using System.Data;
 
 namespace OSRobot.Tests.TestPlugins;
 
@@ -99,7 +99,7 @@ public sealed class TestFileSystemTask
         // ---------
         taskCopy.Init();
         ExecResult execResult = taskCopy.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
-
+        taskCopy.Destroy();
 
         // ---------
         // Assert
@@ -172,7 +172,7 @@ public sealed class TestFileSystemTask
         // ---------
         taskDelete.Init();
         ExecResult execResult = taskDelete.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
-
+        taskDelete.Destroy();
 
         // ---------
         // Assert
@@ -230,6 +230,7 @@ public sealed class TestFileSystemTask
         // ---------
         taskCheckExistence.Init();
         ExecResult execResult = taskCheckExistence.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        taskCheckExistence.Destroy();
         bool fileExists = execResult.Data["FilePathExists"] != null ? (Convert.ToInt32(execResult.Data["FilePathExists"]) == 1) : false;
 
         // ---------
@@ -288,6 +289,7 @@ public sealed class TestFileSystemTask
         // ---------
         taskRename.Init();
         ExecResult execResult = taskRename.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        taskRename.Destroy();
 
         // ---------
         // Assert
@@ -347,6 +349,7 @@ public sealed class TestFileSystemTask
         // ---------
         taskList.Init();
         ExecResult execResult = taskList.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        taskList.Destroy();
 
         // ---------
         // Assert

@@ -162,6 +162,10 @@ public sealed class TestSqlServerCommandTask
         taskWrite.Run(dynDataChain, dynDataSet, 0, logger);
         ExecResult execResult = taskRead.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
 
+        taskClean.Destroy();
+        taskWrite.Destroy();
+        taskRead.Destroy();
+
         DataTable dtRead = (DataTable)execResult.Data["DefaultRecordset"];
 
         Assert.IsTrue(dt.Rows.Count == (dtRead.Rows.Count));

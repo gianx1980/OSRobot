@@ -125,6 +125,8 @@ public sealed class TestDiskSpaceEvent
         {
             Assert.IsTrue(eventTriggered);
         }
+
+        eventObj.Destroy();
     }
 
     [TestMethod]
@@ -193,5 +195,7 @@ public sealed class TestDiskSpaceEvent
         {
             Assert.IsTrue(eventTriggered);
         }
+
+        eventObj.Destroy();
     }
 }

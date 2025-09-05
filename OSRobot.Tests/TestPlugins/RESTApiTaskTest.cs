@@ -17,17 +17,11 @@
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
 
+using System.Data;
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging.Abstract;
-using OSRobot.Server.Plugins.PingTask;
 using OSRobot.Server.Plugins.RESTApiTask;
-using System;
-using System.Collections.Generic;
-using System.Data;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace OSRobot.Tests.TestPlugins;
 

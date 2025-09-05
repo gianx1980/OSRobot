@@ -94,6 +94,8 @@ public sealed class TestFileSystemEvent
         {
             Assert.IsTrue(eventTriggered, "The event did not occur at the expected time.");
         }
+
+        eventObj.Destroy();
     }
 
     [TestMethod]
@@ -175,6 +177,8 @@ public sealed class TestFileSystemEvent
         {
             Assert.IsTrue(eventTriggered, "The event did not occur at the expected time.");
         }
+
+        eventObj.Destroy();
     }
 
     [TestMethod]
@@ -251,5 +255,7 @@ public sealed class TestFileSystemEvent
         {
             Assert.IsTrue(eventTriggered, "The event did not occur at the expected time.");
         }
+
+        eventObj.Destroy();
     }
 }
