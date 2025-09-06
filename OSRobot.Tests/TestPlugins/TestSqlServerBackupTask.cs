@@ -17,40 +17,49 @@
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
 
-using System.Data;
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging.Abstract;
-using OSRobot.Server.Plugins.RESTApiTask;
+using OSRobot.Server.Plugins.SqlServerBackupTask;
 
 namespace OSRobot.Tests.TestPlugins;
 
 [TestClass]
-public sealed class RESTApiTaskTest
+public class TestSqlServerBackupTask
 {
     [TestMethod]
-    public void TestGet()
+    public void TestBackupDB()
     {
         // ---------
         // Arrange
         // ---------
+        string backupDestFolder = "D:\\BackupTest";
+
+        if (Directory.Exists(backupDestFolder))
+            Directory.Delete(backupDestFolder, true);
+        Directory.CreateDirectory(backupDestFolder);
+
         Folder folder = Common.CreateRootFolder();
 
-        RESTApiTaskConfig config = new()
+        SqlServerBackupTaskConfig config = new()
         {
             Id = 1,
-            Name = "REST Api task 1",
+            Name = "Sql Server backup task 1",
 
-            // A public test API that returns JSON data
-            URL = "https://jsonplaceholder.typicode.com/posts",
-            Method = MethodType.Get,
-            
-            // Root of the JSON response
-            JsonPathToData = "$", 
-            ReturnsRecordset = true
+            Server = "localhost",
+            Username = "Test",
+            Password = "12345",
+            ConnectionStringOptions = "Encrypt=no",
+            BackupType = BackupTypeEnum.Full,
+            DatabasesToBackup = DatabasesToBackupEnum.AllUserDatabases,
+            OverwriteIfExists = true,
+            VerifyBackup = true,
+            PerformChecksum = true,
+            ContinueOnError = true,
+            DestinationPath = backupDestFolder
         };
 
-        RESTApiTask task = new()
+        SqlServerBackupTask task = new()
         {
             ParentFolder = folder,
             Config = config
@@ -72,12 +81,8 @@ public sealed class RESTApiTaskTest
         // Assert
         // ---------
         Assert.IsTrue(result.ExecResults.Count > 0, "There are no executions.");
-        
 
-        // Pinging 127.0.0.1 we expect a 100% success rate
         ExecResult execResult = result.ExecResults[0];
         Assert.IsTrue(execResult.Result, "Task failed.");
-        DataTable data = (DataTable)execResult.Data["DefaultRecordset"];
-        Assert.IsTrue(data.Rows.Count > 0, "No rows in recordset.");    
     }
 }
