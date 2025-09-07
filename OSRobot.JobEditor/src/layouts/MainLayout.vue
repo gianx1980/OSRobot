@@ -203,6 +203,7 @@ import SqlServerCommandTaskConfigForm from "src/robotObjects/sqlServerCommandTas
 import UnzipTaskConfigForm from "src/robotObjects/unzipTask/unzipTaskConfigForm.vue";
 import ZipTaskConfigForm from "src/robotObjects/zipTask/zipTaskConfigForm.vue";
 import WriteTextFileTaskConfigForm from "src/robotObjects/writeTextFileTask/writeTextFileTaskConfigForm.vue";
+import PingTaskConfigForm from "src/robotObjects/pingTask/PingTaskConfigForm.vue";
 
 import { ref, onMounted, watch } from "vue";
 import {
@@ -267,6 +268,7 @@ const _configForms = {
   UnzipTaskConfigForm,
   ZipTaskConfigForm,
   WriteTextFileTaskConfigForm,
+  PingTaskConfigForm,
 };
 
 const _appStore = useAppStore();

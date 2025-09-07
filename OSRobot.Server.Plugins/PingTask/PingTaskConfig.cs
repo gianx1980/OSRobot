@@ -18,6 +18,7 @@
 ======================================================================================*/
 
 using OSRobot.Server.Core;
+using OSRobot.Server.Core.DynamicData;
 using System.Text.Json.Serialization;
 
 namespace OSRobot.Server.Plugins.PingTask;
@@ -38,6 +39,7 @@ public class PingTaskConfig : ITaskConfig
     public string IterationObject { get; set; } = string.Empty;
     public int IterationsCount { get; set; }
 
+    [DynamicData]
     public string Host { get; set; } = string.Empty;
     public int Timeout { get; set; } = _defaultTimeout;
     public int Attempts { get; set; } = _defaultAttempts;
