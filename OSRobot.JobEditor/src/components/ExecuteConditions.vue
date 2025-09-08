@@ -301,7 +301,7 @@ function _conditionAddItemClick() {
 
   _dynDataSelected.value = [];
   _conditionDialogTitle.value =
-    _conditionType === "executeCondition"
+    _conditionType === "executeConditions"
       ? _$t("addExecuteCondition")
       : _$t("addDontExecuteCondition");
   _conditionDialogVisibility.value = true;
@@ -310,7 +310,7 @@ function _conditionAddItemClick() {
 function _conditionEditItemClick(row) {
   _conditionDialogFormData.value = Object.assign({}, row);
   _conditionDialogTitle.value =
-    _conditionType === "executeCondition"
+    _conditionType === "executeConditions"
       ? _$t("editExecuteCondition")
       : _$t("editDontExecuteCondition");
 
