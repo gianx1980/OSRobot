@@ -32,6 +32,19 @@ public class RESTApiTask : IterationTask
     private string _httpResult = string.Empty;
     private string _jsonPathData = string.Empty;
 
+    private JContainer? ParseJson(string json)
+    {
+        JContainer? jParsedJson = null;
+
+        try { jParsedJson = JObject.Parse(_rawContent); } catch { }
+        if (jParsedJson == null)
+        {
+            try { jParsedJson = JArray.Parse(_rawContent); } catch { }
+        }
+
+        return jParsedJson;
+    }
+
     protected override void RunIteration(int currentIteration)
     {
         using HttpClient client = new();
@@ -88,7 +101,7 @@ public class RESTApiTask : IterationTask
         {
             _instanceLogger?.Info(this, $"Extracting data from path \"{tConfig.JsonPathToData}\"...");
 
-            JObject jParsedJson = JObject.Parse(_rawContent);
+            JContainer? jParsedJson = ParseJson(_rawContent) ?? throw new ApplicationException("Cannot parse JSON response");
             JToken? jJsonPathData = jParsedJson.SelectToken(tConfig.JsonPathToData);
 
             if (jJsonPathData != null)

@@ -34,8 +34,11 @@ public partial class FtpSftpTask : IterationTask
 
         if (pathItems.Count > 0)
         {
+            if (skipLastSegment)
+                pathItems.RemoveAt(pathItems.Count - 1);
+            
             StringBuilder fullPath = new();
-            for (int i = 0; i < pathItems.Count - 1; i++)
+            for (int i = 0; i < pathItems.Count; i++)
             {
                 string item = pathItems[i];
                 if (!string.IsNullOrEmpty(item))
@@ -45,9 +48,6 @@ public partial class FtpSftpTask : IterationTask
                     if (!fileTransferClient.RemoteDirectoryExists(fullPathString))
                         fileTransferClient.RemoteCreateDirectory(fullPathString);
                 }
-
-                if (skipLastSegment && (i == (pathItems.Count - 1)))
-                    break;
             }
         }
     }
@@ -58,8 +58,11 @@ public partial class FtpSftpTask : IterationTask
 
         if (pathItems.Count > 0)
         {
+            if (skipLastSegment)
+                pathItems.RemoveAt(pathItems.Count - 1);
+
             StringBuilder fullPath = new();
-            for (int i = 0; i < pathItems.Count - 1; i++)
+            for (int i = 0; i < pathItems.Count; i++)
             {
                 string item = pathItems[i];
                 if (!string.IsNullOrEmpty(item))
@@ -77,9 +80,6 @@ public partial class FtpSftpTask : IterationTask
                             fileTransferClient.RemoteCreateDirectory(fullPathString);
                     }
                 }
-
-                if (skipLastSegment && (i == (pathItems.Count - 1)))
-                    break;
             }
         }
     }
@@ -229,6 +229,7 @@ public partial class FtpSftpTask : IterationTask
         }
     }
 
-    [GeneratedRegex(@"[A-Z]:", RegexOptions.IgnoreCase, "it-IT")]
+    // Use Invariant Culture ("")
+    [GeneratedRegex(@"[A-Z]:", RegexOptions.IgnoreCase, "")]
     private static partial Regex BuildLocalPathRegex();
 }

@@ -61,5 +61,8 @@ RobotObjectUtility.getPluginIcon = function (objectId) {
 
     case "ZipTask":
       return "folder_zip";
+
+    case "PingTask":
+      return "network_ping";
   }
 };

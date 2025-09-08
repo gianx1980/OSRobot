@@ -916,6 +916,15 @@ namespace OSRobot.Server.Plugins {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Ping task.
+        /// </summary>
+        internal static string TxtPingTask {
+            get {
+                return ResourceManager.GetString("TxtPingTask", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Post.
         /// </summary>
         internal static string TxtPost {
@@ -1245,6 +1254,15 @@ namespace OSRobot.Server.Plugins {
         internal static string TxtThisWillOverwriteCurrentColDef {
             get {
                 return ResourceManager.GetString("TxtThisWillOverwriteCurrentColDef", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Threshold success rate (%).
+        /// </summary>
+        internal static string TxtThresholdSuccessRate {
+            get {
+                return ResourceManager.GetString("TxtThresholdSuccessRate", resourceCulture);
             }
         }
         

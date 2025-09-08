@@ -402,6 +402,9 @@
   <data name="TxtPercentage" xml:space="preserve">
     <value>%</value>
   </data>
+  <data name="TxtPingTask" xml:space="preserve">
+    <value>Ping task</value>
+  </data>
   <data name="TxtPost" xml:space="preserve">
     <value>Post</value>
   </data>
@@ -512,6 +515,9 @@
   </data>
   <data name="TxtThisWillOverwriteCurrentColDef" xml:space="preserve">
     <value>This operation will overwrite your current columns definition. Do you want to continue?</value>
+  </data>
+  <data name="TxtThresholdSuccessRate" xml:space="preserve">
+    <value>Threshold success rate (%)</value>
   </data>
   <data name="TxtThursday" xml:space="preserve">
     <value>Thursday</value>
