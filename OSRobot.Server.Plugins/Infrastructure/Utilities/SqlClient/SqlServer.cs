@@ -18,22 +18,16 @@
 ======================================================================================*/
 
 using Microsoft.Data.SqlClient;
-using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Text;
-using System.Threading.Tasks;
 
-namespace OSRobot.Server.Plugins.Infrastructure.Utilities;
+namespace OSRobot.Server.Plugins.Infrastructure.Utilities.SqlClient;
 
 public class SqlServerDatabaseListItem(int id, string name)
 {
     public int Id { get; set; } = id;
     public string Name { get; set; } = name;
 }
-
 
 public static class SqlServer
 {
@@ -86,7 +80,7 @@ public static class SqlServer
                 int dbId = reader.GetInt32("database_id"); 
                 string dbName = reader.GetString("name");
                 
-                if (!onlyUserDatabases || (onlyUserDatabases && dbName != "master" && dbName != "model" && dbName != "msdb" && dbName != "tempdb"))
+                if (!onlyUserDatabases || onlyUserDatabases && dbName != "master" && dbName != "model" && dbName != "msdb" && dbName != "tempdb")
                     databaseList.Add(new SqlServerDatabaseListItem(dbId, dbName));
             }
         }
@@ -99,5 +93,4 @@ public static class SqlServer
 
         return databaseList;
     }
-
 }

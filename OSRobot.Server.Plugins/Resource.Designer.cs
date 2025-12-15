@@ -961,6 +961,15 @@ namespace OSRobot.Server.Plugins {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Read binary file task.
+        /// </summary>
+        internal static string TxtReadBinaryFileTask {
+            get {
+                return ResourceManager.GetString("TxtReadBinaryFileTask", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to From &lt;row&gt; to last row.
         /// </summary>
         internal static string TxtReadFromRowToLastRow {

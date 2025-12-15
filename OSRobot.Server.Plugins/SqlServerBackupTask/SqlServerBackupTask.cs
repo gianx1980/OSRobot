@@ -21,7 +21,7 @@ using Microsoft.Data.SqlClient;
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging.Abstract;
-using OSRobot.Server.Plugins.Infrastructure.Utilities;
+using OSRobot.Server.Plugins.Infrastructure.Utilities.SqlClient;
 using System.Data;
 
 namespace OSRobot.Server.Plugins.SqlServerBackupTask;
