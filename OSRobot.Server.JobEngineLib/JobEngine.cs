@@ -32,6 +32,7 @@ using OSRobot.Server.Plugins.FtpSftpTask;
 using OSRobot.Server.Plugins.MemoryEvent;
 using OSRobot.Server.Plugins.OSRobotServiceStartEvent;
 using OSRobot.Server.Plugins.PingTask;
+using OSRobot.Server.Plugins.ReadBinaryFileTask;
 using OSRobot.Server.Plugins.ReadTextFileTask;
 using OSRobot.Server.Plugins.RESTApiTask;
 using OSRobot.Server.Plugins.RunProgramTask;
@@ -499,6 +500,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
             new FtpSftpTaskPlugin(),
             new MemoryEventPlugin(),
             new OSRobotServiceStartEventPlugin(),
+            new ReadBinaryFileTaskPlugin(),
             new ReadTextFileTaskPlugin(),
             new RESTApiTaskPlugin(),
             new RunProgramTaskPlugin(),

@@ -193,6 +193,7 @@ import SystemEventsEventConfigForm from "src/robotObjects/systemEventsEvent/Syst
 import ExcelFileTaskConfigForm from "src/robotObjects/excelFileTask/ExcelFileTaskConfigForm.vue";
 import FileSystemTaskConfigForm from "src/robotObjects/fileSystemTask/FileSystemTaskConfigForm.vue";
 import FtpSftpTaskConfigForm from "src/robotObjects/ftpSftpTask/FtpSftpTaskConfigForm.vue";
+import ReadBinaryFileTaskConfigForm from "src/robotObjects/readBinaryFileTask/ReadBinaryFileTaskConfigForm.vue";
 import ReadTextFileTaskConfigForm from "src/robotObjects/readTextFileTask/ReadTextFileTaskConfigForm.vue";
 import RESTApiTaskConfigForm from "src/robotObjects/restApiTask/RESTApiTaskConfigForm.vue";
 import RunProgramTaskConfigForm from "src/robotObjects/runProgramTask/RunProgramTaskConfigForm.vue";
@@ -258,6 +259,7 @@ const _configForms = {
   ExcelFileTaskConfigForm,
   FileSystemTaskConfigForm,
   FtpSftpTaskConfigForm,
+  ReadBinaryFileTaskConfigForm,
   ReadTextFileTaskConfigForm,
   RESTApiTaskConfigForm,
   RunProgramTaskConfigForm,

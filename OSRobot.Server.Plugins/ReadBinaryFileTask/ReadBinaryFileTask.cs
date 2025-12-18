@@ -17,9 +17,10 @@
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
 
-using OSRobot.Server.Core;
-using OSRobot.Server.Plugins.Infrastructure.Utilities.FileSystem;
 using System.Data;
+using OSRobot.Server.Core;
+using OSRobot.Server.Core.DynamicData;
+using OSRobot.Server.Plugins.Infrastructure.Utilities.FileSystem;
 
 namespace OSRobot.Server.Plugins.ReadBinaryFileTask;
 
@@ -31,16 +32,34 @@ public class ReadBinaryFileTask : IterationTask
 
         DataTable dtFiles = (DataTable)_defaultRecordset;
         dtFiles.Columns.Add("FullName", typeof(string));
-        dtFiles.Columns.Add("FileContent", typeof(string));
+        dtFiles.Columns.Add("FileContent", typeof(byte[]));
 
         FileSystemEnumerator fileSystemEnumerator = new(tConfig.FilePath, tConfig.Recursive);
 
         foreach (string file in fileSystemEnumerator)
         {
+            _instanceLogger?.Info(this, $"Reading file \"{file}\"...");
+
             byte[] fileContent = File.ReadAllBytes(file);
             DataRow dr = dtFiles.NewRow();
             dr["FullName"] = file;
             dr["FileContent"] = fileContent;
+            dtFiles.Rows.Add(dr);
         }
+    }
+
+    private void PostIteration(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
+    {
+        dDataSet.TryAdd(CommonDynamicData.DefaultRecordsetName, _defaultRecordset);
+    }
+
+    protected override void PostIterationSucceded(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
+    {
+        PostIteration(currentIteration, result, dDataSet);
+    }
+
+    protected override void PostIterationFailed(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
+    {
+        PostIteration(currentIteration, result, dDataSet);
     }
 }

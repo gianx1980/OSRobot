@@ -295,6 +295,7 @@ export default {
   readRow: "Read row",
   readRowNumber: "Read row number",
   readTheLastRow: "Read the last row",
+  recursive: "Recursive",
   recursivelyCopy: "Recursively copy",
   recursivelyDelete: "Recursively delete",
   recursivelyDeleteFiles: "Recursively delete files",

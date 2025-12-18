@@ -32,6 +32,9 @@ RobotObjectUtility.getPluginIcon = function (objectId) {
     case "ReadTextFileTask":
       return "description";
 
+    case "ReadBinaryFileTask":
+      return "save";
+
     case "RESTApiTask":
       return "api";
 

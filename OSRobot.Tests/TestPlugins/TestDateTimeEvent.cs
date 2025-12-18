@@ -18,8 +18,6 @@
 ======================================================================================*/
 
 using OSRobot.Server.Core;
-using OSRobot.Server.Core.DynamicData;
-using OSRobot.Server.Core.Logging.Abstract;
 using OSRobot.Server.Plugins.DateTimeEvent;
 
 namespace OSRobot.Tests.TestPlugins;

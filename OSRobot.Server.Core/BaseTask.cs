@@ -25,7 +25,6 @@ namespace OSRobot.Server.Core;
 
 public abstract class BaseTask : ITask
 {
-    protected bool _taskReturnsRecordset = false;
     protected object _defaultRecordset = new DataTable();
     protected int _iterationsCount;
     protected DynamicDataChain _dataChain = [];
