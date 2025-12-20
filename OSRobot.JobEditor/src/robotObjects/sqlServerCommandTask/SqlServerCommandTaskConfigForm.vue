@@ -246,7 +246,7 @@
                   lazy-rules
                   :rules="[(val) => !!val || _$t('thisFieldIsMandatory')]"
                   :disable="
-                    !['Varchar', 'NVarchar', 'Numeric'].includes(
+                    !['Varchar', 'NVarchar', 'Numeric', 'Varbinary'].includes(
                       _parameterDialogFormData.type
                     )
                   "
@@ -444,5 +444,6 @@ const _parameterTypes = [
   { label: _$t("date"), value: "Date" },
   { label: _$t("dateTime"), value: "Datetime" },
   { label: _$t("bit"), value: "Bit" },
+  { label: _$t("varbinary"), value: "Varbinary" },
 ];
 </script>

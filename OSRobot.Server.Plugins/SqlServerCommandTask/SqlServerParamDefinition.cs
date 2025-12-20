@@ -32,7 +32,8 @@ public enum SqlParamType
     Long,
     Date,
     Datetime,
-    Bit
+    Bit,
+    VarBinary
 }
 
 public class SqlServerParamDefinition

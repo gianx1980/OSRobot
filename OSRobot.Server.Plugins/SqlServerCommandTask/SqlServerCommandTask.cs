@@ -93,6 +93,18 @@ public class SqlServerCommandTask : IterationTask
             case SqlParamType.Datetime:
                 sqlParam.SqlDbType = SqlDbType.DateTime;
                 break;
+
+            case SqlParamType.VarBinary:
+                sqlParam.SqlDbType = SqlDbType.VarBinary;
+                if (!string.IsNullOrEmpty(paramDef.Length))
+                {
+                    if (!paramDef.Length.Equals("MAX", StringComparison.CurrentCultureIgnoreCase))
+                        sqlParam.Size = int.Parse(paramDef.Length);
+                    else
+                        sqlParam.Size = -1;
+                }
+                //sqlParam.Value = DynamicDataParser.GetDynamicDataObject()
+                break;
         }
 
         sqlParam.Value = DynamicDataParser.ReplaceDynamicData(paramDef.Value, dataChain, iterationNumber, _subInstanceIndex);

@@ -35,6 +35,7 @@ public class ReadBinaryFileTaskPlugin : IPlugin
         get
         {
             List<DynamicDataSample> Samples = CommonDynamicData.BuildStandardDynamicDataSamples("ReadBinaryFile task 1");
+            Samples.Add(new DynamicDataSample(CommonDynamicData.DefaultRecordsetName, Resource.TxtDynDataDefaultRecordset, Resource.TxtDynDataFieldXOfRecordsetsRow, true));
             return Samples;
         }
     }

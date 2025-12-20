@@ -17,14 +17,11 @@
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
 
-using DocumentFormat.OpenXml.Bibliography;
+using System.Data;
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.Data;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging.Abstract;
-using System.Data;
-using System.IO;
-
 
 namespace OSRobot.Server.Plugins.FileSystemTask;
 

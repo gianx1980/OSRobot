@@ -443,4 +443,5 @@ export default {
   date: "Date",
   dateTime: "Datetime",
   bit: "Bit",
+  varbinary: "Varbinary",
 };
