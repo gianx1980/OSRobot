@@ -21,6 +21,7 @@ using Microsoft.Data.SqlClient;
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
 using System.Data;
+using System.Reflection.Metadata;
 
 
 namespace OSRobot.Server.Plugins.SqlServerCommandTask;
@@ -103,8 +104,16 @@ public class SqlServerCommandTask : IterationTask
                     else
                         sqlParam.Size = -1;
                 }
-                //sqlParam.Value = DynamicDataParser.GetDynamicDataObject()
-                break;
+
+                // The varbinary type is handled differently from the others and therefore requires separate handling.
+                List<DynamicDataInfo> dynDataInfoList = DynamicDataParser.GetDynamicDataInfo(paramDef.Value);
+                if (dynDataInfoList.Count > 1)
+                    throw new ApplicationException("Multiple dynamic data are note allowed for Varbinary parameters.");
+
+                DynamicDataInfo dynDataInfo = dynDataInfoList[0];
+                object? paramValue = DynamicDataParser.GetDynamicDataValue(dynDataInfo, dataChain, iterationNumber, _subInstanceIndex);
+                sqlParam.Value = paramValue ?? DBNull.Value;
+                return sqlParam;
         }
 
         sqlParam.Value = DynamicDataParser.ReplaceDynamicData(paramDef.Value, dataChain, iterationNumber, _subInstanceIndex);

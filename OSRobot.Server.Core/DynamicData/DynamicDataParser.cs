@@ -32,48 +32,69 @@ public class ScriptGlobals
     public int? subInstanceIndex { get; set; }
 }
 
+public class DynamicDataInfo(string dynamicData, int objectID, string fieldName, string subFieldName, string rowIndex)
+{
+    public string DynamicData { get; set; } = dynamicData;
+    public int ObjectID { get; set; } = objectID;
+    public string FieldName { get; set; } = fieldName;
+    public string SubFieldName { get; set; } = subFieldName;
+    public string RowIndex { get; set; } = rowIndex;
+}
+
 public static partial class DynamicDataParser
 {
     private const string _codePlaceholder = "[CODE]";
     private readonly static Regex _regExFieldValue = DynamicDataRegex();
     private readonly static Regex _regExEnvVarValue = DynamicDataRegex();
 
-    private static string ParseBasic(string input, DynamicDataChain dynamicDataChain, int iterationNumber, int? subInstanceIndex)
+    public static List<DynamicDataInfo> GetDynamicDataInfo(string input)
     {
-        string tempParseResult;
+        List<DynamicDataInfo> dynamicDataInfoList = [];
 
-        tempParseResult = _regExFieldValue.Replace(input, (regExMatch) => {
-            string result = string.Empty;
-            int objectID = int.Parse(regExMatch.Groups["ObjectID"].Value);
-            string fieldName = regExMatch.Groups["FieldName"].Value;
-            string subFieldName;
-            string rowIndex;
+        MatchCollection matches = _regExFieldValue.Matches(input);
+        foreach (Match match in matches)
+        {
+            dynamicDataInfoList.Add(new DynamicDataInfo(match.Value,
+                                                            int.Parse(match.Groups["ObjectID"].Value),
+                                                            match.Groups["FieldName"].Value,
+                                                            match.Groups["SubFieldName"].Value,
+                                                            match.Groups["RowIndex"].Value
+                                                            ));
+        }
 
-            DynamicDataSet objectDataSet = dynamicDataChain[objectID];
+        return dynamicDataInfoList;
+    }
 
-            if (regExMatch.Groups["SubFieldName"].Value == string.Empty)
-            {
-                result = objectDataSet[fieldName].ToString() ?? string.Empty;
-            }
-            else
-            {
-                rowIndex = regExMatch.Groups["RowIndex"].Value;
-                subFieldName = regExMatch.Groups["SubFieldName"].Value;
+    public static object? GetDynamicDataValue(DynamicDataInfo dynDataInfo, DynamicDataChain dynamicDataChain, int iterationNumber, int? subInstanceIndex)
+    {
+        DynamicDataSet objectDataSet = dynamicDataChain[dynDataInfo.ObjectID];
 
-                if (objectDataSet[fieldName] is List<Dictionary<string, object>> dict)
-                {
-                    Dictionary<string, object> row = dict[GetRowIndex(rowIndex, iterationNumber, subInstanceIndex)];
-                    result = row[subFieldName].ToString() ?? string.Empty;
-                }
-                else if (objectDataSet[fieldName] is DataTable list)
-                {
-                    DataRow row = list.Rows[GetRowIndex(rowIndex, iterationNumber, subInstanceIndex)];
-                    result = row[subFieldName].ToString() ?? string.Empty;
-                }
-            }
+        if (dynDataInfo.SubFieldName == string.Empty)
+            return objectDataSet[dynDataInfo.FieldName];
 
-            return result;
-        });
+        if (objectDataSet[dynDataInfo.FieldName] is List<Dictionary<string, object>> dict)
+        {
+            Dictionary<string, object> row = dict[GetRowIndex(dynDataInfo.RowIndex, iterationNumber, subInstanceIndex)];
+            return row[dynDataInfo.SubFieldName];
+        }
+
+        if (objectDataSet[dynDataInfo.FieldName] is DataTable list)
+        {
+            DataRow row = list.Rows[GetRowIndex(dynDataInfo.RowIndex, iterationNumber, subInstanceIndex)];
+            return row[dynDataInfo.SubFieldName];
+        }
+
+        return null;
+    }
+
+    public static string ParseBasic(string input, List<DynamicDataInfo> dynDataInfoList, DynamicDataChain dynamicDataChain, int iterationNumber, int? subInstanceIndex)
+    {
+        string tempParseResult = input;
+        foreach (DynamicDataInfo ddi in dynDataInfoList)
+        {
+            string val = GetDynamicDataValue(ddi, dynamicDataChain, iterationNumber, subInstanceIndex)?.ToString() ?? string.Empty;
+            tempParseResult = tempParseResult.Replace(ddi.DynamicData, val);
+        }
 
         tempParseResult = _regExEnvVarValue.Replace(tempParseResult, (regExMatch) => {
             string varName = regExMatch.Groups["VarName"].Value;
@@ -84,7 +105,7 @@ public static partial class DynamicDataParser
         return tempParseResult;
     }
 
-    private static string ParseCSharpCode(string input, DynamicDataChain dynamicDataChain, int iterationNumber, int? subInstanceIndex)
+    public static string ParseCSharpCode(string input, DynamicDataChain dynamicDataChain, int iterationNumber, int? subInstanceIndex)
     {
         string code = input[_codePlaceholder.Length..];
 
@@ -127,11 +148,12 @@ public static partial class DynamicDataParser
         else
         {
             // Basic dynamic data management
-            
+
             // Given a placeholder in the format (for example):
-            //  {object[3].DefaultRecordset[1]['TableName']}
+            //  {object[3].DefaultRecordset[1]['FieldName']}
             //  Extract the parameters needed to replace the placeholder with real data
-            return ParseBasic(input, dynamicDataChain, iterationNumber, subInstanceIndex);
+            List<DynamicDataInfo> dynamicDataInfoList = GetDynamicDataInfo(input);
+            return ParseBasic(input, dynamicDataInfoList, dynamicDataChain, iterationNumber, subInstanceIndex);
         }
     }
 
