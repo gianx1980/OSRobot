@@ -148,6 +148,7 @@ export default {
   fieldValue: "Field value",
   fieldWidth: "Field width",
   fileName: "File name",
+  fileContentSource: "File content source",
   fileNameTemplate: "File name template",
   filePath: "File path",
   findText: "Find text",

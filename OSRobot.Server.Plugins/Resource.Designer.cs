@@ -1375,6 +1375,15 @@ namespace OSRobot.Server.Plugins {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Write binary task file.
+        /// </summary>
+        internal static string TxtWriteBinaryTaskFile {
+            get {
+                return ResourceManager.GetString("TxtWriteBinaryTaskFile", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to Write text file task.
         /// </summary>
         internal static string TxtWriteTextFileTask {

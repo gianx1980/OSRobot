@@ -59,6 +59,9 @@ RobotObjectUtility.getPluginIcon = function (objectId) {
     case "UnzipTask":
       return "folder_zip";
 
+    case "WriteBinaryFileTask":
+      return "notes";
+
     case "WriteTextFileTask":
       return "edit_note";
 

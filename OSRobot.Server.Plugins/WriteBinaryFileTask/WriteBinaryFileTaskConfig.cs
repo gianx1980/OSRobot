@@ -17,13 +17,13 @@
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
 
-using System.Text.Json.Serialization;
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
+using System.Text.Json.Serialization;
 
-namespace OSRobot.Server.Plugins.ReadBinaryFileTask;
+namespace OSRobot.Server.Plugins.WriteBinaryFileTask;
 
-public class ReadBinaryFileTaskConfig : ITaskConfig
+public class WriteBinaryFileTaskConfig : ITaskConfig
 {
     public int Id { get; set; }
     public string Name { get; set; } = string.Empty;
@@ -33,10 +33,6 @@ public class ReadBinaryFileTaskConfig : ITaskConfig
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public IterationMode PluginIterationMode { get; set; }
     public string IterationObject { get; set; } = string.Empty;
-    public int IterationsCount { get; set; }
-
-    [DynamicData]
-    public string FilePath { get; set; } = string.Empty;
-
-    public bool Recursive { get; set; }    
+    public int IterationsCount { get; set; }    
+    public string FileContentSource { get; set; } = string.Empty;
 }

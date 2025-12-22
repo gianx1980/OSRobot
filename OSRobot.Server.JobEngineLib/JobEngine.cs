@@ -42,6 +42,7 @@ using OSRobot.Server.Plugins.SqlServerBulkCopyTask;
 using OSRobot.Server.Plugins.SqlServerCommandTask;
 using OSRobot.Server.Plugins.SystemEventsEvent;
 using OSRobot.Server.Plugins.UnzipTask;
+using OSRobot.Server.Plugins.WriteBinaryFileTask;
 using OSRobot.Server.Plugins.WriteTextFileTask;
 using OSRobot.Server.Plugins.ZipTask;
 using System.Collections.Concurrent;
@@ -510,6 +511,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
             new SqlServerCommandTaskPlugin(),
             new SystemEventsEventPlugin(),
             new UnzipTaskPlugin(),
+            new WriteBinaryFileTaskPlugin(),
             new WriteTextFileTaskPlugin(),
             new ZipTaskPlugin(),
             new PingTaskPlugin()

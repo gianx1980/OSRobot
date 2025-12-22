@@ -555,6 +555,9 @@
   <data name="TxtWednesday" xml:space="preserve">
     <value>Wednesday</value>
   </data>
+  <data name="TxtWriteBinaryTaskFile" xml:space="preserve">
+    <value>Write binary task file</value>
+  </data>
   <data name="TxtWriteTextFileTask" xml:space="preserve">
     <value>Write text file task</value>
   </data>

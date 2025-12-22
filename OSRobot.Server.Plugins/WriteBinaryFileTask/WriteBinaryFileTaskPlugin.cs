@@ -17,26 +17,30 @@
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
 
-using System.Text.Json.Serialization;
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
 
-namespace OSRobot.Server.Plugins.ReadBinaryFileTask;
+namespace OSRobot.Server.Plugins.WriteBinaryFileTask;
 
-public class ReadBinaryFileTaskConfig : ITaskConfig
+public class WriteBinaryFileTaskPlugin : IPlugin
 {
-    public int Id { get; set; }
-    public string Name { get; set; } = string.Empty;
-    public bool Enabled { get; set; } = true;
-    public bool Log { get; set; } = true;
+    public string Id => "WriteBinaryFileTask";
 
-    [JsonConverter(typeof(JsonStringEnumConverter))]
-    public IterationMode PluginIterationMode { get; set; }
-    public string IterationObject { get; set; } = string.Empty;
-    public int IterationsCount { get; set; }
+    public string Title => Resource.TxtWriteBinaryTaskFile;
 
-    [DynamicData]
-    public string FilePath { get; set; } = string.Empty;
+    public EnumPluginType PluginType => EnumPluginType.Task;
 
-    public bool Recursive { get; set; }    
+    public List<DynamicDataSample> SampleDynamicData => CommonDynamicData.BuildStandardDynamicDataSamples("WriteBinaryFile task 1");
+
+    public IPluginInstance GetInstance()
+    {
+        return new WriteBinaryFileTask();
+    }
+
+    public IPluginInstanceConfig GetPluginDefaultConfig()
+    {
+        return new WriteBinaryFileTaskConfig();
+    }
+
+    public EnumOSPlatform SupportedOSPlatforms => EnumOSPlatform.All;
 }
