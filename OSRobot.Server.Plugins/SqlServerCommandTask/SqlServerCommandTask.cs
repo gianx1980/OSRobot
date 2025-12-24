@@ -17,12 +17,10 @@
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
 
+using System.Data;
 using Microsoft.Data.SqlClient;
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
-using System.Data;
-using System.Reflection.Metadata;
-
 
 namespace OSRobot.Server.Plugins.SqlServerCommandTask;
 

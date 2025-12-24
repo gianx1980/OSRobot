@@ -14,6 +14,32 @@
             <q-input
               filled
               class="q-pr-xs"
+              v-model="_propsRef.modelValue.filePath"
+              :label="_$t('filePath')"
+              lazy-rules
+              dense
+              :rules="[(val) => !!val || _$t('thisFieldIsMandatory')]"
+            />
+          </div>
+          <div class="col-3">
+            <BtnFileBrowser
+              class="q-ml-sm"
+              v-model="_propsRef.modelValue"
+              modelValueKey="filePath"
+            />
+            <BtnDynamicDataBrowser
+              class="q-ml-sm"
+              v-model="_propsRef.modelValue"
+              :folderItems="_propsRef.containingFolderItems"
+              modelValueKey="filePath"
+            />
+          </div>
+        </div>
+        <div class="row">
+          <div class="col-9">
+            <q-input
+              filled
+              class="q-pr-xs"
               v-model="_propsRef.modelValue.fileContentSource"
               :label="_$t('fileContentSource')"
               lazy-rules

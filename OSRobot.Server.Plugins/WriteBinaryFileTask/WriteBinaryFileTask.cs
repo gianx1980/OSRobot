@@ -18,6 +18,7 @@
 ======================================================================================*/
 
 using OSRobot.Server.Core;
+using OSRobot.Server.Core.DynamicData;
 
 namespace OSRobot.Server.Plugins.WriteBinaryFileTask;
 
@@ -25,6 +26,18 @@ public class WriteBinaryFileTask : IterationTask
 {
     protected override void RunIteration(int currentIteration)
     {
-        throw new NotImplementedException();
+        WriteBinaryFileTaskConfig tConfig = (WriteBinaryFileTaskConfig)_iterationConfig;
+
+        // The varbinary type is handled differently from the others and therefore requires separate handling.
+        List<DynamicDataInfo> dynDataInfoList = DynamicDataParser.GetDynamicDataInfo(tConfig.FileContentSource);
+        if (dynDataInfoList.Count > 1)
+            throw new ApplicationException("Multiple dynamic data are note allowed for Varbinary parameters.");
+
+        DynamicDataInfo dynDataInfo = dynDataInfoList[0];
+        byte[]? fileContent = (byte[]?)DynamicDataParser.GetDynamicDataValue(dynDataInfo, _dataChain, currentIteration, _subInstanceIndex);
+        if (fileContent == null)
+            return;
+
+        File.WriteAllBytes(tConfig.FilePath, fileContent);
     }
 }

@@ -33,6 +33,11 @@ public class WriteBinaryFileTaskConfig : ITaskConfig
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public IterationMode PluginIterationMode { get; set; }
     public string IterationObject { get; set; } = string.Empty;
-    public int IterationsCount { get; set; }    
+    public int IterationsCount { get; set; }
+
+
+    [DynamicData]
+    public string FilePath { get; set; } = string.Empty;
+
     public string FileContentSource { get; set; } = string.Empty;
 }
