@@ -17,9 +17,9 @@
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
 
+using System.Text.Json.Serialization;
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
-using System.Text.Json.Serialization;
 
 namespace OSRobot.Server.Plugins.WriteBinaryFileTask;
 
