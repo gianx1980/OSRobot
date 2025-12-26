@@ -24,29 +24,17 @@ namespace OSRobot.Server.Plugins.FtpSftpTask;
 
 public class FtpSftpTaskPlugin : IPlugin
 {
-    public string Id { get { return "FtpSftpTask"; } }
+    public string Id => "FtpSftpTask";
 
-    public string Title { get { return Resource.TxtFtpSftpTask; } }
+    public string Title => Resource.TxtFtpSftpTask;
 
-    public EnumPluginType PluginType { get { return EnumPluginType.Task; } }
+    public EnumPluginType PluginType => EnumPluginType.Task;
 
-    public List<DynamicDataSample> SampleDynamicData
-    {
-        get
-        {
-            return CommonDynamicData.BuildStandardDynamicDataSamples("Ftp / Sftp task 1");
-        }
-    }
+    public List<DynamicDataSample> SampleDynamicData => CommonDynamicData.BuildStandardDynamicDataSamples("Ftp / Sftp task 1");
 
-    public IPluginInstance GetInstance()
-    {
-        return new FtpSftpTask();
-    }
+    public IPluginInstance GetInstance() => new FtpSftpTask();
 
-    public IPluginInstanceConfig GetPluginDefaultConfig()
-    {
-        return new FtpSftpTaskConfig();
-    }
+    public IPluginInstanceConfig GetPluginDefaultConfig() => new FtpSftpTaskConfig();
 
-    public EnumOSPlatform SupportedOSPlatforms { get => EnumOSPlatform.All; }
+    public EnumOSPlatform SupportedOSPlatforms => EnumOSPlatform.All;
 }

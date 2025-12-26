@@ -19,17 +19,16 @@
 
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
-using OSRobot.Server.Plugins;
 
 namespace OSRobot.Server.Plugins.ExcelFileTask;
 
 public class ExcelFileTaskPlugin : IPlugin
 {
-    public string Id { get { return "ExcelFileTask"; } }
+    public string Id => "ExcelFileTask";
 
-    public string Title { get { return Resource.TxtExcelFileTask; } }
+    public string Title => Resource.TxtExcelFileTask;
 
-    public EnumPluginType PluginType { get { return EnumPluginType.Task; } }
+    public EnumPluginType PluginType => EnumPluginType.Task;
 
     public List<DynamicDataSample> SampleDynamicData
     {
@@ -41,15 +40,8 @@ public class ExcelFileTaskPlugin : IPlugin
         }
     }
 
-    public IPluginInstance GetInstance()
-    {
-        return new ExcelFileTask();
-    }
+    public IPluginInstance GetInstance() => new ExcelFileTask();
+    public IPluginInstanceConfig GetPluginDefaultConfig() => new ExcelFileTaskConfig();
 
-    public IPluginInstanceConfig GetPluginDefaultConfig()
-    {
-        return new ExcelFileTaskConfig();
-    }
-
-    public EnumOSPlatform SupportedOSPlatforms { get => EnumOSPlatform.All; }
+    public EnumOSPlatform SupportedOSPlatforms => EnumOSPlatform.All;
 }

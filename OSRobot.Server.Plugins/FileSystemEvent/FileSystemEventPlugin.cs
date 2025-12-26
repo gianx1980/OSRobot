@@ -24,11 +24,11 @@ namespace OSRobot.Server.Plugins.FileSystemEvent;
 
 public class FileSystemEventPlugin : IPlugin
 {
-    public string Id { get { return "FileSystemEvent"; } }
+    public string Id => "FileSystemEvent";
 
-    public string Title { get { return Resource.TxtFileSystemEvent; } }
+    public string Title => Resource.TxtFileSystemEvent;
 
-    public EnumPluginType PluginType { get { return EnumPluginType.Event; } }
+    public EnumPluginType PluginType => EnumPluginType.Event;
 
     public List<DynamicDataSample> SampleDynamicData
     {
@@ -44,15 +44,9 @@ public class FileSystemEventPlugin : IPlugin
         }
     }
 
-    public IPluginInstance GetInstance()
-    {
-        return new FileSystemEvent();
-    }
+    public IPluginInstance GetInstance() => new FileSystemEvent();
+    
+    public IPluginInstanceConfig GetPluginDefaultConfig() => new FileSystemEventConfig();
 
-    public IPluginInstanceConfig GetPluginDefaultConfig()
-    {
-        return new FileSystemEventConfig();
-    }
-
-    public EnumOSPlatform SupportedOSPlatforms { get => EnumOSPlatform.All; }
+    public EnumOSPlatform SupportedOSPlatforms => EnumOSPlatform.All;
 }

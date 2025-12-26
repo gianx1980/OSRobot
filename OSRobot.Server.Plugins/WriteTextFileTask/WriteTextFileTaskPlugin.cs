@@ -24,11 +24,11 @@ namespace OSRobot.Server.Plugins.WriteTextFileTask;
 
 public class WriteTextFileTaskPlugin : IPlugin
 {
-    public string Id { get { return "WriteTextFileTask"; } }
+    public string Id => "WriteTextFileTask"; 
 
-    public string Title { get { return Resource.TxtWriteTextFileTask; } }
+    public string Title => Resource.TxtWriteTextFileTask;
 
-    public EnumPluginType PluginType { get { return EnumPluginType.Task; } }
+    public EnumPluginType PluginType => EnumPluginType.Task;
 
     public List<DynamicDataSample> SampleDynamicData
     {
@@ -40,15 +40,9 @@ public class WriteTextFileTaskPlugin : IPlugin
         }
     }
 
-    public IPluginInstance GetInstance()
-    {
-        return new WriteTextFileTask();
-    }
+    public IPluginInstance GetInstance() => new WriteTextFileTask();
 
-    public IPluginInstanceConfig GetPluginDefaultConfig()
-    {
-        return new WriteTextFileTaskConfig();
-    }
-
-    public EnumOSPlatform SupportedOSPlatforms { get => EnumOSPlatform.All; }
+    public IPluginInstanceConfig GetPluginDefaultConfig() => new WriteTextFileTaskConfig();
+    
+    public EnumOSPlatform SupportedOSPlatforms => EnumOSPlatform.All;
 }

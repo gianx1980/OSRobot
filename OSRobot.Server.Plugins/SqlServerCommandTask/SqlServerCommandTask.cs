@@ -17,15 +17,14 @@
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
 
+using System.Data;
 using Microsoft.Data.SqlClient;
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
-using System.Data;
-
 
 namespace OSRobot.Server.Plugins.SqlServerCommandTask;
 
-public class SqlServerCommandTask : IterationTask
+public class SqlServerCommandTask : MultipleIterationTask
 {
     private int _executionReturnValue;
 
@@ -93,6 +92,26 @@ public class SqlServerCommandTask : IterationTask
             case SqlParamType.Datetime:
                 sqlParam.SqlDbType = SqlDbType.DateTime;
                 break;
+
+            case SqlParamType.VarBinary:
+                sqlParam.SqlDbType = SqlDbType.VarBinary;
+                if (!string.IsNullOrEmpty(paramDef.Length))
+                {
+                    if (!paramDef.Length.Equals("MAX", StringComparison.CurrentCultureIgnoreCase))
+                        sqlParam.Size = int.Parse(paramDef.Length);
+                    else
+                        sqlParam.Size = -1;
+                }
+
+                // The varbinary type is handled differently from the others and therefore requires separate handling.
+                List<DynamicDataInfo> dynDataInfoList = DynamicDataParser.GetDynamicDataInfo(paramDef.Value);
+                if (dynDataInfoList.Count > 1)
+                    throw new ApplicationException("Multiple dynamic data are note allowed for Varbinary parameters.");
+
+                DynamicDataInfo dynDataInfo = dynDataInfoList[0];
+                object? paramValue = DynamicDataParser.GetDynamicDataValue(dynDataInfo, dataChain, iterationNumber, _subInstanceIndex);
+                sqlParam.Value = paramValue ?? DBNull.Value;
+                return sqlParam;
         }
 
         sqlParam.Value = DynamicDataParser.ReplaceDynamicData(paramDef.Value, dataChain, iterationNumber, _subInstanceIndex);
@@ -100,18 +119,18 @@ public class SqlServerCommandTask : IterationTask
         return sqlParam;
     }
 
-    protected override void RunIteration(int currentIteration)
+    protected override void RunMultipleIterationTask(int currentIteration)
     {
-        SqlServerCommandTaskConfig tConfig = (SqlServerCommandTaskConfig)_iterationConfig;
+        SqlServerCommandTaskConfig config = (SqlServerCommandTaskConfig)_iterationTaskConfig;
         _defaultRecordset = new DataTable();
 
-        string ConnectionString = $"Server={tConfig.Server};Database={tConfig.Database};User Id={tConfig.Username};Password={tConfig.Password};{tConfig.ConnectionStringOptions}";
+        string ConnectionString = $"Server={config.Server};Database={config.Database};User Id={config.Username};Password={config.Password};{config.ConnectionStringOptions}";
 
         using SqlConnection cnt = new(ConnectionString);
         using SqlCommand cmd = new(string.Empty, cnt);
         cnt.Open();
 
-        if (tConfig.Type == QueryTaskType.Text)
+        if (config.Type == QueryTaskType.Text)
             cmd.CommandType = CommandType.Text;
         else
             cmd.CommandType = CommandType.StoredProcedure;
@@ -122,15 +141,15 @@ public class SqlServerCommandTask : IterationTask
             cmd.Parameters["@RETVALUE"].Direction = ParameterDirection.ReturnValue;
         }
 
-        foreach (SqlServerParamDefinition ParamDef in tConfig.ParamsDefinition)
+        foreach (SqlServerParamDefinition ParamDef in config.ParamsDefinition)
         {
             cmd.Parameters.Add(CreateParameter(ParamDef, _dataChain, currentIteration));
         }
 
-        cmd.CommandText = tConfig.Query;
-        cmd.CommandTimeout = tConfig.CommandTimeout;
+        cmd.CommandText = config.Query;
+        cmd.CommandTimeout = config.CommandTimeout;
 
-        if (tConfig.ReturnsRecordset)
+        if (config.ReturnsRecordset)
         {
             SqlDataAdapter da = new(cmd);
             da.Fill((DataTable)_defaultRecordset);
@@ -148,26 +167,26 @@ public class SqlServerCommandTask : IterationTask
 
     private void PostIteration(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
     {
-        if (_iterationConfig.Log)
+        SqlServerCommandTaskConfig config = (SqlServerCommandTaskConfig)_iterationTaskConfig;
+
+        if (config.Log)
         {
-            _instanceLogger?.Info(this, $"Number of queries/commands executed: {currentIteration + 1}");
-            _instanceLogger?.TaskCompleted(this);
+            _instanceLogger.Info(this, $"Number of queries/commands executed: {currentIteration + 1}");
+            _instanceLogger.TaskCompleted(this);
         }
 
-        SqlServerCommandTaskConfig tConfig = (SqlServerCommandTaskConfig)_iterationConfig;
-
-        if (tConfig.ReturnsRecordset)
+        if (config.ReturnsRecordset)
             dDataSet.TryAdd(CommonDynamicData.DefaultRecordsetName, _defaultRecordset);
 
         dDataSet[CommonDynamicData.ExecutionReturnValue] = _executionReturnValue;
     }
 
-    protected override void PostIterationSucceded(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
+    protected override void PostTaskSucceded(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
     {
         PostIteration(currentIteration, result, dDataSet);
     }
 
-    protected override void PostIterationFailed(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
+    protected override void PostTaskFailed(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
     {
         PostIteration(currentIteration, result, dDataSet);
     }

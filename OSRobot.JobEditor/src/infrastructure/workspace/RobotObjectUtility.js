@@ -32,6 +32,9 @@ RobotObjectUtility.getPluginIcon = function (objectId) {
     case "ReadTextFileTask":
       return "description";
 
+    case "ReadBinaryFileTask":
+      return "save";
+
     case "RESTApiTask":
       return "api";
 
@@ -55,6 +58,9 @@ RobotObjectUtility.getPluginIcon = function (objectId) {
 
     case "UnzipTask":
       return "folder_zip";
+
+    case "WriteBinaryFileTask":
+      return "notes";
 
     case "WriteTextFileTask":
       return "edit_note";

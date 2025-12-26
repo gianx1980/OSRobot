@@ -24,11 +24,11 @@ namespace OSRobot.Server.Plugins.RESTApiTask;
 
 public class RESTApiTaskPlugin : IPlugin
 {
-    public string Id { get { return "RESTApiTask"; } }
+    public string Id => "RESTApiTask"; 
 
-    public string Title { get { return Resource.TxtRESTApiTask; } }
+    public string Title => Resource.TxtRESTApiTask; 
 
-    public EnumPluginType PluginType { get { return EnumPluginType.Task; } }
+    public EnumPluginType PluginType => EnumPluginType.Task;
 
     public List<DynamicDataSample> SampleDynamicData
     {
@@ -44,15 +44,9 @@ public class RESTApiTaskPlugin : IPlugin
         }
     }
 
-    public IPluginInstance GetInstance()
-    {
-        return new RESTApiTask();
-    }
+    public IPluginInstance GetInstance() => new RESTApiTask();
 
-    public IPluginInstanceConfig GetPluginDefaultConfig()
-    {
-        return new RESTApiTaskConfig();
-    }
+    public IPluginInstanceConfig GetPluginDefaultConfig() => new RESTApiTaskConfig();
 
-    public EnumOSPlatform SupportedOSPlatforms { get => EnumOSPlatform.All; }
+    public EnumOSPlatform SupportedOSPlatforms => EnumOSPlatform.All;
 }

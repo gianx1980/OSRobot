@@ -148,6 +148,7 @@ export default {
   fieldValue: "Field value",
   fieldWidth: "Field width",
   fileName: "File name",
+  fileContentSource: "File content source",
   fileNameTemplate: "File name template",
   filePath: "File path",
   findText: "Find text",
@@ -295,6 +296,7 @@ export default {
   readRow: "Read row",
   readRowNumber: "Read row number",
   readTheLastRow: "Read the last row",
+  recursive: "Recursive",
   recursivelyCopy: "Recursively copy",
   recursivelyDelete: "Recursively delete",
   recursivelyDeleteFiles: "Recursively delete files",
@@ -442,4 +444,5 @@ export default {
   date: "Date",
   dateTime: "Datetime",
   bit: "Bit",
+  varbinary: "Varbinary",
 };

@@ -24,29 +24,17 @@ namespace OSRobot.Server.Plugins.SqlServerBulkCopyTask;
 
 public class SqlServerBulkCopyTaskPlugin : IPlugin
 {
-    public string Id { get { return "SqlServerBulkCopyTask"; } }
+    public string Id => "SqlServerBulkCopyTask";
 
-    public string Title { get { return Resource.TxtSqlServerBulkCopyTask; } }
+    public string Title => Resource.TxtSqlServerBulkCopyTask;
 
-    public EnumPluginType PluginType { get { return EnumPluginType.Task; } }
+    public EnumPluginType PluginType => EnumPluginType.Task; 
 
-    public List<DynamicDataSample> SampleDynamicData
-    {
-        get
-        {
-            return CommonDynamicData.BuildStandardDynamicDataSamples("Sql Server bulk copy task 1");
-        }
-    }
+    public List<DynamicDataSample> SampleDynamicData => CommonDynamicData.BuildStandardDynamicDataSamples("Sql Server bulk copy task 1");
 
-    public IPluginInstance GetInstance()
-    {
-        return new SqlServerBulkCopyTask();
-    }
+    public IPluginInstance GetInstance() => new SqlServerBulkCopyTask();
 
-    public IPluginInstanceConfig GetPluginDefaultConfig()
-    {
-        return new SqlServerBulkCopyTaskConfig();
-    }
+    public IPluginInstanceConfig GetPluginDefaultConfig() => new SqlServerBulkCopyTaskConfig();
 
-    public EnumOSPlatform SupportedOSPlatforms { get => EnumOSPlatform.All; }
+    public EnumOSPlatform SupportedOSPlatforms => EnumOSPlatform.All;
 }

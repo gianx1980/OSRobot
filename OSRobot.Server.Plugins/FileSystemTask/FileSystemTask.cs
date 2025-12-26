@@ -17,18 +17,15 @@
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
 
-using DocumentFormat.OpenXml.Bibliography;
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.Data;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging.Abstract;
 using System.Data;
-using System.IO;
-
 
 namespace OSRobot.Server.Plugins.FileSystemTask;
 
-public class FileSystemTask : IterationTask
+public class FileSystemTask : MultipleIterationTask
 {
     private bool _filePathExists = false;
 
@@ -237,212 +234,230 @@ public class FileSystemTask : IterationTask
         logger?.Info(this, $"Delete of {deleteItem.DeletePath} completed");
     }
 
-    protected override void RunIteration(int currentIteration)
+    private void ExecTaskTypeCopy(FileSystemTaskConfig config, int currentIteration)
     {
-        FileSystemTaskConfig tConfig = (FileSystemTaskConfig)_iterationConfig;
+        _instanceLogger.Info(this, "Starting copy files...");
 
-        if (tConfig.Command == FileSystemTaskCommandType.Copy)
+        foreach (FileSystemTaskCopyItem copyItem in config.CopyItems)
         {
-            _instanceLogger?.Info(this, "Starting copy files...");
-
-            foreach (FileSystemTaskCopyItem copyItem in tConfig.CopyItems)
-            {
-                FileSystemTaskCopyItem? copyItemCopy = (FileSystemTaskCopyItem?)CoreHelpers.CloneObjects(copyItem) ?? throw new ApplicationException("Cloning configuration returned null");
-                copyItemCopy.SourcePath = DynamicDataParser.ReplaceDynamicData(copyItemCopy.SourcePath, _dataChain, currentIteration, _subInstanceIndex);
-                copyItemCopy.DestinationPath = DynamicDataParser.ReplaceDynamicData(copyItemCopy.DestinationPath, _dataChain, currentIteration, _subInstanceIndex);
-                copyItemCopy.FilesOlderThanDays = DynamicDataParser.ReplaceDynamicData(copyItemCopy.FilesOlderThanDays, _dataChain, currentIteration, _subInstanceIndex);
-                copyItemCopy.FilesOlderThanHours = DynamicDataParser.ReplaceDynamicData(copyItemCopy.FilesOlderThanHours, _dataChain, currentIteration, _subInstanceIndex);
-                copyItemCopy.FilesOlderThanMinutes = DynamicDataParser.ReplaceDynamicData(copyItemCopy.FilesOlderThanMinutes, _dataChain, currentIteration, _subInstanceIndex);
-                ManageCopyItem(copyItemCopy, _instanceLogger);
-            }
-
-            _instanceLogger?.Info(this, "Copy files completed");
+            FileSystemTaskCopyItem? copyItemCopy = (FileSystemTaskCopyItem?)CoreHelpers.CloneObjects(copyItem) ?? throw new ApplicationException("Cloning configuration returned null");
+            copyItemCopy.SourcePath = DynamicDataParser.ReplaceDynamicData(copyItemCopy.SourcePath, _dataChain, currentIteration, _subInstanceIndex);
+            copyItemCopy.DestinationPath = DynamicDataParser.ReplaceDynamicData(copyItemCopy.DestinationPath, _dataChain, currentIteration, _subInstanceIndex);
+            copyItemCopy.FilesOlderThanDays = DynamicDataParser.ReplaceDynamicData(copyItemCopy.FilesOlderThanDays, _dataChain, currentIteration, _subInstanceIndex);
+            copyItemCopy.FilesOlderThanHours = DynamicDataParser.ReplaceDynamicData(copyItemCopy.FilesOlderThanHours, _dataChain, currentIteration, _subInstanceIndex);
+            copyItemCopy.FilesOlderThanMinutes = DynamicDataParser.ReplaceDynamicData(copyItemCopy.FilesOlderThanMinutes, _dataChain, currentIteration, _subInstanceIndex);
+            ManageCopyItem(copyItemCopy, _instanceLogger);
         }
-        else if (tConfig.Command == FileSystemTaskCommandType.Delete)
+
+        _instanceLogger.Info(this, "Copy files completed");
+    }
+
+    private void ExecTaskTypeDelete(FileSystemTaskConfig config, int currentIteration)
+    {
+        _instanceLogger.Info(this, "Starting delete files...");
+
+        foreach (FileSystemTaskDeleteItem deleteItem in config.DeleteItems)
         {
-            _instanceLogger?.Info(this, "Starting delete files...");
-
-            foreach (FileSystemTaskDeleteItem deleteItem in tConfig.DeleteItems)
-            {
-                FileSystemTaskDeleteItem? deleteItemCopy = (FileSystemTaskDeleteItem?)CoreHelpers.CloneObjects(deleteItem) ?? throw new ApplicationException("Cloning configuration returned null");
-                deleteItemCopy.DeletePath = DynamicDataParser.ReplaceDynamicData(deleteItemCopy.DeletePath, _dataChain, currentIteration, _subInstanceIndex);
-                deleteItemCopy.FilesOlderThanDays = DynamicDataParser.ReplaceDynamicData(deleteItemCopy.FilesOlderThanDays, _dataChain, currentIteration, _subInstanceIndex);
-                deleteItemCopy.FilesOlderThanHours = DynamicDataParser.ReplaceDynamicData(deleteItemCopy.FilesOlderThanHours, _dataChain, currentIteration, _subInstanceIndex);
-                deleteItemCopy.FilesOlderThanMinutes = DynamicDataParser.ReplaceDynamicData(deleteItemCopy.FilesOlderThanMinutes, _dataChain, currentIteration, _subInstanceIndex);
-                ManageDeleteItem(deleteItemCopy, _instanceLogger);
-            }
-
-            _instanceLogger?.Info(this, "Delete files completed");
+            FileSystemTaskDeleteItem? deleteItemCopy = (FileSystemTaskDeleteItem?)CoreHelpers.CloneObjects(deleteItem) ?? throw new ApplicationException("Cloning configuration returned null");
+            deleteItemCopy.DeletePath = DynamicDataParser.ReplaceDynamicData(deleteItemCopy.DeletePath, _dataChain, currentIteration, _subInstanceIndex);
+            deleteItemCopy.FilesOlderThanDays = DynamicDataParser.ReplaceDynamicData(deleteItemCopy.FilesOlderThanDays, _dataChain, currentIteration, _subInstanceIndex);
+            deleteItemCopy.FilesOlderThanHours = DynamicDataParser.ReplaceDynamicData(deleteItemCopy.FilesOlderThanHours, _dataChain, currentIteration, _subInstanceIndex);
+            deleteItemCopy.FilesOlderThanMinutes = DynamicDataParser.ReplaceDynamicData(deleteItemCopy.FilesOlderThanMinutes, _dataChain, currentIteration, _subInstanceIndex);
+            ManageDeleteItem(deleteItemCopy, _instanceLogger);
         }
-        else if (tConfig.Command == FileSystemTaskCommandType.CreateFolder)
+
+        _instanceLogger.Info(this, "Delete files completed");
+    }
+
+    private void ExecTaskTypeCreateFolder(FileSystemTaskConfig config, int currentIteration)
+    {
+        _instanceLogger.Info(this, "Starting check existence of file/directory...");
+
+        Directory.CreateDirectory(config.CreateFolderPath);
+
+        _instanceLogger.Info(this, "Create directory completed");
+    }
+
+    private void ExecTaskTypeCheckExistence(FileSystemTaskConfig config, int currentIteration)
+    {
+        _instanceLogger.Info(this, "Starting check existence of file/directory...");
+        _filePathExists = false;
+
+        if (File.Exists(config.CheckExistenceFilePath) || Directory.Exists(config.CheckExistenceFilePath))
         {
-            _instanceLogger?.Info(this, "Starting check existence of file/directory...");
-
-            Directory.CreateDirectory(tConfig.CreateFolderPath);
-
-            _instanceLogger?.Info(this, "Create directory completed");
+            _filePathExists = true;
+            _instanceLogger.Info(this, $"File/Folder: {config.CheckExistenceFilePath} exists");
         }
-        else if (tConfig.Command == FileSystemTaskCommandType.CheckExistence)
+
+        _instanceLogger.Info(this, "Check existence completed");
+    }
+
+    private void ExecTaskTypeList(FileSystemTaskConfig config, int currentIteration)
+    {
+        _instanceLogger.Info(this, $"Starting enumeration of files and directories in {config.ListFolderPath}...");
+
+        bool isListFolderPathANamePattern = IsNameAPattern(config.ListFolderPath);
+        bool isListFolderPathADirectory = Directory.Exists(config.ListFolderPath);
+
+        string listFolderPathName = Path.GetFileName(config.ListFolderPath);
+        string? listFolderPathParent = Path.GetDirectoryName(config.ListFolderPath);
+
+        if (!isListFolderPathADirectory && !isListFolderPathANamePattern)
         {
-            _instanceLogger?.Info(this, "Starting check existence of file/directory...");
-            _filePathExists = false;
-
-            if (File.Exists(tConfig.CheckExistenceFilePath) || Directory.Exists(tConfig.CheckExistenceFilePath))
-            {
-                _filePathExists = true;
-                _instanceLogger?.Info(this, $"File/Folder: {tConfig.CheckExistenceFilePath} exists");
-            }
-
-            _instanceLogger?.Info(this, "Check existence completed");
+            _instanceLogger.Info(this, $"{config.ListFolderPath} is not a directory, cannot list content.");
+            return;
         }
-        else if (tConfig.Command == FileSystemTaskCommandType.List)
+
+        string? searchPattern;
+        DirectoryInfo listFolderPathDirInfo;
+
+        if (isListFolderPathADirectory)
         {
-            _instanceLogger?.Info(this, $"Starting enumeration of files and directories in {tConfig.ListFolderPath}...");
-
-            bool isListFolderPathANamePattern = IsNameAPattern(tConfig.ListFolderPath);
-            bool isListFolderPathADirectory = Directory.Exists(tConfig.ListFolderPath);
-
-            string listFolderPathName = Path.GetFileName(tConfig.ListFolderPath);
-            string? listFolderPathParent = Path.GetDirectoryName(tConfig.ListFolderPath);
-
-            if (!isListFolderPathADirectory && !isListFolderPathANamePattern)
-            {
-                _instanceLogger?.Info(this, $"{tConfig.ListFolderPath} is not a directory, cannot list content.");
-                return;
-            }
-
-            string? searchPattern;
-            DirectoryInfo listFolderPathDirInfo;
-
-            if (isListFolderPathADirectory)
-            {
-                searchPattern = "*";
-                listFolderPathDirInfo = new DirectoryInfo(tConfig.ListFolderPath);
-            }
-            else
-            {
-                searchPattern = listFolderPathName;
-                listFolderPathParent = Path.GetDirectoryName(tConfig.ListFolderPath);
-                listFolderPathDirInfo = new DirectoryInfo(listFolderPathParent!);
-            }
-
-            DataTable dtDirContent = (DataTable)_defaultRecordset;
-            dtDirContent.Columns.Add("FullName", typeof(string));
-            dtDirContent.Columns.Add("Name", typeof(string));
-            dtDirContent.Columns.Add("Extension", typeof(string));
-            dtDirContent.Columns.Add("Size", typeof(long));
-            dtDirContent.Columns.Add("CreationTime", typeof(DateTime));
-            dtDirContent.Columns.Add("LastAccessTime", typeof(DateTime));
-            dtDirContent.Columns.Add("LastWriteTime", typeof(DateTime));
-            dtDirContent.Columns.Add("IsDirectory", typeof(bool));
-
-            if (tConfig.ListFiles)
-            {
-                FileInfo[] fileList = listFolderPathDirInfo.GetFiles(searchPattern,
-                                                                    tConfig.ListSubfoldersContent ?
-                                                                            SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
-                
-                foreach (FileInfo file in fileList)
-                {
-                    DataRow dr = dtDirContent.NewRow();
-                    dr["FullName"] = file.FullName;
-                    dr["Name"] = file.Name;
-                    dr["Extension"] = file.Extension;
-                    dr["Size"] = file.Length;
-                    dr["CreationTime"] = file.CreationTime;
-                    dr["LastAccessTime"] = file.LastAccessTime;
-                    dr["LastWriteTime"] = file.LastWriteTime;
-                    dr["IsDirectory"] = false;
-                    dtDirContent.Rows.Add(dr);
-                }
-            }
-
-            if (tConfig.ListFolders)
-            {
-                DirectoryInfo[] directoryList = listFolderPathDirInfo.GetDirectories(searchPattern,
-                                                                    tConfig.ListSubfoldersContent ?
-                                                                            SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
-
-                foreach (DirectoryInfo dir in directoryList)
-                {
-                    DataRow dr = dtDirContent.NewRow();
-                    dr["FullName"] = dir.FullName;
-                    dr["Name"] = dir.Name;
-                    dr["Extension"] = dir.Extension;
-                    dr["Size"] = 0;
-                    dr["CreationTime"] = dir.CreationTime;
-                    dr["LastAccessTime"] = dir.LastAccessTime;
-                    dr["LastWriteTime"] = dir.LastWriteTime;
-                    dr["IsDirectory"] = true;
-                    dtDirContent.Rows.Add(dr);
-                }
-            }
-
-            _instanceLogger?.Info(this, "Enumeration completed");
+            searchPattern = "*";
+            listFolderPathDirInfo = new DirectoryInfo(config.ListFolderPath);
         }
-        else if (tConfig.Command == FileSystemTaskCommandType.Rename)
+        else
         {
-            bool isRenameFromPathADirectory = Directory.Exists(tConfig.RenameFromPath);
-
-            if (!isRenameFromPathADirectory)
-            {
-                _instanceLogger?.Info(this, $"Renaming directory {tConfig.RenameFromPath} to {tConfig.RenameToPath}...");
-
-                FileInfo fileInfo = new(tConfig.RenameFromPath);
-
-                string itemName = fileInfo.Name;
-                string itemPath = fileInfo.DirectoryName ?? string.Empty;
-                string itemExtension = fileInfo.Extension;
-                string itemSeparator = Path.DirectorySeparatorChar.ToString();
-
-                string moveToPath = tConfig.RenameToPath.Replace("{ItemName}", itemName)
-                                                        .Replace("{ItemPath}", itemPath)
-                                                        .Replace("{ItemExtension}", itemExtension)
-                                                        .Replace("{ItemSeparator}", itemSeparator);
-                
-                fileInfo.MoveTo(moveToPath);
-
-                _instanceLogger?.Info(this, $"Renaming directory {tConfig.RenameFromPath} to {moveToPath} completed.");
-            }
-            else
-            {
-                _instanceLogger?.Info(this, $"Renaming file {tConfig.RenameFromPath} to {tConfig.RenameToPath}...");
-
-                DirectoryInfo directoryInfo = new(tConfig.RenameFromPath);
-
-                string itemName = directoryInfo.Name;
-                string itemPath = directoryInfo.Parent?.FullName ?? string.Empty; 
-                string itemExtension = directoryInfo.Extension;
-                string itemSeparator = Path.DirectorySeparatorChar.ToString();
-
-                string moveToPath = tConfig.RenameToPath.Replace("{ItemName}", itemName)
-                                                        .Replace("{ItemPath}", itemPath)
-                                                        .Replace("{ItemExtension}", itemExtension)
-                                                        .Replace("{ItemSeparator}", itemSeparator);
-
-                directoryInfo.MoveTo(moveToPath);
-
-                _instanceLogger?.Info(this, $"Renaming file {tConfig.RenameFromPath} to {moveToPath} completed.");
-            }                
+            searchPattern = listFolderPathName;
+            listFolderPathParent = Path.GetDirectoryName(config.ListFolderPath);
+            listFolderPathDirInfo = new DirectoryInfo(listFolderPathParent!);
         }
+
+        DataTable dtDirContent = (DataTable)_defaultRecordset;
+        dtDirContent.Columns.Add("FullName", typeof(string));
+        dtDirContent.Columns.Add("Name", typeof(string));
+        dtDirContent.Columns.Add("Extension", typeof(string));
+        dtDirContent.Columns.Add("Size", typeof(long));
+        dtDirContent.Columns.Add("CreationTime", typeof(DateTime));
+        dtDirContent.Columns.Add("LastAccessTime", typeof(DateTime));
+        dtDirContent.Columns.Add("LastWriteTime", typeof(DateTime));
+        dtDirContent.Columns.Add("IsDirectory", typeof(bool));
+
+        if (config.ListFiles)
+        {
+            FileInfo[] fileList = listFolderPathDirInfo.GetFiles(searchPattern,
+                                                                config.ListSubfoldersContent ?
+                                                                        SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+
+            foreach (FileInfo file in fileList)
+            {
+                DataRow dr = dtDirContent.NewRow();
+                dr["FullName"] = file.FullName;
+                dr["Name"] = file.Name;
+                dr["Extension"] = file.Extension;
+                dr["Size"] = file.Length;
+                dr["CreationTime"] = file.CreationTime;
+                dr["LastAccessTime"] = file.LastAccessTime;
+                dr["LastWriteTime"] = file.LastWriteTime;
+                dr["IsDirectory"] = false;
+                dtDirContent.Rows.Add(dr);
+            }
+        }
+
+        if (config.ListFolders)
+        {
+            DirectoryInfo[] directoryList = listFolderPathDirInfo.GetDirectories(searchPattern,
+                                                                config.ListSubfoldersContent ?
+                                                                        SearchOption.AllDirectories : SearchOption.TopDirectoryOnly);
+
+            foreach (DirectoryInfo dir in directoryList)
+            {
+                DataRow dr = dtDirContent.NewRow();
+                dr["FullName"] = dir.FullName;
+                dr["Name"] = dir.Name;
+                dr["Extension"] = dir.Extension;
+                dr["Size"] = 0;
+                dr["CreationTime"] = dir.CreationTime;
+                dr["LastAccessTime"] = dir.LastAccessTime;
+                dr["LastWriteTime"] = dir.LastWriteTime;
+                dr["IsDirectory"] = true;
+                dtDirContent.Rows.Add(dr);
+            }
+        }
+
+        _instanceLogger.Info(this, "Enumeration completed");
+    }
+
+    private void ExecTaskTypeRename(FileSystemTaskConfig config, int currentIteration)
+    {
+        bool isRenameFromPathADirectory = Directory.Exists(config.RenameFromPath);
+
+        if (!isRenameFromPathADirectory)
+        {
+            _instanceLogger.Info(this, $"Renaming directory {config.RenameFromPath} to {config.RenameToPath}...");
+
+            FileInfo fileInfo = new(config.RenameFromPath);
+
+            string itemName = fileInfo.Name;
+            string itemPath = fileInfo.DirectoryName ?? string.Empty;
+            string itemExtension = fileInfo.Extension;
+            string itemSeparator = Path.DirectorySeparatorChar.ToString();
+
+            string moveToPath = config.RenameToPath.Replace("{ItemName}", itemName)
+                                                    .Replace("{ItemPath}", itemPath)
+                                                    .Replace("{ItemExtension}", itemExtension)
+                                                    .Replace("{ItemSeparator}", itemSeparator);
+
+            fileInfo.MoveTo(moveToPath);
+
+            _instanceLogger.Info(this, $"Renaming directory {config.RenameFromPath} to {moveToPath} completed.");
+        }
+        else
+        {
+            _instanceLogger.Info(this, $"Renaming file {config.RenameFromPath} to {config.RenameToPath}...");
+
+            DirectoryInfo directoryInfo = new(config.RenameFromPath);
+
+            string itemName = directoryInfo.Name;
+            string itemPath = directoryInfo.Parent?.FullName ?? string.Empty;
+            string itemExtension = directoryInfo.Extension;
+            string itemSeparator = Path.DirectorySeparatorChar.ToString();
+
+            string moveToPath = config.RenameToPath.Replace("{ItemName}", itemName)
+                                                    .Replace("{ItemPath}", itemPath)
+                                                    .Replace("{ItemExtension}", itemExtension)
+                                                    .Replace("{ItemSeparator}", itemSeparator);
+
+            directoryInfo.MoveTo(moveToPath);
+
+            _instanceLogger.Info(this, $"Renaming file {config.RenameFromPath} to {moveToPath} completed.");
+        }
+    }
+
+    protected override void RunMultipleIterationTask(int currentIteration)
+    {
+        FileSystemTaskConfig config = (FileSystemTaskConfig)_iterationTaskConfig;
+
+        if (config.Command == FileSystemTaskCommandType.Copy)
+            ExecTaskTypeCopy(config, currentIteration);
+        else if (config.Command == FileSystemTaskCommandType.Delete)
+            ExecTaskTypeDelete(config, currentIteration);
+        else if (config.Command == FileSystemTaskCommandType.CreateFolder)
+            ExecTaskTypeCreateFolder(config, currentIteration);
+        else if (config.Command == FileSystemTaskCommandType.CheckExistence)
+            ExecTaskTypeCheckExistence(config, currentIteration);
+        else if (config.Command == FileSystemTaskCommandType.List)
+            ExecTaskTypeList(config, currentIteration);
+        else if (config.Command == FileSystemTaskCommandType.Rename)
+            ExecTaskTypeRename(config, currentIteration);
         else
         {
             throw new ApplicationException("FileSystemTask: unknown command type");
         }
     }
 
-    protected override void PostIterationSucceded(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
+    protected override void PostTaskSucceded(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
     {
-        FileSystemTaskConfig tConfig = (FileSystemTaskConfig)_iterationConfig;
+        FileSystemTaskConfig config = (FileSystemTaskConfig)_iterationTaskConfig;
 
-        if (tConfig.Command == FileSystemTaskCommandType.CheckExistence)
+        if (config.Command == FileSystemTaskCommandType.CheckExistence)
         {
             if (_filePathExists)
                 dDataSet.TryAdd("FilePathExists", 1);
             else
                 dDataSet.TryAdd("FilePathExists", 0);
         }
-        else if (tConfig.Command == FileSystemTaskCommandType.List)
+        else if (config.Command == FileSystemTaskCommandType.List)
         {
             dDataSet.TryAdd(CommonDynamicData.DefaultRecordsetName, _defaultRecordset);
         }

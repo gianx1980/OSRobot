@@ -39,6 +39,8 @@ public interface IPluginInstanceLogger
 
     void TaskEnded(ITask task);
 
+    void TaskIterarionError(ITask task, int iterationIndex, Exception ex);
+
 
     void EventError(IEvent tdrEvent, Exception ex);
     void EventTriggering(IEvent tdrEvent);

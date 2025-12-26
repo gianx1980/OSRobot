@@ -24,33 +24,25 @@ namespace OSRobot.Server.Plugins.PingTask;
 
 public class PingTaskPlugin : IPlugin
 {
-    public string Id { get { return "PingTask"; } }
+    public string Id => "PingTask";
 
-    public string Title { get { return Resource.TxtPingTask; } }
+    public string Title => Resource.TxtPingTask;
 
-    public EnumPluginType PluginType { get { return EnumPluginType.Task; } }
+    public EnumPluginType PluginType => EnumPluginType.Task;
 
     public List<DynamicDataSample> SampleDynamicData
     {
         get
         {
             List<DynamicDataSample> Samples = CommonDynamicData.BuildStandardDynamicDataSamples("Ping task 1");
-
             Samples.Add(new DynamicDataSample("ThresholdSuccessRate", Resource.TxtThresholdSuccessRate, @"50%"));
-
             return Samples;
         }
     }
 
-    public IPluginInstance GetInstance()
-    {
-        return new PingTask();
-    }
+    public IPluginInstance GetInstance() => new PingTask();
 
-    public IPluginInstanceConfig GetPluginDefaultConfig()
-    {
-        return new PingTaskConfig();
-    }
+    public IPluginInstanceConfig GetPluginDefaultConfig() => new PingTaskConfig();
 
-    public EnumOSPlatform SupportedOSPlatforms { get => EnumOSPlatform.All; }
+    public EnumOSPlatform SupportedOSPlatforms => EnumOSPlatform.All;
 }

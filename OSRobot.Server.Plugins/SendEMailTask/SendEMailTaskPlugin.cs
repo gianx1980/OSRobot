@@ -24,27 +24,17 @@ namespace OSRobot.Server.Plugins.SendEMailTask;
 
 public class SendEMailTaskPlugin : IPlugin
 {
-    public string Id { get { return "SendEMailTask"; } }
-    public string Title { get { return Resource.TxtSendEMailTask; } }
-    public EnumPluginType PluginType { get { return EnumPluginType.Task; } }
+    public string Id => "SendEMailTask";
 
-    public List<DynamicDataSample> SampleDynamicData
-    {
-        get
-        {
-            return CommonDynamicData.BuildStandardDynamicDataSamples("Send email task 1");
-        }
-    }
+    public string Title => Resource.TxtSendEMailTask;
 
-    public IPluginInstance GetInstance()
-    {
-        return new SendEMailTask();
-    }
+    public EnumPluginType PluginType => EnumPluginType.Task; 
 
-    public IPluginInstanceConfig GetPluginDefaultConfig()
-    {
-        return new SendEMailTaskConfig();
-    }
+    public List<DynamicDataSample> SampleDynamicData => CommonDynamicData.BuildStandardDynamicDataSamples("Send email task 1");
 
-    public EnumOSPlatform SupportedOSPlatforms { get => EnumOSPlatform.All; }
+    public IPluginInstance GetInstance() => new SendEMailTask();
+
+    public IPluginInstanceConfig GetPluginDefaultConfig() => new SendEMailTaskConfig();
+
+    public EnumOSPlatform SupportedOSPlatforms => EnumOSPlatform.All;
 }

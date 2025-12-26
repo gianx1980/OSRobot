@@ -417,6 +417,9 @@
   <data name="TxtRawContentExample" xml:space="preserve">
     <value>[{"Column1":"file1.txt"}, {"Column1":"file2.txt"}, {"Column1":"file3.txt"}]</value>
   </data>
+  <data name="TxtReadBinaryFileTask" xml:space="preserve">
+    <value>Read binary file task</value>
+  </data>
   <data name="TxtReadFromRowToLastRow" xml:space="preserve">
     <value>From &lt;row&gt; to last row</value>
   </data>
@@ -551,6 +554,9 @@
   </data>
   <data name="TxtWednesday" xml:space="preserve">
     <value>Wednesday</value>
+  </data>
+  <data name="TxtWriteBinaryTaskFile" xml:space="preserve">
+    <value>Write binary task file</value>
   </data>
   <data name="TxtWriteTextFileTask" xml:space="preserve">
     <value>Write text file task</value>

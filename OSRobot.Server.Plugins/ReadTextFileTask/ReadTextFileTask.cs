@@ -23,10 +23,9 @@ using OSRobot.Server.Core.DynamicData;
 using System.Data;
 using System.Globalization;
 
-
 namespace OSRobot.Server.Plugins.ReadTextFileTask;
 
-public class ReadTextFileTask : IterationTask
+public class ReadTextFileTask : MultipleIterationTask
 {
     private string[] BuildDelimitersArray(ReadTextFileTaskConfig config)
     {
@@ -186,178 +185,196 @@ public class ReadTextFileTask : IterationTask
         }
     }
 
-    protected override void RunIteration(int currentIteration)
+    private void ExecTaskTypeReadAllTheRows(ReadTextFileTaskConfig config, TextFieldParser fileParser)
     {
-        // For this kind of objects consider only one iteration
-        ReadTextFileTaskConfig tConfig = (ReadTextFileTaskConfig)_iterationConfig;
-        DataTable defaultRecordset = new();
-        _defaultRecordset = defaultRecordset;
-
-        // If columns definition have been overriden, build the datatable according to user definition
-        if (tConfig.ColumnsDefinition.Count > 0)
-        {
-            // Set a default column position if empty
-            for (int i = 0; i < tConfig.ColumnsDefinition.Count; i++)
-            {
-                if (tConfig.ColumnsDefinition[i].ColumnPosition == null)
-                    tConfig.ColumnsDefinition[i].ColumnPosition = i;
-            }
-
-            BuildCustomDataTable(defaultRecordset, tConfig);
-        }
-            
-
-        using TextFieldParser fileParser = new(tConfig.FilePath);
-        if (tConfig.SplitColumnsType == ReadTextFileSplitColumnsType.UseDelimiters)
-        {
-            fileParser.TextFieldType = FieldType.Delimited;
-            fileParser.Delimiters = BuildDelimitersArray(tConfig);
-            fileParser.HasFieldsEnclosedInQuotes = tConfig.UseDoubleQuotes;
-        }
-
-        int readFromRow = 0;
-        int readToRow = 0;
         int currentRow = 1;
+        DataTable defaultRecordset = (DataTable)_defaultRecordset;
 
-        if (tConfig.ReadAllTheRowsOption)
+        while (!fileParser.EndOfData)
         {
-            while (!fileParser.EndOfData)
+            try
             {
-                try
-                {
-                    string[] row = ReadRow(fileParser, tConfig);
+                string[] row = ReadRow(fileParser, config);
 
-                    if (currentRow == 1 && tConfig.SkipFirstLine)
-                    {
-                        currentRow++;
-                        continue;
-                    }
-
-                    AddRow(currentRow, row, tConfig, defaultRecordset);
-                }
-                catch (MalformedLineException ex)
+                if (currentRow == 1 && config.SkipFirstLine)
                 {
-                    _instanceLogger?.Error(this, "Error parsing line", ex);
-                }
-
-                currentRow++;
-            }
-        }
-        else if (tConfig.ReadLastRowOption)
-        {
-            string[]? row = null;
-            while (!fileParser.EndOfData)
-            {
-                try
-                {
-                    row = ReadRow(fileParser, tConfig);
                     currentRow++;
+                    continue;
                 }
-                catch (MalformedLineException ex)
-                {
-                    _instanceLogger?.Error(this, "Error parsing line", ex);
-                }
+
+                AddRow(currentRow, row, config, defaultRecordset);
             }
-            if (row != null)
+            catch (MalformedLineException ex)
             {
-                AddRow(currentRow, row, tConfig, defaultRecordset);
+                _instanceLogger.Error(this, "Error parsing line", ex);
             }
+
+            currentRow++;
         }
-        else if (tConfig.ReadRowNumberOption || (tConfig.ReadIntervalOption && tConfig.ReadInterval == ReadTextFileIntervalType.ReadFromRowToRow))
+    }
+
+    private void ExecTaskTypeReadLastRow(ReadTextFileTaskConfig config, TextFieldParser fileParser)
+    {
+        int currentRow = 1;
+        DataTable defaultRecordset = (DataTable)_defaultRecordset;
+        string[]? row = null;
+        while (!fileParser.EndOfData)
         {
-            if (tConfig.ReadRowNumberOption)
+            try
             {
-                readFromRow = int.Parse(tConfig.ReadRowNumber);
-                readToRow = readFromRow;
-            }
-            else
-            {
-                readFromRow = int.Parse(tConfig.ReadFromRow);
-                readToRow = int.Parse(tConfig.ReadToRow);
-            }
-
-            string[]? Row = null;
-            while (!fileParser.EndOfData)
-            {
-                try
-                {
-                    if (currentRow > readToRow)
-                        break;
-
-                    Row = ReadRow(fileParser, tConfig);
-                    if (currentRow >= readFromRow && currentRow <= readToRow)
-                    {
-                        AddRow(currentRow, Row, tConfig, defaultRecordset);
-                    }
-                }
-                catch (MalformedLineException ex)
-                {
-                    _instanceLogger?.Error(this, "Error parsing line", ex);
-                }
-
+                row = ReadRow(fileParser, config);
                 currentRow++;
             }
+            catch (MalformedLineException ex)
+            {
+                _instanceLogger.Error(this, "Error parsing line", ex);
+            }
+        }
+        if (row != null)
+        {
+            AddRow(currentRow, row, config, defaultRecordset);
+        }
+    }
+
+    private void ExecTaskTypeReadRowNumber(ReadTextFileTaskConfig config, TextFieldParser fileParser)
+    {
+        int readFromRow;
+        int readToRow;
+        int currentRow = 1;
+        DataTable defaultRecordset = (DataTable)_defaultRecordset;
+
+        if (config.ReadRowNumberOption)
+        {
+            readFromRow = int.Parse(config.ReadRowNumber);
+            readToRow = readFromRow;
         }
         else
         {
-            List<string[]> rows = [];
-            string[]? row = null;
-            while (!fileParser.EndOfData)
+            readFromRow = int.Parse(config.ReadFromRow);
+            readToRow = int.Parse(config.ReadToRow);
+        }
+
+        string[]? Row = null;
+        while (!fileParser.EndOfData)
+        {
+            try
             {
-                try
+                if (currentRow > readToRow)
+                    break;
+
+                Row = ReadRow(fileParser, config);
+                if (currentRow >= readFromRow && currentRow <= readToRow)
                 {
-                    row = ReadRow(fileParser, tConfig);
-                    rows.Add(row);
-                }
-                catch (MalformedLineException ex)
-                {
-                    _instanceLogger?.Error(this, "Error parsing line", ex);
+                    AddRow(currentRow, Row, config, defaultRecordset);
                 }
             }
-
-            if (rows.Count > 0)
+            catch (MalformedLineException ex)
             {
-                if (tConfig.ReadInterval == ReadTextFileIntervalType.ReadFromRowToLastRow)
-                {
-                    // From row to end
-                    readFromRow = int.Parse(tConfig.ReadFromRow);
-                    readFromRow--;
-                    if (readFromRow < 0) readFromRow = 0;
-                }
-                else
-                {
-                    // Read N Last rows
-                    readFromRow = (rows.Count - 1) - int.Parse(tConfig.ReadNumberOfRows);
-                }
+                _instanceLogger.Error(this, "Error parsing line", ex);
+            }
 
-                if (readFromRow <= (rows.Count - 1))
+            currentRow++;
+        }
+    }
+    private void ExecTaskTypeReadInterval(ReadTextFileTaskConfig config, TextFieldParser fileParser)
+    {
+        int readFromRow;
+        DataTable defaultRecordset = (DataTable)_defaultRecordset;
+        List<string[]> rows = [];
+        string[]? row = null;
+        while (!fileParser.EndOfData)
+        {
+            try
+            {
+                row = ReadRow(fileParser, config);
+                rows.Add(row);
+            }
+            catch (MalformedLineException ex)
+            {
+                _instanceLogger.Error(this, "Error parsing line", ex);
+            }
+        }
+
+        if (rows.Count > 0)
+        {
+            if (config.ReadInterval == ReadTextFileIntervalType.ReadFromRowToLastRow)
+            {
+                // From row to end
+                readFromRow = int.Parse(config.ReadFromRow);
+                readFromRow--;
+                if (readFromRow < 0) readFromRow = 0;
+            }
+            else
+            {
+                // Read N Last rows
+                readFromRow = (rows.Count - 1) - int.Parse(config.ReadNumberOfRows);
+            }
+
+            if (readFromRow <= (rows.Count - 1))
+            {
+                for (int RowIndex = readFromRow; RowIndex < rows.Count; RowIndex++)
                 {
-                    for (int RowIndex = readFromRow; RowIndex < rows.Count; RowIndex++)
-                    {
-                        AddRow(RowIndex, rows[RowIndex], tConfig, defaultRecordset);
-                    }
+                    AddRow(RowIndex, rows[RowIndex], config, defaultRecordset);
                 }
             }
         }
+    }
+
+
+    protected override void RunMultipleIterationTask(int currentIteration)
+    {
+        // For this kind of objects consider only one iteration
+        ReadTextFileTaskConfig config = (ReadTextFileTaskConfig)_iterationTaskConfig;
+
+        // If columns definition have been overriden, build the datatable according to user definition
+        if (config.ColumnsDefinition.Count > 0)
+        {
+            // Set a default column position if empty
+            for (int i = 0; i < config.ColumnsDefinition.Count; i++)
+            {
+                if (config.ColumnsDefinition[i].ColumnPosition == null)
+                    config.ColumnsDefinition[i].ColumnPosition = i;
+            }
+
+            BuildCustomDataTable((DataTable)_defaultRecordset, config);
+        }
+            
+
+        using TextFieldParser fileParser = new(config.FilePath);
+        if (config.SplitColumnsType == ReadTextFileSplitColumnsType.UseDelimiters)
+        {
+            fileParser.TextFieldType = FieldType.Delimited;
+            fileParser.Delimiters = BuildDelimitersArray(config);
+            fileParser.HasFieldsEnclosedInQuotes = config.UseDoubleQuotes;
+        }
+
+        if (config.ReadAllTheRowsOption)
+            ExecTaskTypeReadAllTheRows(config, fileParser);
+        else if (config.ReadLastRowOption)
+            ExecTaskTypeReadLastRow(config, fileParser);
+        else if (config.ReadRowNumberOption || (config.ReadIntervalOption && config.ReadInterval == ReadTextFileIntervalType.ReadFromRowToRow))
+            ExecTaskTypeReadRowNumber(config, fileParser);
+        else
+            ExecTaskTypeReadInterval(config, fileParser);
     }
 
     private void PostIteration(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
     {
         if (Config.Log)
         {
-            _instanceLogger?.Info(this, $"Rows processed: {currentIteration - 1}");
-            _instanceLogger?.TaskCompleted(this);
+            _instanceLogger.Info(this, $"Rows processed: {currentIteration - 1}");
+            _instanceLogger.TaskCompleted(this);
         }
 
         dDataSet.TryAdd(CommonDynamicData.DefaultRecordsetName, _defaultRecordset);
     }
 
-    protected override void PostIterationSucceded(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
+    protected override void PostTaskSucceded(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
     {
         PostIteration(currentIteration, result, dDataSet);
     }
 
-    protected override void PostIterationFailed(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
+    protected override void PostTaskFailed(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
     {
         PostIteration(currentIteration, result, dDataSet);
     }

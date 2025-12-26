@@ -24,11 +24,11 @@ namespace OSRobot.Server.Plugins.MemoryEvent;
 
 public class MemoryEventPlugin : IPlugin
 {
-    public string Id { get { return "MemoryEvent"; } }
+    public string Id => "MemoryEvent";
 
-    public string Title { get { return Resource.TxtMemoryEvent; } }
+    public string Title => Resource.TxtMemoryEvent;
 
-    public EnumPluginType PluginType { get { return EnumPluginType.Event; } }
+    public EnumPluginType PluginType => EnumPluginType.Event;
 
     public List<DynamicDataSample> SampleDynamicData
     {
@@ -40,15 +40,9 @@ public class MemoryEventPlugin : IPlugin
         }
     }
 
-    public IPluginInstance GetInstance()
-    {
-        return new MemoryEvent();
-    }
+    public IPluginInstance GetInstance() => new MemoryEvent();
 
-    public IPluginInstanceConfig GetPluginDefaultConfig()
-    {
-        return new MemoryEventConfig();
-    }
+    public IPluginInstanceConfig GetPluginDefaultConfig() => new MemoryEventConfig();
 
-    public EnumOSPlatform SupportedOSPlatforms { get => EnumOSPlatform.All; }
+    public EnumOSPlatform SupportedOSPlatforms => EnumOSPlatform.All;
 }

@@ -57,9 +57,9 @@ public class DiskSpaceEvent : IEvent
         _recurringTimer.AutoReset = true;
         _recurringTimer.Elapsed += RecurringTimer_Elapsed;
 
-        DiskSpaceEventConfig TConfig = (DiskSpaceEventConfig)Config;
+        DiskSpaceEventConfig config = (DiskSpaceEventConfig)Config;
 
-        int CheckIntervalSeconds = TConfig.CheckIntervalSeconds;
+        int CheckIntervalSeconds = config.CheckIntervalSeconds;
         if (CheckIntervalSeconds <= 0)
             CheckIntervalSeconds = 1;
 
@@ -111,12 +111,12 @@ public class DiskSpaceEvent : IEvent
             if (Config.Log)
                 logger.Info(this, "Checking disks space...");
 
-            DiskSpaceEventConfig tConfig = (DiskSpaceEventConfig)Config;
+            DiskSpaceEventConfig config = (DiskSpaceEventConfig)Config;
 
             DriveInfo[] allDrives = DriveInfo.GetDrives();
             foreach (DriveInfo drive in allDrives)
             {
-                DiskThreshold? diskTh = tConfig.DiskThresholds.Where(t => t.Disk == drive.Name && drive.DriveType == DriveType.Fixed).FirstOrDefault();
+                DiskThreshold? diskTh = config.DiskThresholds.Where(t => t.Disk == drive.Name && drive.DriveType == DriveType.Fixed).FirstOrDefault();
 
                 if (diskTh != null)
                 {

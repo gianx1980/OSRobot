@@ -23,7 +23,7 @@ using OSRobot.Server.Core.DynamicData;
 
 namespace OSRobot.Server.Plugins.WriteTextFileTask;
 
-public class WriteTextFileTask : BaseTask
+public class WriteTextFileTask : SingleIterationTask
 {
     private string GetDelimiter(WriteTextFileTaskConfig config)
     {
@@ -44,7 +44,7 @@ public class WriteTextFileTask : BaseTask
     {
         WriteTextFileTaskConfig? configCopy = (WriteTextFileTaskConfig?)CoreHelpers.CloneObjects(config) ?? throw new ApplicationException("Cloning configuration returned null");
         DynamicDataParser.Parse(configCopy, dataChain, iterationNumber, _subInstanceIndex);
-        
+
         foreach (WriteTextFileColumnDefinition col in configCopy.ColumnsDefinition)
         {
             col.FieldValue = DynamicDataParser.ReplaceDynamicData(col.FieldValue, dataChain, iterationNumber, _subInstanceIndex);
@@ -146,79 +146,73 @@ public class WriteTextFileTask : BaseTask
         return sb.ToString();
     }
 
-    protected override void RunTask()
+    private void ExecuteTaskTypeAppendRow(WriteTextFileTaskConfig config)
     {
-        WriteTextFileTaskConfig tConfig_0 = ParseDynamicData(0, (WriteTextFileTaskConfig)Config, _dataChain);
-        
         int i = 0;
-        bool addHeader = ShouldAddHeader(tConfig_0);
-        DateTime startDateTime = DateTime.Now;
+        bool addHeader = ShouldAddHeader(config);
+        using StreamWriter sw = new(config.FilePath, true);
 
-        try
+        for (i = 0; i < _iterationsCount; i++)
         {
-            switch (tConfig_0.TaskType)
+            if (addHeader)
             {
-                case WriteTextFileTaskType.AppendRow:
-                    using (StreamWriter sw = new(tConfig_0.FilePath, true))
-                    {
-                        for (i = 0; i < _iterationsCount; i++)
-                        {
-                            if (addHeader)
-                            {
-                                string[] headerValues = BuildHeaderArray(tConfig_0, _dataChain);
-                                sw.WriteLine(BuildRow(tConfig_0, headerValues));
-                                addHeader = false;
-                            }
-
-                            WriteTextFileTaskConfig configCopy = ParseDynamicData(i, (WriteTextFileTaskConfig)Config, _dataChain);
-                            string[] fieldValues = BuildDataArray(i, configCopy, _dataChain);
-                            sw.WriteLine(BuildRow(configCopy, fieldValues));
-                        }
-                    }
-                    break;
-
-                case WriteTextFileTaskType.InsertRow:
-                    {
-                        List<string> fileLines = [.. File.ReadAllLines(tConfig_0.FilePath)];
-
-                        for (i = 0; i < _iterationsCount; i++)
-                        {
-                            if (addHeader)
-                            {
-                                string[] headerValues = BuildHeaderArray(tConfig_0, _dataChain);
-                                fileLines.Add(BuildRow(tConfig_0, headerValues));
-                                addHeader = false;
-                            }
-
-                            WriteTextFileTaskConfig configCopy = ParseDynamicData(i, (WriteTextFileTaskConfig)Config, _dataChain);
-                            string[] fieldValues = BuildDataArray(i, configCopy, _dataChain);
-                            fileLines.Insert(int.Parse(configCopy.InsertAtRow), BuildRow(configCopy, fieldValues));
-                        }
-                        File.WriteAllLines(tConfig_0.FilePath, fileLines);
-                    }
-                    break;
-
-                case WriteTextFileTaskType.ReplaceText:
-                    {
-                        string fileContent = File.ReadAllText(tConfig_0.FilePath);
-                        fileContent = fileContent.Replace(tConfig_0.FindText, tConfig_0.ReplaceWithText);
-                        File.WriteAllText(tConfig_0.FilePath, fileContent);
-                    }
-                    break;
+                string[] headerValues = BuildHeaderArray(config, _dataChain);
+                sw.WriteLine(BuildRow(config, headerValues));
+                addHeader = false;
             }
 
-            DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, true, 0, startDateTime, DateTime.Now, _iterationsCount);
-            ExecResult result = new(true, dDataSet);
-            _execResults.Add(result);
+            WriteTextFileTaskConfig configCopy = ParseDynamicData(i, (WriteTextFileTaskConfig)Config, _dataChain);
+            string[] fieldValues = BuildDataArray(i, configCopy, _dataChain);
+            sw.WriteLine(BuildRow(configCopy, fieldValues));
         }
-        catch (Exception ex)
-        {
-            if (Config.Log)
-                _instanceLogger?.TaskError(this, ex);
+    }
 
-            DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, false, -1, startDateTime, DateTime.Now, i + 1);
-            ExecResult result = new(false, dDataSet);
-            _execResults.Add(result);
+    private void ExecuteTaskTypeInsertRow(WriteTextFileTaskConfig config)
+    {
+        int i = 0;
+        List<string> fileLines = [.. File.ReadAllLines(config.FilePath)];
+        bool addHeader = ShouldAddHeader(config);
+
+        for (i = 0; i < _iterationsCount; i++)
+        {
+            if (addHeader)
+            {
+                string[] headerValues = BuildHeaderArray(config, _dataChain);
+                fileLines.Add(BuildRow(config, headerValues));
+                addHeader = false;
+            }
+
+            WriteTextFileTaskConfig configCopy = ParseDynamicData(i, (WriteTextFileTaskConfig)Config, _dataChain);
+            string[] fieldValues = BuildDataArray(i, configCopy, _dataChain);
+            fileLines.Insert(int.Parse(configCopy.InsertAtRow), BuildRow(configCopy, fieldValues));
+        }
+        File.WriteAllLines(config.FilePath, fileLines);
+    }
+
+    private void ExecuteTaskTypeReplaceText(WriteTextFileTaskConfig config)
+    {
+        string fileContent = File.ReadAllText(config.FilePath);
+        fileContent = fileContent.Replace(config.FindText, config.ReplaceWithText);
+        File.WriteAllText(config.FilePath, fileContent);
+    }
+
+    protected override void RunSingleIterationTask()
+    {
+        WriteTextFileTaskConfig config = ParseDynamicData(0, (WriteTextFileTaskConfig)_taskConfig, _dataChain);
+
+        switch (config.TaskType)
+        {
+            case WriteTextFileTaskType.AppendRow:
+                ExecuteTaskTypeAppendRow(config);
+                break;
+
+            case WriteTextFileTaskType.InsertRow:
+                ExecuteTaskTypeInsertRow(config);
+                break;
+
+            case WriteTextFileTaskType.ReplaceText:
+                ExecuteTaskTypeReplaceText(config);
+                break;
         }
     }
 }

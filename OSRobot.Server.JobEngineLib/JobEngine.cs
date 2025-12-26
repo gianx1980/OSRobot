@@ -16,6 +16,9 @@
     You should have received a copy of the GNU General Public License
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
+
+using System.Collections.Concurrent;
+using System.Text.RegularExpressions;
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging;
@@ -32,6 +35,7 @@ using OSRobot.Server.Plugins.FtpSftpTask;
 using OSRobot.Server.Plugins.MemoryEvent;
 using OSRobot.Server.Plugins.OSRobotServiceStartEvent;
 using OSRobot.Server.Plugins.PingTask;
+using OSRobot.Server.Plugins.ReadBinaryFileTask;
 using OSRobot.Server.Plugins.ReadTextFileTask;
 using OSRobot.Server.Plugins.RESTApiTask;
 using OSRobot.Server.Plugins.RunProgramTask;
@@ -41,10 +45,10 @@ using OSRobot.Server.Plugins.SqlServerBulkCopyTask;
 using OSRobot.Server.Plugins.SqlServerCommandTask;
 using OSRobot.Server.Plugins.SystemEventsEvent;
 using OSRobot.Server.Plugins.UnzipTask;
+using OSRobot.Server.Plugins.WriteBinaryFileTask;
 using OSRobot.Server.Plugins.WriteTextFileTask;
 using OSRobot.Server.Plugins.ZipTask;
-using System.Collections.Concurrent;
-using System.Text.RegularExpressions;
+
 
 namespace OSRobot.Server.JobEngineLib;
 
@@ -499,6 +503,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
             new FtpSftpTaskPlugin(),
             new MemoryEventPlugin(),
             new OSRobotServiceStartEventPlugin(),
+            new ReadBinaryFileTaskPlugin(),
             new ReadTextFileTaskPlugin(),
             new RESTApiTaskPlugin(),
             new RunProgramTaskPlugin(),
@@ -508,6 +513,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
             new SqlServerCommandTaskPlugin(),
             new SystemEventsEventPlugin(),
             new UnzipTaskPlugin(),
+            new WriteBinaryFileTaskPlugin(),
             new WriteTextFileTaskPlugin(),
             new ZipTaskPlugin(),
             new PingTaskPlugin()

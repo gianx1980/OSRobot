@@ -26,7 +26,7 @@ using System.Text;
 
 namespace OSRobot.Server.Plugins.RESTApiTask;
 
-public class RESTApiTask : IterationTask
+public class RESTApiTask : MultipleIterationTask
 {
     private string _rawContent = string.Empty;
     private string _httpResult = string.Empty;
@@ -45,13 +45,13 @@ public class RESTApiTask : IterationTask
         return jParsedJson;
     }
 
-    protected override void RunIteration(int currentIteration)
+    protected override void RunMultipleIterationTask(int currentIteration)
     {
         using HttpClient client = new();
-        RESTApiTaskConfig tConfig = (RESTApiTaskConfig)_iterationConfig;
+        RESTApiTaskConfig config = (RESTApiTaskConfig)_iterationTaskConfig;
 
         client.DefaultRequestHeaders.Clear();
-        foreach (RESTApiHeader apiHeader in tConfig.Headers)
+        foreach (RESTApiHeader apiHeader in config.Headers)
         {
             client.DefaultRequestHeaders.Add(
                 DynamicDataParser.ReplaceDynamicData(apiHeader.Name, _dataChain, currentIteration, _subInstanceIndex),
@@ -62,30 +62,30 @@ public class RESTApiTask : IterationTask
         Task<HttpResponseMessage> taskResponse;
         HttpResponseMessage response;
 
-        if (tConfig.Method == MethodType.Get)
+        if (config.Method == MethodType.Get)
         {
-            _instanceLogger?.Info(this, $"Connecting to: {tConfig.URL} Method: GET");
-            taskResponse = client.GetAsync(tConfig.URL);
+            _instanceLogger?.Info(this, $"Connecting to: {config.URL} Method: GET");
+            taskResponse = client.GetAsync(config.URL);
         }
-        else if (tConfig.Method == MethodType.Post)
+        else if (config.Method == MethodType.Post)
         {
-            _instanceLogger?.Info(this, $"Connecting to: {tConfig.URL} Method: POST");
-            StringContent contentParameters = new(tConfig.Body, Encoding.UTF8, "application/json");
-            taskResponse = client.PostAsync(tConfig.URL, contentParameters);
+            _instanceLogger?.Info(this, $"Connecting to: {config.URL} Method: POST");
+            StringContent contentParameters = new(config.Body, Encoding.UTF8, "application/json");
+            taskResponse = client.PostAsync(config.URL, contentParameters);
         }
-        else if (tConfig.Method == MethodType.Put)
+        else if (config.Method == MethodType.Put)
         {
-            _instanceLogger?.Info(this, $"Connecting to: {tConfig.URL} Method: PUT");
-            StringContent contentParameters = new(tConfig.Body, Encoding.UTF8, "application/json");
-            taskResponse = client.PutAsync(tConfig.URL, contentParameters);
+            _instanceLogger?.Info(this, $"Connecting to: {config.URL} Method: PUT");
+            StringContent contentParameters = new(config.Body, Encoding.UTF8, "application/json");
+            taskResponse = client.PutAsync(config.URL, contentParameters);
         }
-        else if (tConfig.Method == MethodType.Delete)
+        else if (config.Method == MethodType.Delete)
         {
-            _instanceLogger?.Info(this, $"Connecting to: {tConfig.URL} Method: DELETE");
-            taskResponse = client.DeleteAsync(tConfig.URL);
+            _instanceLogger?.Info(this, $"Connecting to: {config.URL} Method: DELETE");
+            taskResponse = client.DeleteAsync(config.URL);
         }
         else
-            throw new ApplicationException($"Http method '{tConfig.Method}' not supported.");
+            throw new ApplicationException($"Http method '{config.Method}' not supported.");
 
         // Wait for task to complete
         using (response = taskResponse.Result)
@@ -97,17 +97,17 @@ public class RESTApiTask : IterationTask
             _httpResult = ((int)response.StatusCode).ToString();
         }
 
-        if (!string.IsNullOrEmpty(tConfig.JsonPathToData))
+        if (!string.IsNullOrEmpty(config.JsonPathToData))
         {
-            _instanceLogger?.Info(this, $"Extracting data from path \"{tConfig.JsonPathToData}\"...");
+            _instanceLogger?.Info(this, $"Extracting data from path \"{config.JsonPathToData}\"...");
 
             JContainer? jParsedJson = ParseJson(_rawContent) ?? throw new ApplicationException("Cannot parse JSON response");
-            JToken? jJsonPathData = jParsedJson.SelectToken(tConfig.JsonPathToData);
+            JToken? jJsonPathData = jParsedJson.SelectToken(config.JsonPathToData);
 
             if (jJsonPathData != null)
             {
                 _jsonPathData = jJsonPathData.ToString();
-                if (tConfig.ReturnsRecordset)
+                if (config.ReturnsRecordset)
                 {
                     _instanceLogger?.Info(this, "Trying to deserialize JSON response...");
                     DataTable temp = JsonConvert.DeserializeObject<DataTable>(_jsonPathData) ?? throw new ApplicationException("Cannot deserialize JSON response");
@@ -120,28 +120,28 @@ public class RESTApiTask : IterationTask
 
     private void PostIteration(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
     {
-        RESTApiTaskConfig tConfig = (RESTApiTaskConfig)_iterationConfig;
-        dDataSet.TryAdd(RESTApiTaskCommon.DynDataKeyURL, tConfig.URL);
+        RESTApiTaskConfig config = (RESTApiTaskConfig)_iterationTaskConfig;
+        dDataSet.TryAdd(RESTApiTaskCommon.DynDataKeyURL, config.URL);
         dDataSet.TryAdd(RESTApiTaskCommon.DynDataKeyRawContent, _rawContent);
         dDataSet.TryAdd(RESTApiTaskCommon.DynDataKeyHttpResult, _httpResult);
         
-        if (tConfig != null && !string.IsNullOrEmpty(tConfig.JsonPathToData))
+        if (config != null && !string.IsNullOrEmpty(config.JsonPathToData))
         {
             dDataSet.TryAdd(RESTApiTaskCommon.DynDataKeyJsonPathData, _jsonPathData);
 
-            if (tConfig.ReturnsRecordset)
+            if (config.ReturnsRecordset)
             {
                 dDataSet.TryAdd(CommonDynamicData.DefaultRecordsetName, _defaultRecordset);
             }
         }
     }
 
-    protected override void PostIterationSucceded(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
+    protected override void PostTaskSucceded(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
     {
         PostIteration(currentIteration, result, dDataSet);
     }
 
-    protected override void PostIterationFailed(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
+    protected override void PostTaskFailed(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
     {
         PostIteration(currentIteration, result, dDataSet);
     }

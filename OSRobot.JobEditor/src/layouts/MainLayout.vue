@@ -193,6 +193,7 @@ import SystemEventsEventConfigForm from "src/robotObjects/systemEventsEvent/Syst
 import ExcelFileTaskConfigForm from "src/robotObjects/excelFileTask/ExcelFileTaskConfigForm.vue";
 import FileSystemTaskConfigForm from "src/robotObjects/fileSystemTask/FileSystemTaskConfigForm.vue";
 import FtpSftpTaskConfigForm from "src/robotObjects/ftpSftpTask/FtpSftpTaskConfigForm.vue";
+import ReadBinaryFileTaskConfigForm from "src/robotObjects/readBinaryFileTask/ReadBinaryFileTaskConfigForm.vue";
 import ReadTextFileTaskConfigForm from "src/robotObjects/readTextFileTask/ReadTextFileTaskConfigForm.vue";
 import RESTApiTaskConfigForm from "src/robotObjects/restApiTask/RESTApiTaskConfigForm.vue";
 import RunProgramTaskConfigForm from "src/robotObjects/runProgramTask/RunProgramTaskConfigForm.vue";
@@ -202,6 +203,7 @@ import SqlServerBulkCopyTaskConfigForm from "src/robotObjects/sqlServerBulkCopyT
 import SqlServerCommandTaskConfigForm from "src/robotObjects/sqlServerCommandTask/SqlServerCommandTaskConfigForm.vue";
 import UnzipTaskConfigForm from "src/robotObjects/unzipTask/unzipTaskConfigForm.vue";
 import ZipTaskConfigForm from "src/robotObjects/zipTask/zipTaskConfigForm.vue";
+import WriteBinaryFileTaskConfigForm from "src/robotObjects/writeBinaryFileTask/WriteBinaryFileTaskConfigForm.vue";
 import WriteTextFileTaskConfigForm from "src/robotObjects/writeTextFileTask/writeTextFileTaskConfigForm.vue";
 import PingTaskConfigForm from "src/robotObjects/pingTask/PingTaskConfigForm.vue";
 
@@ -258,6 +260,7 @@ const _configForms = {
   ExcelFileTaskConfigForm,
   FileSystemTaskConfigForm,
   FtpSftpTaskConfigForm,
+  ReadBinaryFileTaskConfigForm,
   ReadTextFileTaskConfigForm,
   RESTApiTaskConfigForm,
   RunProgramTaskConfigForm,
@@ -267,6 +270,7 @@ const _configForms = {
   SqlServerCommandTaskConfigForm,
   UnzipTaskConfigForm,
   ZipTaskConfigForm,
+  WriteBinaryFileTaskConfigForm,
   WriteTextFileTaskConfigForm,
   PingTaskConfigForm,
 };

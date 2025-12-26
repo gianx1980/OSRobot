@@ -24,29 +24,17 @@ namespace OSRobot.Server.Plugins.OSRobotServiceStartEvent;
 
 public class OSRobotServiceStartEventPlugin : IPlugin
 {
-    public string Id { get { return "OSRobotServiceStartEvent"; } }
+    public string Id => "OSRobotServiceStartEvent";
 
-    public string Title { get { return Resource.TxtOSRobotServiceStartEvent; } }
+    public string Title => Resource.TxtOSRobotServiceStartEvent;
 
-    public EnumPluginType PluginType { get { return EnumPluginType.Event; } }
+    public EnumPluginType PluginType => EnumPluginType.Event;
 
-    public List<DynamicDataSample> SampleDynamicData
-    {
-        get
-        {
-            return CommonDynamicData.BuildStandardDynamicDataSamples("TDP Robot service start event 1");
-        }
-    }
+    public List<DynamicDataSample> SampleDynamicData => CommonDynamicData.BuildStandardDynamicDataSamples("OSRobot Robot service start event 1");
 
-    public IPluginInstance GetInstance()
-    {
-        return new OSRobotServiceStartEvent();
-    }
+    public IPluginInstance GetInstance() => new OSRobotServiceStartEvent();
 
-    public IPluginInstanceConfig GetPluginDefaultConfig()
-    {
-        return new OSRobotServiceStartEventConfig();
-    }
+    public IPluginInstanceConfig GetPluginDefaultConfig() => new OSRobotServiceStartEventConfig();
 
-    public EnumOSPlatform SupportedOSPlatforms { get => EnumOSPlatform.All; }
+    public EnumOSPlatform SupportedOSPlatforms => EnumOSPlatform.All;
 }

@@ -30,11 +30,11 @@ using System.Threading.Tasks;
 namespace OSRobot.Server.Plugins.FileSystemTask;
 public class FileSystemTaskPlugin : IPlugin
 {
-    public string Id { get { return "FileSystemTask"; } }
+    public string Id => "FileSystemTask";
 
-    public string Title { get { return Resource.TxtFileSystemTask; } }
+    public string Title => Resource.TxtFileSystemTask;
 
-    public EnumPluginType PluginType { get { return EnumPluginType.Task; } }
+    public EnumPluginType PluginType => EnumPluginType.Task;
 
     public List<DynamicDataSample> SampleDynamicData
     {
@@ -47,15 +47,9 @@ public class FileSystemTaskPlugin : IPlugin
         }
     }
 
-    public IPluginInstance GetInstance()
-    {
-        return new FileSystemTask();
-    }
+    public IPluginInstance GetInstance() => new FileSystemTask();
 
-    public IPluginInstanceConfig GetPluginDefaultConfig()
-    {
-        return new FileSystemTaskConfig();
-    }
+    public IPluginInstanceConfig GetPluginDefaultConfig() => new FileSystemTaskConfig();
 
-    public EnumOSPlatform SupportedOSPlatforms { get => EnumOSPlatform.All; }
+    public EnumOSPlatform SupportedOSPlatforms => EnumOSPlatform.All;
 }

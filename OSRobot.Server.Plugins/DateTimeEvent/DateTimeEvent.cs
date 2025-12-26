@@ -65,23 +65,23 @@ public class DateTimeEvent : IEvent
 
         bool enableOneTimeTimer = false;
         bool enableRecurringTimer = false;
-        DateTimeEventConfig tConfig = (DateTimeEventConfig)Config;
+        DateTimeEventConfig config = (DateTimeEventConfig)Config;
 
         DateTime now = DateTime.Now;
-        if (tConfig.AtDate > now)
+        if (config.AtDate > now)
         {
-            _oneTimeTimer.Interval = tConfig.AtDate.Subtract(now).TotalMilliseconds;
+            _oneTimeTimer.Interval = config.AtDate.Subtract(now).TotalMilliseconds;
             enableOneTimeTimer = true;
         }
 
-        if (tConfig.EveryDaysHoursSecs)
+        if (config.EveryDaysHoursSecs)
         {
-            _recurringTimer.Interval = new TimeSpan(tConfig.EveryNumDays, tConfig.EveryNumHours, tConfig.EveryNumMinutes, 0).TotalMilliseconds;
+            _recurringTimer.Interval = new TimeSpan(config.EveryNumDays, config.EveryNumHours, config.EveryNumMinutes, 0).TotalMilliseconds;
             enableRecurringTimer = true;
         }
-        else if (tConfig.EverySeconds)
+        else if (config.EverySeconds)
         {
-            _recurringTimer.Interval = new TimeSpan(0, 0, 0, tConfig.EveryNumSeconds).TotalMilliseconds;
+            _recurringTimer.Interval = new TimeSpan(0, 0, 0, config.EveryNumSeconds).TotalMilliseconds;
             enableRecurringTimer = true;
         }
 
@@ -113,8 +113,8 @@ public class DateTimeEvent : IEvent
                 logger.EventTriggering(this);
             OnEventTriggered(new EventTriggeredEventArgs(dDataSet, logger));
 
-            DateTimeEventConfig tConfig = (DateTimeEventConfig)Config;
-            if (!tConfig.OneTime)
+            DateTimeEventConfig config = (DateTimeEventConfig)Config;
+            if (!config.OneTime)
                 _recurringTimer.Enabled = true;
         }
         catch (Exception ex)
@@ -133,10 +133,10 @@ public class DateTimeEvent : IEvent
             if (Config.Log)
                 logger.EventTriggered(this);
             DateTime now = DateTime.Now;
-            DateTimeEventConfig tConfig = (DateTimeEventConfig)Config;
+            DateTimeEventConfig config = (DateTimeEventConfig)Config;
             DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, true, 0, now, now, 1);
 
-            if ((tConfig.OnDays.Where(i => i.Equals(now.DayOfWeek)).Any()) || tConfig.OnAllDays)
+            if ((config.OnDays.Where(i => i.Equals(now.DayOfWeek)).Any()) || config.OnAllDays)
             {
                 if (Config.Log)
                     logger.EventTriggering(this);

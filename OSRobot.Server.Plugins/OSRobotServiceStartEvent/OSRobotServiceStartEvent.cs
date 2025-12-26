@@ -84,17 +84,17 @@ public partial class OSRobotServiceStartEvent : IEvent
 
         try
         {
-            OSRobotServiceStartEventConfig tConfig = (OSRobotServiceStartEventConfig)Config;
+            OSRobotServiceStartEventConfig config = (OSRobotServiceStartEventConfig)Config;
 
             int systemStartedForMinutes = GetSystemStartedForMinutes();
 
-            if ((tConfig.MinutesWithin != null && systemStartedForMinutes <= tConfig.MinutesWithin)
-                || (tConfig.MinutesAfter != null && systemStartedForMinutes >= tConfig.MinutesAfter))
+            if ((config.MinutesWithin != null && systemStartedForMinutes <= config.MinutesWithin)
+                || (config.MinutesAfter != null && systemStartedForMinutes >= config.MinutesAfter))
             {
                 DateTime now = DateTime.Now;
                 DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, true, 0, now, now, 1);
 
-                if (tConfig.Log)
+                if (config.Log)
                 {
                     logger.Info(this, $"System up time (minutes): {systemStartedForMinutes}");
                     logger.EventTriggering(this);

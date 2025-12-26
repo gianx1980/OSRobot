@@ -21,7 +21,7 @@ using Microsoft.AspNetCore.Mvc;
 using OSRobot.Server.Controllers.Base;
 using OSRobot.Server.Models.DTO;
 using OSRobot.Server.Models.DTO.ClientUtils;
-using OSRobot.Server.Plugins.Infrastructure.Utilities;
+using OSRobot.Server.Plugins.Infrastructure.Utilities.SqlClient;
 
 namespace OSRobot.Server.Controllers;
 

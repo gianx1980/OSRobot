@@ -18,61 +18,48 @@
 ======================================================================================*/
 
 using OSRobot.Server.Core.DynamicData;
+using OSRobot.Server.Core.Logging.Abstract;
 
 namespace OSRobot.Server.Core;
 
-public abstract class IterationTask : BaseTask
+public abstract class MultipleIterationTask : BaseTask
 {
-    protected DateTime _startDateTime;
-    
     #pragma warning disable CS8618
-    protected ITaskConfig _iterationConfig;
+    protected ITaskConfig _iterationTaskConfig;
     #pragma warning restore CS8618
 
-    protected abstract void RunIteration(int currentIteration);
+    protected abstract void RunMultipleIterationTask(int currentIteration);
 
-    protected virtual void PostIterationSucceded(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
+    protected override void RunTask(DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, int? subInstanceIndex, IPluginInstanceLogger instanceLogger)
     {
+        _iterationsCount = DynamicDataParser.GetIterationCount((ITaskConfig)Config, dataChain, lastDynamicDataSet);
 
-    }
-
-    protected virtual void PostIterationFailed(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
-    {
-
-    }
-
-    protected override void RunTask()
-    {
         for (int i = 0; i < _iterationsCount; i++)
         {
-            DateTime _startDateTime = DateTime.Now;
+            DateTime executionStartDateTime = DateTime.Now;
+            _iterationTaskConfig = (ITaskConfig?)CoreHelpers.CloneObjects(Config) ?? throw new ApplicationException("Cloning configuration returned null");
+            DynamicDataParser.Parse(_iterationTaskConfig, _dataChain, i, _subInstanceIndex);
 
             try
             {
-                ITaskConfig? tempTaskConfig = (ITaskConfig?)CoreHelpers.CloneObjects(Config) ?? throw new ApplicationException("Cloning configuration returned null");
-                _iterationConfig = tempTaskConfig;
-                DynamicDataParser.Parse(_iterationConfig, _dataChain, i, _subInstanceIndex);
+                RunMultipleIterationTask(i);
 
-                RunIteration(i);
-
-                DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, true, 0, _startDateTime, DateTime.Now, _iterationsCount);
+                DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, true, 0, executionStartDateTime, DateTime.Now, _iterationsCount);
                 ExecResult result = new(true, dDataSet);
-
-                PostIterationSucceded(i, result, dDataSet);
-
                 _execResults.Add(result);
+
+                PostTaskSucceded(i, result, dDataSet);
             }
             catch (Exception ex)
             {
                 if (Config.Log)
-                    _instanceLogger?.TaskError(this, ex);
+                    _instanceLogger?.TaskIterarionError(this, i, ex);
 
-                DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, false, -1, _startDateTime, DateTime.Now, i + 1);
+                DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, false, -1, executionStartDateTime, DateTime.Now, _iterationsCount);
                 ExecResult result = new(false, dDataSet);
-
-                PostIterationFailed(i, result, dDataSet);
-
                 _execResults.Add(result);
+
+                PostTaskFailed(i, result, dDataSet);
             }
         }
     }

@@ -56,52 +56,52 @@ public class SystemEventsEvent : IEvent
         /*
         new Thread(() =>
         {
-            SystemEventsEventConfig TConfig = (SystemEventsEventConfig)Config;
+            SystemEventsEventConfig config = (SystemEventsEventConfig)Config;
             WndHiddenForm FormEvents = new WndHiddenForm();
 
-            if (TConfig.EventDisplaySettingsChanged)
+            if (config.EventDisplaySettingsChanged)
             {
                 FormEvents.EventDisplaySettingsChanged = true;
                 FormEvents.DisplaySettingsChanged += FormEvents_DisplaySettingsChanged;
             }
 
-            if (TConfig.EventInstalledFontsChanged)
+            if (config.EventInstalledFontsChanged)
             {
                 FormEvents.EventInstalledFontsChanged = true;
                 FormEvents.InstalledFontsChanged += FormEvents_InstalledFontsChanged;
             }
 
-            if (TConfig.EventPaletteChanged)
+            if (config.EventPaletteChanged)
             {
                 FormEvents.EventPaletteChanged = true;
                 FormEvents.PaletteChanged += FormEvents_PaletteChanged;
             }
 
-            if (TConfig.EventPowerModeChanged)
+            if (config.EventPowerModeChanged)
             {
                 FormEvents.EventPowerModeChanged = true;
                 FormEvents.PowerModeChanged += FormEvents_PowerModeChanged;
             }
 
-            if (TConfig.EventSessionEnded)
+            if (config.EventSessionEnded)
             {
                 FormEvents.EventSessionEnded = true;
                 FormEvents.SessionEnded += FormEvents_SessionEnded;
             }
 
-            if (TConfig.EventSessionSwitch)
+            if (config.EventSessionSwitch)
             {
                 FormEvents.EventSessionSwitch = true;
                 FormEvents.SessionSwitch += FormEvents_SessionSwitch;
             }
 
-            if (TConfig.EventTimeChanged)
+            if (config.EventTimeChanged)
             {
                 FormEvents.EventTimeChanged = true;
                 FormEvents.TimeChanged += FormEvents_TimeChanged;
             }
 
-            if (TConfig.EventUserPreferenceChanged)
+            if (config.EventUserPreferenceChanged)
             {
                 FormEvents.EventUserPreferenceChanged = true;
                 FormEvents.UserPreferenceChanged += FormEvents_UserPreferenceChanged;

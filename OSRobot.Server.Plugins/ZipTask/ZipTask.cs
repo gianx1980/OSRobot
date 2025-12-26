@@ -23,9 +23,8 @@ using OSRobot.Server.Core;
 
 namespace OSRobot.Server.Plugins.ZipTask;
 
-public class ZipTask : IterationTask
+public class ZipTask : MultipleIterationTask
 {
-
     private int ToNumericCompressionLevel(CompressionLevelType compressionLevel)
     {
         if (compressionLevel == CompressionLevelType.Low)
@@ -140,27 +139,27 @@ public class ZipTask : IterationTask
         }
     }
 
-    protected override void RunIteration(int currentIteration)
+    protected override void RunMultipleIterationTask(int currentIteration)
     {
-        ZipTaskConfig tConfig = (ZipTaskConfig)_iterationConfig;
+        ZipTaskConfig config = (ZipTaskConfig)_iterationTaskConfig;
         
-        if (File.Exists(tConfig.Destination))
+        if (File.Exists(config.Destination))
         {
-            if (tConfig.IfArchiveExists == IfArchiveExistsType.CreateWithUniqueNames)
+            if (config.IfArchiveExists == IfArchiveExistsType.CreateWithUniqueNames)
             {
-                tConfig.Destination = Common.GetUniqueFileName(tConfig.Destination);
+                config.Destination = Common.GetUniqueFileName(config.Destination);
             }
-            else if (tConfig.IfArchiveExists == IfArchiveExistsType.Fail)
+            else if (config.IfArchiveExists == IfArchiveExistsType.Fail)
             {
                 if (Config.Log)
-                    _instanceLogger?.Error($"File name {tConfig.Destination} already exists.");
+                    _instanceLogger.Error($"File name {config.Destination} already exists.");
 
-                throw new ApplicationException($"File name {tConfig.Destination} already exists.");
+                throw new ApplicationException($"File name {config.Destination} already exists.");
             }
         }
 
-        _instanceLogger?.Info(this, $"Compressing {tConfig.Source} to {tConfig.Destination}...");
-        CompressItem(tConfig.Source, tConfig.Destination, tConfig.IncludeFilesInSubFolders,
-                        tConfig.StoreFullPath, tConfig.SkipEmptyFolders, ToNumericCompressionLevel(tConfig.CompressionLevel));
+        _instanceLogger.Info(this, $"Compressing {config.Source} to {config.Destination}...");
+        CompressItem(config.Source, config.Destination, config.IncludeFilesInSubFolders,
+                        config.StoreFullPath, config.SkipEmptyFolders, ToNumericCompressionLevel(config.CompressionLevel));
     }
 }

@@ -25,13 +25,17 @@ namespace OSRobot.Server.Core;
 
 public abstract class BaseTask : ITask
 {
-    protected bool _taskReturnsRecordset = false;
     protected object _defaultRecordset = new DataTable();
     protected int _iterationsCount;
     protected DynamicDataChain _dataChain = [];
     protected DynamicDataSet _lastDynamicDataSet = [];
+
     protected int? _subInstanceIndex;
-    protected IPluginInstanceLogger? _instanceLogger;
+    #pragma warning disable CS8618
+    protected IPluginInstanceLogger _instanceLogger;
+    protected InstanceExecResult _instanceExecResult;
+    #pragma warning restore CS8618
+    
     protected List<ExecResult> _execResults = [];
 
     public IFolder? ParentFolder { get; set; }
@@ -52,18 +56,6 @@ public abstract class BaseTask : ITask
         DestroyTask();
     }
 
-    protected virtual void InitTask()
-    {
-
-    }
-
-    protected virtual void DestroyTask()
-    {
-
-    }
-
-    protected abstract void RunTask();
-
     public InstanceExecResult Run(DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, int? subInstanceIndex, IPluginInstanceLogger instanceLogger)
     {
         _dataChain = dataChain;
@@ -76,10 +68,7 @@ public abstract class BaseTask : ITask
             if (Config.Log)
                 instanceLogger.TaskStarted(this);
 
-            _iterationsCount = DynamicDataParser.GetIterationCount((ITaskConfig)Config, dataChain, lastDynamicDataSet);
-
-            if (_iterationsCount > 0)
-                RunTask();
+            RunTask(dataChain, lastDynamicDataSet, subInstanceIndex, instanceLogger);
 
             if (Config.Log)
                 instanceLogger.TaskCompleted(this);
@@ -90,6 +79,30 @@ public abstract class BaseTask : ITask
                 instanceLogger.TaskError(this, ex);
         }
 
-        return new InstanceExecResult(_execResults);
+        _instanceExecResult = new InstanceExecResult(_execResults);
+
+        return _instanceExecResult;
     }
+
+    protected virtual void InitTask()
+    {
+
+    }
+
+    protected virtual void DestroyTask()
+    {
+
+    }
+
+    protected virtual void PostTaskSucceded(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
+    {
+
+    }
+
+    protected virtual void PostTaskFailed(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
+    {
+
+    }
+
+    protected abstract void RunTask(DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, int? subInstanceIndex, IPluginInstanceLogger instanceLogger);
 }

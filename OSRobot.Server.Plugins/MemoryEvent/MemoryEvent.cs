@@ -83,9 +83,9 @@ public class MemoryEvent : IEvent
         _recurringTimer.Elapsed += RecurringTimer_Elapsed;
         _recurringTimer.Enabled = true;
 
-        MemoryEventConfig tConfig = (MemoryEventConfig)Config;
+        MemoryEventConfig config = (MemoryEventConfig)Config;
 
-        int checkIntervalSeconds = tConfig.CheckIntervalSeconds;
+        int checkIntervalSeconds = config.CheckIntervalSeconds;
         if (checkIntervalSeconds <= 0)
             checkIntervalSeconds = 1;
 
@@ -108,7 +108,7 @@ public class MemoryEvent : IEvent
             if (Config.Log)
                 Logger.Info(this, "Checking Memory usage...");
 
-            MemoryEventConfig tConfig = (MemoryEventConfig)Config;
+            MemoryEventConfig config = (MemoryEventConfig)Config;
 
             if (_dateFirstSample == DateTime.MinValue)
                 _dateFirstSample = DateTime.Now;
@@ -118,35 +118,35 @@ public class MemoryEvent : IEvent
             float memoryUsage = usedMemory / totalMemory * 100; 
 
             Debug.WriteLine($"Samples Count before: {_memoryUsageSamples.Count}");
-            if (tConfig.TriggerIfAvgUsageIsAboveThresholdLastXMin)
+            if (config.TriggerIfAvgUsageIsAboveThresholdLastXMin)
                 _memoryUsageSamples.Add(new MemoryUsageSample(memoryUsage));
             Debug.WriteLine($"Samples Count after: {_memoryUsageSamples.Count}");
 
-            if (tConfig.TriggerIfPassedXMinFromLastTrigger
-                && DateTime.Now.Subtract(_dateLastTrigger).TotalMinutes < tConfig.MinutesFromLastTrigger)
+            if (config.TriggerIfPassedXMinFromLastTrigger
+                && DateTime.Now.Subtract(_dateLastTrigger).TotalMinutes < config.MinutesFromLastTrigger)
             {
                 if (Config.Log)
                     Logger.Info(this, "Minimum trigger time not elapsed");
                 return;
             }
 
-            Debug.WriteLine($"Object hash: {this.GetHashCode()}, MemoryUsage: {memoryUsage}, Threshold: {tConfig.Threshold}");
+            Debug.WriteLine($"Object hash: {this.GetHashCode()}, MemoryUsage: {memoryUsage}, Threshold: {config.Threshold}");
 
-            if (tConfig.TriggerIfUsageIsAboveThreshold)
+            if (config.TriggerIfUsageIsAboveThreshold)
             {
-                if (memoryUsage > tConfig.Threshold)
+                if (memoryUsage > config.Threshold)
                     triggerEvent = true;
             }
-            else if (tConfig.TriggerIfAvgUsageIsAboveThresholdLastXMin)
+            else if (config.TriggerIfAvgUsageIsAboveThresholdLastXMin)
             {
-                DateTime dtFrom = DateTime.Now.Subtract(new TimeSpan(0, tConfig.AvgIntervalMinutes ?? _defaultIntervalMinutes, 0));
+                DateTime dtFrom = DateTime.Now.Subtract(new TimeSpan(0, config.AvgIntervalMinutes ?? _defaultIntervalMinutes, 0));
                 memoryUsage = _memoryUsageSamples.Where(t => t.SampleDateTime >= dtFrom).DefaultIfEmpty().Average(t => t == null ? 0 : t.SampleValue);
 
-                Debug.WriteLine($"Memory Average Usage: {memoryUsage}, Threshold: {tConfig.Threshold}, Samples Count: {_memoryUsageSamples.Count}");
+                Debug.WriteLine($"Memory Average Usage: {memoryUsage}, Threshold: {config.Threshold}, Samples Count: {_memoryUsageSamples.Count}");
 
-                // Before starting triggering the event, we want at least some samples for duration of TConfig.AvgIntervalMinutes minutes
-                if (DateTime.Now.Subtract(_dateFirstSample).TotalMinutes > tConfig.AvgIntervalMinutes
-                    && memoryUsage > tConfig.ThresholdLastXMin)
+                // Before starting triggering the event, we want at least some samples for duration of config.AvgIntervalMinutes minutes
+                if (DateTime.Now.Subtract(_dateFirstSample).TotalMinutes > config.AvgIntervalMinutes
+                    && memoryUsage > config.ThresholdLastXMin)
                     triggerEvent = true;
 
                 _memoryUsageSamples.RemoveAll(t => t.SampleDateTime < dtFrom);
