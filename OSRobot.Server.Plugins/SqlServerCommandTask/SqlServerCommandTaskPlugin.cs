@@ -24,11 +24,11 @@ namespace OSRobot.Server.Plugins.SqlServerCommandTask;
 
 public class SqlServerCommandTaskPlugin : IPlugin
 {
-    public string Id { get { return "SqlServerCommandTask"; } }
+    public string Id => "SqlServerCommandTask";
 
-    public string Title { get { return Resource.TxtSqlServerCommandTask; } }
+    public string Title => Resource.TxtSqlServerCommandTask;
 
-    public EnumPluginType PluginType { get { return EnumPluginType.Task; } }
+    public EnumPluginType PluginType => EnumPluginType.Task;
 
     public List<DynamicDataSample> SampleDynamicData
     {
@@ -40,15 +40,9 @@ public class SqlServerCommandTaskPlugin : IPlugin
         }
     }
 
-    public IPluginInstance GetInstance()
-    {
-        return new SqlServerCommandTask();
-    }
+    public IPluginInstance GetInstance() => new SqlServerCommandTask();
 
-    public IPluginInstanceConfig GetPluginDefaultConfig()
-    {
-        return new SqlServerCommandTaskConfig();
-    }
+    public IPluginInstanceConfig GetPluginDefaultConfig() => new SqlServerCommandTaskConfig();
 
-    public EnumOSPlatform SupportedOSPlatforms { get => EnumOSPlatform.All; }
+    public EnumOSPlatform SupportedOSPlatforms => EnumOSPlatform.All;
 }

@@ -25,29 +25,29 @@ using System.Data;
 
 namespace OSRobot.Server.Plugins.SqlServerBulkCopyTask;
 
-public class SqlServerBulkCopyTask : IterationTask
+public class SqlServerBulkCopyTask : MultipleIterationTask
 {
-    protected override void RunIteration(int currentIteration)
+    protected override void RunMultipleIterationTask(int currentIteration)
     {
-        SqlServerBulkCopyTaskConfig tConfig = (SqlServerBulkCopyTaskConfig)_iterationConfig;            
-        string connectionString = $"Server={tConfig.Server};Database={tConfig.Database};User ID={tConfig.Username};Password={tConfig.Password};{tConfig.ConnectionStringOptions}";
+        SqlServerBulkCopyTaskConfig config = (SqlServerBulkCopyTaskConfig)_iterationTaskConfig;            
+        string connectionString = $"Server={config.Server};Database={config.Database};User ID={config.Username};Password={config.Password};{config.ConnectionStringOptions}";
 
         using SqlConnection cnt = new(connectionString);
         cnt.Open();
 
         using SqlBulkCopy bulkCopy = new(cnt);
-        bulkCopy.BulkCopyTimeout = tConfig.CommandTimeout;
-        bulkCopy.DestinationTableName = tConfig.DestinationTable;
-        DataTable? dtSource = (DataTable?)DynamicDataParser.GetDynamicDataObject(tConfig.SourceRecordset, _dataChain);
+        bulkCopy.BulkCopyTimeout = config.CommandTimeout;
+        bulkCopy.DestinationTableName = config.DestinationTable;
+        DataTable? dtSource = (DataTable?)DynamicDataParser.GetDynamicDataObject(config.SourceRecordset, _dataChain);
 
         if (dtSource == null)
         {
-            _instanceLogger?.Error(this, $"Cannot access the requested source recordset {tConfig.SourceRecordset}.");
+            _instanceLogger.Error(this, $"Cannot access the requested source recordset {config.SourceRecordset}.");
             throw new ApplicationException("Cannot access the requested source recordset.");
         }
 
-        _instanceLogger?.Info(this, $"About to bulk copy {dtSource.Rows.Count} rows to table {tConfig.DestinationTable}...");
+        _instanceLogger.Info(this, $"About to bulk copy {dtSource.Rows.Count} rows to table {config.DestinationTable}...");
         bulkCopy.WriteToServer(dtSource);
-        _instanceLogger?.Info(this, "Bulk copy successfully completed");
+        _instanceLogger.Info(this, "Bulk copy successfully completed");
     }
 }

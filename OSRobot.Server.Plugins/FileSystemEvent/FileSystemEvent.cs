@@ -58,8 +58,8 @@ public class FileSystemEvent : IEvent
 
     public void Init()
     {
-        FileSystemEventConfig tConfig = (FileSystemEventConfig)Config;
-        foreach (FolderToMonitor folder in tConfig.FoldersToMonitor)
+        FileSystemEventConfig config = (FileSystemEventConfig)Config;
+        foreach (FolderToMonitor folder in config.FoldersToMonitor)
         {
             FileSystemWatcher watcher = new()
             {

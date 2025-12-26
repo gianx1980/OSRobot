@@ -24,11 +24,11 @@ namespace OSRobot.Server.Plugins.ReadBinaryFileTask;
 
 public class ReadBinaryFileTaskPlugin : IPlugin
 {
-    public string Id { get { return "ReadBinaryFileTask"; } }
+    public string Id => "ReadBinaryFileTask";
 
-    public string Title { get { return Resource.TxtReadBinaryFileTask; } }
+    public string Title => Resource.TxtReadBinaryFileTask;
 
-    public EnumPluginType PluginType { get { return EnumPluginType.Task; } }
+    public EnumPluginType PluginType => EnumPluginType.Task;
 
     public List<DynamicDataSample> SampleDynamicData
     {
@@ -40,15 +40,9 @@ public class ReadBinaryFileTaskPlugin : IPlugin
         }
     }
 
-    public IPluginInstance GetInstance()
-    {
-        return new ReadBinaryFileTask();
-    }
+    public IPluginInstance GetInstance() => new ReadBinaryFileTask();
 
-    public IPluginInstanceConfig GetPluginDefaultConfig()
-    {
-        return new ReadBinaryFileTaskConfig();
-    }
+    public IPluginInstanceConfig GetPluginDefaultConfig() => new ReadBinaryFileTaskConfig();
 
-    public EnumOSPlatform SupportedOSPlatforms { get => EnumOSPlatform.All; }
+    public EnumOSPlatform SupportedOSPlatforms => EnumOSPlatform.All;
 }

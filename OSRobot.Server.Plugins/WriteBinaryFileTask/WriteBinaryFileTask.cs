@@ -19,30 +19,29 @@
 
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
-using OSRobot.Server.Plugins.WriteTextFileTask;
 
 namespace OSRobot.Server.Plugins.WriteBinaryFileTask;
 
-public class WriteBinaryFileTask : BaseTask
+public class WriteBinaryFileTask : SingleIterationTask
 {
-    protected override void RunTask()
+    protected override void RunSingleIterationTask()
     {
         for (int i = 0; i < _iterationsCount; i++)
         {
-            WriteTextFileTaskConfig? tConfig = (WriteTextFileTaskConfig?)CoreHelpers.CloneObjects(Config) ?? throw new ApplicationException("Cloning configuration returned null");
-            DynamicDataParser.Parse(tConfig, _dataChain, i, _subInstanceIndex);
+            WriteBinaryFileTaskConfig? config = (WriteBinaryFileTaskConfig?)CoreHelpers.CloneObjects(Config) ?? throw new ApplicationException("Cloning configuration returned null");
+            DynamicDataParser.Parse(config, _dataChain, i, _subInstanceIndex);
 
             // The varbinary type is handled differently from the others and therefore requires separate handling.
-            List<DynamicDataInfo> dynDataInfoList = DynamicDataParser.GetDynamicDataInfo(tConfig.FileContentSource);
+            List<DynamicDataInfo> dynDataInfoList = DynamicDataParser.GetDynamicDataInfo(config.FileContentSource);
             if (dynDataInfoList.Count > 1)
                 throw new ApplicationException("Multiple dynamic data are note allowed for Varbinary parameters.");
 
             DynamicDataInfo dynDataInfo = dynDataInfoList[0];
-            byte[]? fileContent = (byte[]?)DynamicDataParser.GetDynamicDataValue(dynDataInfo, _dataChain, currentIteration, _subInstanceIndex);
+            byte[]? fileContent = (byte[]?)DynamicDataParser.GetDynamicDataValue(dynDataInfo, _dataChain, i, _subInstanceIndex);
             if (fileContent == null)
                 return;
 
-            File.WriteAllBytes(tConfig.FilePath, fileContent);
+            File.WriteAllBytes(config.FilePath, fileContent);
         }
     }
 }

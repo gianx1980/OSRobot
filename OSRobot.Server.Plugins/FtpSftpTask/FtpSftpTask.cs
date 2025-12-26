@@ -23,10 +23,9 @@ using OSRobot.Server.Core.Logging.Abstract;
 using System.Text;
 using System.Text.RegularExpressions;
 
-
 namespace OSRobot.Server.Plugins.FtpSftpTask;
 
-public partial class FtpSftpTask : IterationTask
+public partial class FtpSftpTask : MultipleIterationTask
 {
     private void BuildRemotePath(FtpSftpClient fileTransferClient, string remotePath, bool skipLastSegment)
     {
@@ -191,20 +190,20 @@ public partial class FtpSftpTask : IterationTask
         }
     }
 
-    protected override void RunIteration(int currentIteration)
+    protected override void RunMultipleIterationTask(int currentIteration)
     {
-        FtpSftpTaskConfig tConfig = (FtpSftpTaskConfig)_iterationConfig;
+        FtpSftpTaskConfig config = (FtpSftpTaskConfig)_iterationTaskConfig;
 
         using FtpSftpClient fileTransferClient = new();
-        _instanceLogger?.Info($"Connecting to host: {tConfig.Host} Port: {tConfig.Port} Username: {tConfig.Username}");
-        fileTransferClient.Connect(tConfig.Protocol, tConfig.Host, int.Parse(tConfig.Port), tConfig.Username, tConfig.Password);
+        _instanceLogger?.Info($"Connecting to host: {config.Host} Port: {config.Port} Username: {config.Username}");
+        fileTransferClient.Connect(config.Protocol, config.Host, int.Parse(config.Port), config.Username, config.Password);
         _instanceLogger?.Info("Connection established");
 
-        if (tConfig.Command == CommandEnum.Copy)
+        if (config.Command == CommandEnum.Copy)
         {
             _instanceLogger?.Info("Starting copy files...");
 
-            foreach (FtpSftpCopyItem copyItem in tConfig.CopyItems)
+            foreach (FtpSftpCopyItem copyItem in config.CopyItems)
             {
                 FtpSftpCopyItem? copyItemCopy = (FtpSftpCopyItem?)CoreHelpers.CloneObjects(copyItem) ?? throw new ApplicationException("Cloning CopyItem returned null");
                 copyItemCopy.LocalPath = DynamicDataParser.ReplaceDynamicData(copyItemCopy.LocalPath, _dataChain, currentIteration, _subInstanceIndex);
@@ -218,7 +217,7 @@ public partial class FtpSftpTask : IterationTask
         {
             _instanceLogger?.Info("Starting delete files...");
 
-            foreach (FtpSftpDeleteItem deleteItem in tConfig.DeleteItems)
+            foreach (FtpSftpDeleteItem deleteItem in config.DeleteItems)
             {
                 FtpSftpDeleteItem? deleteItemCopy = (FtpSftpDeleteItem?)CoreHelpers.CloneObjects(deleteItem) ?? throw new ApplicationException("Cloning DeleteItem returned null");
                 deleteItemCopy.RemotePath = DynamicDataParser.ReplaceDynamicData(deleteItemCopy.RemotePath, _dataChain, currentIteration, _subInstanceIndex);

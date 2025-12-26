@@ -23,7 +23,7 @@ using OSRobot.Server.Core;
 
 namespace OSRobot.Server.Plugins.UnzipTask;
 
-public class UnzipTask : IterationTask
+public class UnzipTask : MultipleIterationTask
 {
     private bool UncompressArchive(string zipFileName, string outputFolder, IfDestFileExistsType ifDestFileExists)
     {
@@ -65,12 +65,12 @@ public class UnzipTask : IterationTask
         return true;
     }
 
-    protected override void RunIteration(int currentIteration)
+    protected override void RunMultipleIterationTask(int currentIteration)
     {
-        UnzipTaskConfig configCopy = (UnzipTaskConfig)_iterationConfig;
+        UnzipTaskConfig config = (UnzipTaskConfig)_iterationTaskConfig;
         
-        _instanceLogger?.Info(this, $"Uncompressing archive {configCopy.Source} to {configCopy.Destination}...");
-        bool completed = UncompressArchive(configCopy.Source, configCopy.Destination, configCopy.IfDestFileExists);
+        _instanceLogger.Info(this, $"Uncompressing archive {config.Source} to {config.Destination}...");
+        bool completed = UncompressArchive(config.Source, config.Destination, config.IfDestFileExists);
 
         if (!completed)
             throw new ApplicationException("One or more files with the same name found in destination folder.");

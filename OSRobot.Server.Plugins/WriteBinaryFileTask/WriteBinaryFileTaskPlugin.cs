@@ -32,15 +32,9 @@ public class WriteBinaryFileTaskPlugin : IPlugin
 
     public List<DynamicDataSample> SampleDynamicData => CommonDynamicData.BuildStandardDynamicDataSamples("WriteBinaryFile task 1");
 
-    public IPluginInstance GetInstance()
-    {
-        return new WriteBinaryFileTask();
-    }
+    public IPluginInstance GetInstance() => new WriteBinaryFileTask();
 
-    public IPluginInstanceConfig GetPluginDefaultConfig()
-    {
-        return new WriteBinaryFileTaskConfig();
-    }
-
+    public IPluginInstanceConfig GetPluginDefaultConfig() => new WriteBinaryFileTaskConfig();
+    
     public EnumOSPlatform SupportedOSPlatforms => EnumOSPlatform.All;
 }

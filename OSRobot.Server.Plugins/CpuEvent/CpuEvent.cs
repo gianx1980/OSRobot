@@ -80,9 +80,9 @@ public class CpuEvent : IEvent
         _recurringTimer.AutoReset = true;
         _recurringTimer.Elapsed += RecurringTimer_Elapsed;
 
-        CpuEventConfig tConfig = (CpuEventConfig)Config;
+        CpuEventConfig config = (CpuEventConfig)Config;
 
-        int checkIntervalSeconds = tConfig.CheckIntervalSeconds;
+        int checkIntervalSeconds = config.CheckIntervalSeconds;
         if (checkIntervalSeconds <= 0)
             checkIntervalSeconds = 1;
 
@@ -107,7 +107,7 @@ public class CpuEvent : IEvent
             if (Config.Log)
                 logger.Info(this, "Checking CPU usage...");
 
-            CpuEventConfig tConfig = (CpuEventConfig)Config;
+            CpuEventConfig config = (CpuEventConfig)Config;
 
             _perfCounter ??= new PerformanceCounter("Processor information", "% processor utility", "_Total");
 
@@ -119,35 +119,35 @@ public class CpuEvent : IEvent
             _lastSample = currentSample;
 
             Debug.WriteLine($"Samples Count before: {_cpuUsageSamples.Count}");
-            if (tConfig.TriggerIfAvgUsageIsAboveThresholdLastXMin)
+            if (config.TriggerIfAvgUsageIsAboveThresholdLastXMin)
                 _cpuUsageSamples.Add(new CpuUsageSample(cpuUsage));
             Debug.WriteLine($"Samples Count after: {_cpuUsageSamples.Count}");
 
-            if (tConfig.TriggerIfPassedXMinFromLastTrigger
-                && DateTime.Now.Subtract(_dateLastTrigger).TotalMinutes < tConfig.MinutesFromLastTrigger)
+            if (config.TriggerIfPassedXMinFromLastTrigger
+                && DateTime.Now.Subtract(_dateLastTrigger).TotalMinutes < config.MinutesFromLastTrigger)
             {
                 if (Config.Log)
                     logger.Info(this, "Minimum trigger time not elapsed");
                 return;
             }
 
-            Debug.WriteLine($"Object hash: {this.GetHashCode()}, CpuUsage: {cpuUsage}, Threshold: {tConfig.Threshold}");
+            Debug.WriteLine($"Object hash: {this.GetHashCode()}, CpuUsage: {cpuUsage}, Threshold: {config.Threshold}");
 
-            if (tConfig.TriggerIfUsageIsAboveThreshold)
+            if (config.TriggerIfUsageIsAboveThreshold)
             {    
-                if (cpuUsage > tConfig.Threshold)
+                if (cpuUsage > config.Threshold)
                     triggerEvent = true;
             }
-            else if (tConfig.TriggerIfAvgUsageIsAboveThresholdLastXMin)
+            else if (config.TriggerIfAvgUsageIsAboveThresholdLastXMin)
             {
-                DateTime dtFrom = DateTime.Now.Subtract(new TimeSpan(0, tConfig.AvgIntervalMinutes ?? _defaultIntervalMinutes, 0));
+                DateTime dtFrom = DateTime.Now.Subtract(new TimeSpan(0, config.AvgIntervalMinutes ?? _defaultIntervalMinutes, 0));
                 cpuUsage = _cpuUsageSamples.Where(t => t.SampleDateTime >= dtFrom).DefaultIfEmpty().Average(t => t == null ? 0 : t.SampleValue);
 
-                Debug.WriteLine($"Cpu Average Usage: {cpuUsage}, Threshold: {tConfig.Threshold}, Samples Count: {_cpuUsageSamples.Count}");
+                Debug.WriteLine($"Cpu Average Usage: {cpuUsage}, Threshold: {config.Threshold}, Samples Count: {_cpuUsageSamples.Count}");
 
-                // Before starting triggering the event, we want at least samples for duaration of TConfig.AvgIntervalMinutes minutes
-                if (DateTime.Now.Subtract(_dateFirstSample).TotalMinutes > tConfig.AvgIntervalMinutes
-                    && cpuUsage > tConfig.ThresholdLastXMin)
+                // Before starting triggering the event, we want at least samples for duaration of config.AvgIntervalMinutes minutes
+                if (DateTime.Now.Subtract(_dateFirstSample).TotalMinutes > config.AvgIntervalMinutes
+                    && cpuUsage > config.ThresholdLastXMin)
                     triggerEvent = true;
 
                 _cpuUsageSamples.RemoveAll(t => t.SampleDateTime < dtFrom);

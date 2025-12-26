@@ -24,11 +24,11 @@ namespace OSRobot.Server.Plugins.ReadTextFileTask;
 
 public class ReadTextFileTaskPlugin : IPlugin
 {
-    public string Id { get { return "ReadTextFileTask"; } }
+    public string Id => "ReadTextFileTask";
 
-    public string Title { get { return Resource.TxtReadTextFileTask; } }
+    public string Title => Resource.TxtReadTextFileTask;
 
-    public EnumPluginType PluginType { get { return EnumPluginType.Task; } }
+    public EnumPluginType PluginType => EnumPluginType.Task;
 
     public List<DynamicDataSample> SampleDynamicData
     {
@@ -40,15 +40,9 @@ public class ReadTextFileTaskPlugin : IPlugin
         }
     }
 
-    public IPluginInstance GetInstance()
-    {
-        return new ReadTextFileTask();
-    }
+    public IPluginInstance GetInstance() => new ReadTextFileTask();
 
-    public IPluginInstanceConfig GetPluginDefaultConfig()
-    {
-        return new ReadTextFileTaskConfig();
-    }
+    public IPluginInstanceConfig GetPluginDefaultConfig() => new ReadTextFileTaskConfig();
 
-    public EnumOSPlatform SupportedOSPlatforms { get => EnumOSPlatform.All; }
+    public EnumOSPlatform SupportedOSPlatforms => EnumOSPlatform.All;
 }

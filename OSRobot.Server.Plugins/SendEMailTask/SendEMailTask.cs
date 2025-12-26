@@ -23,42 +23,42 @@ using System.Net.Mail;
 
 namespace OSRobot.Server.Plugins.SendEMailTask;
 
-public class SendEMailTask : IterationTask
+public class SendEMailTask : MultipleIterationTask
 {
-    protected override void RunIteration(int currentIteration)
+    protected override void RunMultipleIterationTask(int currentIteration)
     {
-        SendEMailTaskConfig tConfig = (SendEMailTaskConfig)_iterationConfig;
+        SendEMailTaskConfig config = (SendEMailTaskConfig)_iterationTaskConfig;
 
-        using SmtpClient mailClient = new(tConfig.SMTPServer, int.Parse(tConfig.Port));
+        using SmtpClient mailClient = new(config.SMTPServer, int.Parse(config.Port));
         using MailMessage mail = new();
-        mail.Sender = new MailAddress(tConfig.Sender);
-        mail.From = new MailAddress(tConfig.Sender);
+        mail.Sender = new MailAddress(config.Sender);
+        mail.From = new MailAddress(config.Sender);
 
-        foreach (string Recipient in tConfig.Recipients)
+        foreach (string Recipient in config.Recipients)
         {
             mail.To.Add(Recipient);
         }
 
-        foreach (string ccRecipient in tConfig.CC)
+        foreach (string ccRecipient in config.CC)
         {
             mail.CC.Add(ccRecipient);
         }
 
-        foreach (string fileAttachment in tConfig.Attachments)
+        foreach (string fileAttachment in config.Attachments)
         {
             mail.Attachments.Add(new Attachment(fileAttachment));
         }
 
-        mail.Subject = tConfig.Subject;
-        mail.Body = tConfig.Message;
+        mail.Subject = config.Subject;
+        mail.Body = config.Message;
 
-        if (tConfig.Authenticate)
+        if (config.Authenticate)
         {
-            mailClient.Credentials = new NetworkCredential(tConfig.Username, tConfig.Password);
+            mailClient.Credentials = new NetworkCredential(config.Username, config.Password);
         }
 
-        mailClient.EnableSsl = tConfig.UseSSL;
-        mailClient.Port = int.Parse(tConfig.Port);
+        mailClient.EnableSsl = config.UseSSL;
+        mailClient.Port = int.Parse(config.Port);
         mailClient.Send(mail);
     }
 }

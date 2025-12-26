@@ -24,29 +24,16 @@ namespace OSRobot.Server.Plugins.ZipTask;
 
 public class ZipTaskPlugin : IPlugin
 {
-    public string Id { get { return "ZipTask"; } }
+    public string Id => "ZipTask";
 
-    public string Title { get { return Resource.TxtZipTask; } }
+    public string Title => Resource.TxtZipTask;
 
-    public EnumPluginType PluginType { get { return EnumPluginType.Task; } }
+    public EnumPluginType PluginType => EnumPluginType.Task;
 
-    public List<DynamicDataSample> SampleDynamicData
-    {
-        get
-        {
-            return CommonDynamicData.BuildStandardDynamicDataSamples("Zip task 1");
-        }
-    }
-
-    public IPluginInstance GetInstance()
-    {
-        return new ZipTask();
-    }
-
-    public IPluginInstanceConfig GetPluginDefaultConfig()
-    {
-        return new ZipTaskConfig();
-    }
-
-    public EnumOSPlatform SupportedOSPlatforms { get => EnumOSPlatform.All; }
+    public List<DynamicDataSample> SampleDynamicData => CommonDynamicData.BuildStandardDynamicDataSamples("Zip task 1");
+    public IPluginInstance GetInstance() => new ZipTask();
+    
+    public IPluginInstanceConfig GetPluginDefaultConfig() => new ZipTaskConfig();
+    
+    public EnumOSPlatform SupportedOSPlatforms => EnumOSPlatform.All;
 }

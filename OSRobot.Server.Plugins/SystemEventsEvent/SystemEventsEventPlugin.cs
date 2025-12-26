@@ -25,11 +25,11 @@ namespace OSRobot.Server.Plugins.SystemEventsEvent;
 
 public class SystemEventsEventPlugin : IPlugin
 {
-    public string Id { get { return "SystemEventsEvent"; } }
+    public string Id => "SystemEventsEvent";
 
-    public string Title { get { return Resource.TxtSystemEventsEvent; } }
+    public string Title => Resource.TxtSystemEventsEvent;
 
-    public EnumPluginType PluginType { get { return EnumPluginType.Event; } }
+    public EnumPluginType PluginType => EnumPluginType.Event;
 
     public List<DynamicDataSample> SampleDynamicData
     {
@@ -41,15 +41,9 @@ public class SystemEventsEventPlugin : IPlugin
         }
     }
 
-    public IPluginInstance GetInstance()
-    {
-        return new SystemEventsEvent();
-    }
+    public IPluginInstance GetInstance() => new SystemEventsEvent();
 
-    public IPluginInstanceConfig GetPluginDefaultConfig()
-    {
-        return new SystemEventsEventConfig();
-    }
-
-    public EnumOSPlatform SupportedOSPlatforms { get => EnumOSPlatform.All; }
+    public IPluginInstanceConfig GetPluginDefaultConfig() => new SystemEventsEventConfig();
+    
+    public EnumOSPlatform SupportedOSPlatforms => EnumOSPlatform.All;
 }

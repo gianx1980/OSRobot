@@ -17,18 +17,18 @@
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
 
-using System.Data;
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Plugins.Infrastructure.Utilities.FileSystem;
+using System.Data;
 
 namespace OSRobot.Server.Plugins.ReadBinaryFileTask;
 
-public class ReadBinaryFileTask : IterationTask
+public class ReadBinaryFileTask : MultipleIterationTask
 {
-    protected override void RunIteration(int currentIteration)
+    protected override void RunMultipleIterationTask(int currentIteration)
     {
-        ReadBinaryFileTaskConfig tConfig = (ReadBinaryFileTaskConfig)_iterationConfig;
+        ReadBinaryFileTaskConfig config = (ReadBinaryFileTaskConfig)_iterationTaskConfig;
 
         DataTable dtFiles = (DataTable)_defaultRecordset;
         dtFiles.Columns.Add("FullName", typeof(string));
@@ -40,7 +40,7 @@ public class ReadBinaryFileTask : IterationTask
         dtFiles.Columns.Add("LastWriteTime", typeof(DateTime));
         dtFiles.Columns.Add("FileContent", typeof(byte[]));
 
-        FileSystemEnumerator fileSystemEnumerator = new(tConfig.FilePath, tConfig.Recursive);
+        FileSystemEnumerator fileSystemEnumerator = new(config.FilePath, config.Recursive);
 
         foreach (string file in fileSystemEnumerator)
         {
@@ -66,12 +66,12 @@ public class ReadBinaryFileTask : IterationTask
         dDataSet.TryAdd(CommonDynamicData.DefaultRecordsetName, _defaultRecordset);
     }
 
-    protected override void PostIterationSucceded(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
+    protected override void PostTaskSucceded(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
     {
         PostIteration(currentIteration, result, dDataSet);
     }
 
-    protected override void PostIterationFailed(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
+    protected override void PostTaskFailed(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
     {
         PostIteration(currentIteration, result, dDataSet);
     }

@@ -23,11 +23,11 @@ namespace OSRobot.Server.Plugins.SqlServerBackupTask;
 
 public class SqlServerBackupTaskPlugin : IPlugin
 {
-    public string Id { get { return "SqlServerBackupTask"; } }
+    public string Id => "SqlServerBackupTask";
 
-    public string Title { get { return Resource.TxtSqlServerBackupTask; } } 
+    public string Title => Resource.TxtSqlServerBackupTask; 
 
-    public EnumPluginType PluginType { get { return EnumPluginType.Task; } }
+    public EnumPluginType PluginType => EnumPluginType.Task;
 
     public List<DynamicDataSample> SampleDynamicData
     {
@@ -40,15 +40,9 @@ public class SqlServerBackupTaskPlugin : IPlugin
         }
     }
 
-    public IPluginInstance GetInstance()
-    {
-        return new SqlServerBackupTask();
-    }
+    public IPluginInstance GetInstance() => new SqlServerBackupTask();
 
-    public IPluginInstanceConfig GetPluginDefaultConfig()
-    {
-        return new SqlServerBackupTaskConfig();
-    }
+    public IPluginInstanceConfig GetPluginDefaultConfig() => new SqlServerBackupTaskConfig();
 
-    public EnumOSPlatform SupportedOSPlatforms { get => EnumOSPlatform.All; }
+    public EnumOSPlatform SupportedOSPlatforms => EnumOSPlatform.All;
 }

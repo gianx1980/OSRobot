@@ -17,30 +17,30 @@
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
 
-using System.Net.NetworkInformation;
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
+using System.Net.NetworkInformation;
 
 namespace OSRobot.Server.Plugins.PingTask;
 
-public class PingTask : IterationTask
+public class PingTask : MultipleIterationTask
 {
     private float _thresholdSuccessRate;
 
-    protected override void RunIteration(int currentIteration)
+    protected override void RunMultipleIterationTask(int currentIteration)
     {
-        PingTaskConfig tConfig = (PingTaskConfig)_iterationConfig;
+        PingTaskConfig config = (PingTaskConfig)_iterationTaskConfig;
 
         _thresholdSuccessRate = 0;
         int attemptSuccessCount = 0;
         Ping ping = new();
 
-        for (int i = 1; i <= tConfig.Attempts; i++)
+        for (int i = 1; i <= config.Attempts; i++)
         {
             try
             {
-                _instanceLogger?.Info(this, $"Pinging host {tConfig.Host} (Attempt: {i})...");
-                PingReply reply = ping.Send(tConfig.Host, tConfig.Timeout);
+                _instanceLogger?.Info(this, $"Pinging host {config.Host} (Attempt: {i})...");
+                PingReply reply = ping.Send(config.Host, config.Timeout);
                 _instanceLogger?.Info(this, $"Status: {reply.Status}");
 
                 if (reply.Status == IPStatus.Success)
@@ -52,7 +52,7 @@ public class PingTask : IterationTask
             }
         }
 
-        _thresholdSuccessRate = ((float)attemptSuccessCount / tConfig.Attempts) * 100;
+        _thresholdSuccessRate = ((float)attemptSuccessCount / config.Attempts) * 100;
     }
 
     private void PostIteration(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
@@ -60,12 +60,12 @@ public class PingTask : IterationTask
         dDataSet.TryAdd("ThresholdSuccessRate", _thresholdSuccessRate);
     }
 
-    protected override void PostIterationSucceded(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
+    protected override void PostTaskSucceded(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
     {
         PostIteration(currentIteration, result, dDataSet);
     }
 
-    protected override void PostIterationFailed(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
+    protected override void PostTaskFailed(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
     {
         PostIteration(currentIteration, result, dDataSet);
     }

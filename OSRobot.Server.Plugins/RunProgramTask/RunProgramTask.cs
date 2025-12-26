@@ -22,21 +22,21 @@ using System.Diagnostics;
 
 namespace OSRobot.Server.Plugins.RunProgramTask;
 
-public class RunProgramTask : IterationTask
+public class RunProgramTask : MultipleIterationTask
 {
-    protected override void RunIteration(int currentIteration)
+    protected override void RunMultipleIterationTask(int currentIteration)
     {
-        RunProgramTaskConfig tConfig = (RunProgramTaskConfig)_iterationConfig;
+        RunProgramTaskConfig config = (RunProgramTaskConfig)_iterationTaskConfig;
 
-        ProcessStartInfo pInfo = new(tConfig.ProgramPath, tConfig.Parameters);
-        string defaultWorkingFolder = Path.GetDirectoryName(tConfig.ProgramPath) ?? string.Empty;
-        pInfo.WorkingDirectory = string.IsNullOrEmpty(tConfig.WorkingFolder) ? defaultWorkingFolder : tConfig.WorkingFolder;
-        _instanceLogger?.Info(this, $"Running program: {tConfig.ProgramPath} Parameters: {tConfig.Parameters} Working folder: {pInfo.WorkingDirectory}");
+        ProcessStartInfo pInfo = new(config.ProgramPath, config.Parameters);
+        string defaultWorkingFolder = Path.GetDirectoryName(config.ProgramPath) ?? string.Empty;
+        pInfo.WorkingDirectory = string.IsNullOrEmpty(config.WorkingFolder) ? defaultWorkingFolder : config.WorkingFolder;
+        _instanceLogger.Info(this, $"Running program: {config.ProgramPath} Parameters: {config.Parameters} Working folder: {pInfo.WorkingDirectory}");
 
         using Process? newProc = Process.Start(pInfo);
         if (newProc == null)
         {
-            _instanceLogger?.Error(this, "Run program failed: Process.Start returned null.");
+            _instanceLogger.Error(this, "Run program failed: Process.Start returned null.");
             return;
         }
         

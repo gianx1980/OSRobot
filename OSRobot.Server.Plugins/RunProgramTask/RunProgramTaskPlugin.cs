@@ -24,29 +24,16 @@ namespace OSRobot.Server.Plugins.RunProgramTask;
 
 public class RunProgramTaskPlugin : IPlugin
 {
-    public string Id { get { return "RunProgramTask"; } }
+    public string Id => "RunProgramTask";
 
-    public string Title { get { return Resource.TxtRunProgramTask; } }
+    public string Title => Resource.TxtRunProgramTask;
 
-    public EnumPluginType PluginType { get { return EnumPluginType.Task; } }
+    public EnumPluginType PluginType => EnumPluginType.Task;
 
-    public List<DynamicDataSample> SampleDynamicData
-    {
-        get
-        {
-            return CommonDynamicData.BuildStandardDynamicDataSamples("Run program task 1");
-        }
-    }
+    public List<DynamicDataSample> SampleDynamicData => CommonDynamicData.BuildStandardDynamicDataSamples("Run program task 1");
+    public IPluginInstance GetInstance() => new RunProgramTask();
 
-    public IPluginInstance GetInstance()
-    {
-        return new RunProgramTask();
-    }
-
-    public IPluginInstanceConfig GetPluginDefaultConfig()
-    {
-        return new RunProgramTaskConfig();
-    }
-
+    public IPluginInstanceConfig GetPluginDefaultConfig() => new RunProgramTaskConfig();
+    
     public EnumOSPlatform SupportedOSPlatforms { get => EnumOSPlatform.All; }
 }

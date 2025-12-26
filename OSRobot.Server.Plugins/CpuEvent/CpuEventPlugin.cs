@@ -24,11 +24,11 @@ namespace OSRobot.Server.Plugins.CpuEvent;
 
 public class CpuEventPlugin : IPlugin
 {
-    public string Id { get { return "CpuEvent"; } }
+    public string Id => "CpuEvent";
 
-    public string Title { get { return Resource.TxtCpuEvent; } }
+    public string Title => Resource.TxtCpuEvent;
 
-    public EnumPluginType PluginType { get { return EnumPluginType.Event; } }
+    public EnumPluginType PluginType => EnumPluginType.Event;
 
     public List<DynamicDataSample> SampleDynamicData
     {
@@ -40,16 +40,9 @@ public class CpuEventPlugin : IPlugin
         }
     }
 
-    public IPluginInstance GetInstance()
-    {
-        return new CpuEvent();
-    }
-
-    public IPluginInstanceConfig GetPluginDefaultConfig()
-    {
-        return new CpuEventConfig();
-    }
-
-    public EnumOSPlatform SupportedOSPlatforms { get => EnumOSPlatform.Windows; }
+    public IPluginInstance GetInstance() => new CpuEvent();
     
+    public IPluginInstanceConfig GetPluginDefaultConfig() => new CpuEventConfig();
+    
+    public EnumOSPlatform SupportedOSPlatforms => EnumOSPlatform.Windows;
 }

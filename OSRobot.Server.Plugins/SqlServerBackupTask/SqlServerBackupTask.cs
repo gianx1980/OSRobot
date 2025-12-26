@@ -26,7 +26,7 @@ using System.Data;
 
 namespace OSRobot.Server.Plugins.SqlServerBackupTask;
 
-public class SqlServerBackupTask : IterationTask
+public class SqlServerBackupTask : MultipleIterationTask
 {
     private const int _backupSuccess = -1;
     private const int _backupSuccessChecksumError = -2;
@@ -227,17 +227,17 @@ public class SqlServerBackupTask : IterationTask
         return result;
     }
 
-    protected override void RunIteration(int currentIteration)
+    protected override void RunMultipleIterationTask(int currentIteration)
     {
         _successfulBackupsNumber = 0;
         _failedBackupsNumber = 0;
 
-        SqlServerBackupTaskConfig tConfig = (SqlServerBackupTaskConfig)_iterationConfig;
+        SqlServerBackupTaskConfig config = (SqlServerBackupTaskConfig)_iterationTaskConfig;
 
-        string connectionString = $"Server={tConfig.Server};User ID={tConfig.Username};Password={tConfig.Password};{tConfig.ConnectionStringOptions}";
+        string connectionString = $"Server={config.Server};User ID={config.Username};Password={config.Password};{config.ConnectionStringOptions}";
 
-        bool getUserDatabases = tConfig.DatabasesToBackup == DatabasesToBackupEnum.AllUserDatabases;
-        List<SqlServerDatabaseListItem>? currentDbList = SqlServer.GetDatabaseList(tConfig.Server, tConfig.Username, tConfig.Password, tConfig.ConnectionStringOptions, getUserDatabases);
+        bool getUserDatabases = config.DatabasesToBackup == DatabasesToBackupEnum.AllUserDatabases;
+        List<SqlServerDatabaseListItem>? currentDbList = SqlServer.GetDatabaseList(config.Server, config.Username, config.Password, config.ConnectionStringOptions, getUserDatabases);
         if (currentDbList == null)
         {
             _instanceLogger?.Error(this, "An error occurred while obtaining database list, cannot continue.");
@@ -246,25 +246,25 @@ public class SqlServerBackupTask : IterationTask
 
         List<string> dbToBackupList = [.. currentDbList.Select(t => t.Name)];
 
-        if (tConfig.DatabasesToBackup == DatabasesToBackupEnum.SelectedDatabases)
+        if (config.DatabasesToBackup == DatabasesToBackupEnum.SelectedDatabases)
         {
-            dbToBackupList = [.. dbToBackupList.Where(t => tConfig.SelectedDatabases.Contains(t))];
+            dbToBackupList = [.. dbToBackupList.Where(t => config.SelectedDatabases.Contains(t))];
         }
 
-        string prevFileNameTemplate = tConfig.FileNameTemplate;
+        string prevFileNameTemplate = config.FileNameTemplate;
         foreach (string dbName in dbToBackupList)
         {
             try
             {
-                tConfig.FileNameTemplate = prevFileNameTemplate.Replace("{DatabaseName}", dbName);
+                config.FileNameTemplate = prevFileNameTemplate.Replace("{DatabaseName}", dbName);
                 _instanceLogger?.Info(this, $"Backing up database '{dbName}'...");
                 int backupResult;
 
-                if (tConfig.BackupType == BackupTypeEnum.Full)
+                if (config.BackupType == BackupTypeEnum.Full)
                 {
-                    backupResult = BackupDatabase(connectionString, dbName, tConfig.DestinationPath, tConfig.FileNameTemplate, tConfig.OverwriteIfExists,
-                                                    tConfig.PerformChecksum, tConfig.ContinueOnError,
-                                                    $"OSRobot-Backup-{DateTime.Now.Ticks}", tConfig.UseCompression, _instanceLogger);
+                    backupResult = BackupDatabase(connectionString, dbName, config.DestinationPath, config.FileNameTemplate, config.OverwriteIfExists,
+                                                    config.PerformChecksum, config.ContinueOnError,
+                                                    $"OSRobot-Backup-{DateTime.Now.Ticks}", config.UseCompression, _instanceLogger);
 
                     if (backupResult == _backupSuccess)
                         _instanceLogger?.Info(this, $"Backup database '{dbName}' completed");
@@ -275,9 +275,9 @@ public class SqlServerBackupTask : IterationTask
                 }
                 else
                 {
-                    backupResult = BackupTransactionLog(connectionString, dbName, tConfig.DestinationPath, tConfig.FileNameTemplate, tConfig.OverwriteIfExists,
-                                                        tConfig.PerformChecksum, tConfig.ContinueOnError,
-                                                        $"OSRobot-TranLogBackup-{DateTime.Now.Ticks}", tConfig.UseCompression, _instanceLogger);
+                    backupResult = BackupTransactionLog(connectionString, dbName, config.DestinationPath, config.FileNameTemplate, config.OverwriteIfExists,
+                                                        config.PerformChecksum, config.ContinueOnError,
+                                                        $"OSRobot-TranLogBackup-{DateTime.Now.Ticks}", config.UseCompression, _instanceLogger);
 
                     if (backupResult == _backupSuccess)
                         _instanceLogger?.Info(this, $"Backup transaction log '{dbName}' completed");
@@ -294,11 +294,11 @@ public class SqlServerBackupTask : IterationTask
 
                 if (backupResult == _backupSuccess || backupResult == _backupSuccessChecksumError)
                 {
-                    if (tConfig.VerifyBackup)
+                    if (config.VerifyBackup)
                     {
                         _instanceLogger?.Info(this, $"Starting backup verification '{dbName}'...");
 
-                        if (VerifyBackup(connectionString, dbName, tConfig.DestinationPath, tConfig.FileNameTemplate, tConfig.BackupType, _instanceLogger))
+                        if (VerifyBackup(connectionString, dbName, config.DestinationPath, config.FileNameTemplate, config.BackupType, _instanceLogger))
                             _instanceLogger?.Info(this, "Verification OK");
                         else
                             _instanceLogger?.Info(this, "Verification failed");
@@ -312,13 +312,13 @@ public class SqlServerBackupTask : IterationTask
         }
     }
 
-    protected override void PostIterationSucceded(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
+    protected override void PostTaskSucceded(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
     {
         dDataSet.TryAdd(SqlServerBackupTaskCommon.DynDataKeySuccessfulBackupsNumber, _successfulBackupsNumber);
         dDataSet.TryAdd(SqlServerBackupTaskCommon.DynDataKeyFailedBackupsNumber, _failedBackupsNumber);
     }
 
-    protected override void PostIterationFailed(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
+    protected override void PostTaskFailed(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
     {
         dDataSet.TryAdd(SqlServerBackupTaskCommon.DynDataKeySuccessfulBackupsNumber, _successfulBackupsNumber);
         dDataSet.TryAdd(SqlServerBackupTaskCommon.DynDataKeyFailedBackupsNumber, _failedBackupsNumber);

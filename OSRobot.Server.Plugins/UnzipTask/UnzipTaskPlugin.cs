@@ -24,29 +24,17 @@ namespace OSRobot.Server.Plugins.UnzipTask;
 
 public class UnzipTaskPlugin : IPlugin
 {
-    public string Id { get { return "UnzipTask"; } }
+    public string Id => "UnzipTask";
 
-    public string Title { get { return Resource.TxtUnzipTask; } }
+    public string Title => Resource.TxtUnzipTask;
 
-    public EnumPluginType PluginType { get { return EnumPluginType.Task; } }
+    public EnumPluginType PluginType => EnumPluginType.Task;
 
-    public List<DynamicDataSample> SampleDynamicData
-    {
-        get
-        {
-            return CommonDynamicData.BuildStandardDynamicDataSamples("Unzip task 1");
-        }
-    }
+    public List<DynamicDataSample> SampleDynamicData => CommonDynamicData.BuildStandardDynamicDataSamples("Unzip task 1");
 
-    public IPluginInstance GetInstance()
-    {
-        return new UnzipTask();
-    }
+    public IPluginInstance GetInstance() => new UnzipTask();
 
-    public IPluginInstanceConfig GetPluginDefaultConfig()
-    {
-        return new UnzipTaskConfig();
-    }
-
-    public EnumOSPlatform SupportedOSPlatforms { get => EnumOSPlatform.All; }
+    public IPluginInstanceConfig GetPluginDefaultConfig() => new UnzipTaskConfig();
+    
+    public EnumOSPlatform SupportedOSPlatforms => EnumOSPlatform.All;
 }
