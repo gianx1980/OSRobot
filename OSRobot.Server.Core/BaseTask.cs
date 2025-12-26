@@ -31,7 +31,7 @@ public abstract class BaseTask : ITask
     protected DynamicDataSet _lastDynamicDataSet = [];
 
     protected int? _subInstanceIndex;
-#pragma warning disable CS8618
+    #pragma warning disable CS8618
     protected IPluginInstanceLogger _instanceLogger;
     protected InstanceExecResult _instanceExecResult;
     #pragma warning restore CS8618
@@ -79,8 +79,7 @@ public abstract class BaseTask : ITask
                 instanceLogger.TaskError(this, ex);
         }
 
-        if (_instanceExecResult == null)
-            throw new ApplicationException("_instanceExecResult not set by the task implementation");
+        _instanceExecResult = new InstanceExecResult(_execResults);
 
         return _instanceExecResult;
     }
