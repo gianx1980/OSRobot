@@ -33,7 +33,7 @@ public sealed class TestDiskSpaceEvent
         DiskSpaceEvent eventObj = new();
         long? result = (long?)Common.CallPrivateMethod(eventObj, "ThresholdToBytes", [(long)549755813888, (int)99999999, DiskThresholdUnitMeasure.Megabytes]);
         Assert.IsNotNull(result, "Result is null");
-        Assert.AreEqual(result, 99999999L * 1024L * 1024L);
+        Assert.AreEqual(99999999L * 1024L * 1024L, result);
     }
 
     [TestMethod]
@@ -44,7 +44,7 @@ public sealed class TestDiskSpaceEvent
         long? result = (long?)Common.CallPrivateMethod(eventObj, "ThresholdToBytes", [(long)549755813888, (int)99999999, DiskThresholdUnitMeasure.Gigabytes]);
 
         Assert.IsNotNull(result, "Result is null");
-        Assert.AreEqual(result, 99999999L * 1024L * 1024L * 1024L);
+        Assert.AreEqual(99999999L * 1024L * 1024L * 1024L, result);
     }
 
     [TestMethod]
@@ -55,7 +55,7 @@ public sealed class TestDiskSpaceEvent
         long? result = (long?)Common.CallPrivateMethod(eventObj, "ThresholdToBytes", [(long)549755813888, (int)999999, DiskThresholdUnitMeasure.Terabytes]);
 
         Assert.IsNotNull(result, "Result is null");
-        Assert.AreEqual(result, 999999L * 1024L * 1024L * 1024L * 1024L);
+        Assert.AreEqual(999999L * 1024L * 1024L * 1024L * 1024L, result);
     }
 
 

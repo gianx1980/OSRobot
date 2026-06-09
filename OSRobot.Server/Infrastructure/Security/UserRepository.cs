@@ -22,7 +22,6 @@ using Microsoft.EntityFrameworkCore;
 using OSRobot.Server.Infrastructure.Security.Abstract;
 using OSRobot.Server.Infrastructure.DataAccess.Models;
 using OSRobot.Server.Core;
-using Irony.Parsing;
 
 namespace OSRobot.Server.Infrastructure.Security;
 
