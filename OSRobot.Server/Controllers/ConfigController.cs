@@ -35,7 +35,7 @@ namespace OSRobot.Server.Controllers
         [HttpPost]
         [Route("GetConfig")]
         [Authorize]
-        public IActionResult GetConfig()
+        public ActionResult<ResponseModel<ConfigResponse>> GetConfig()
         {
             ConfigResponse configResponse = new(_appSettings.JWT.RequestNewTokenIfMinutesLeft, 
                                                     _appSettings.ClientSettings.AppTitle, 

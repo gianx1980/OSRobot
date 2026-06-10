@@ -37,7 +37,7 @@ public class ClientErrorTrackingController : AppControllerBase
     [HttpPost]
     [Authorize]
     [Route("TrackError")]
-    public async Task<IActionResult> TrackError(TrackErrorRequest trackErrorMessageRequest)
+    public async Task<ActionResult> TrackError(TrackErrorRequest trackErrorMessageRequest)
     {
         await Task.FromResult(0);
         /*
