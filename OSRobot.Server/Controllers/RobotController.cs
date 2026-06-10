@@ -33,10 +33,11 @@ namespace OSRobot.Server.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSettings) : AppControllerBase
+public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSettings, ILogger<RobotController> logger) : AppControllerBase
 {
     private readonly IJobEngine _jobEngine = jobEngine;
     private readonly AppSettings _appSettings = appSettings.Value;
+    private readonly ILogger<RobotController> _logger = logger;
 
     [HttpGet]
     [Route("Objects")]
@@ -110,8 +111,9 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
             ResponseModel response = new(ResponseCode.ResponseOk, null);
             return Ok(response);
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "An error occurred while saving jobs.json.");
             ResponseModel errResp = new(ResponseCode.ErrorSavingJobs, "An error occurred while saving the jobs.");
             return BadRequest(errResp);
         }

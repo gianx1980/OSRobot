@@ -39,11 +39,12 @@ namespace OSRobot.Server.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class AccountController(IJWTManager jWTManager, IOptions<AppSettings> appSettings, IUserRepository userRepository) : AppControllerBase
+public class AccountController(IJWTManager jWTManager, IOptions<AppSettings> appSettings, IUserRepository userRepository, ILogger<AccountController> logger) : AppControllerBase
 {
     private readonly IJWTManager _jWTManager = jWTManager;
     private readonly AppSettings _appSettings = appSettings.Value;
     private readonly IUserRepository _userRepository = userRepository;
+    private readonly ILogger<AccountController> _logger = logger;
     
     private string? GetPrincipalNameFromExpiredToken(string token)
     {
@@ -65,9 +66,13 @@ public class AccountController(IJWTManager jWTManager, IOptions<AppSettings> app
         {
             principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out securityToken);
         }
-        catch
+        catch (SecurityTokenException ex)
         {
-
+            _logger.LogWarning(ex, "Token validation failed during refresh attempt.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error validating expired token.");
         }
 
         if (principal == null
