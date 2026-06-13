@@ -1,5 +1,5 @@
 <script setup>
-import { BaseEdge, EdgeLabelRenderer, getBezierPath } from "@vue-flow/core";
+import { BaseEdge, EdgeLabelRenderer, getSmoothStepPath } from "@vue-flow/core";
 import { computed } from "vue";
 import { useI18n } from "vue-i18n";
 
@@ -54,7 +54,7 @@ function _delete(ev) {
   _emit("deleteEdgeClick", eventData);
 }
 
-const _path = computed(() => getBezierPath(_props));
+const _path = computed(() => getSmoothStepPath(_props));
 </script>
 
 <script>
