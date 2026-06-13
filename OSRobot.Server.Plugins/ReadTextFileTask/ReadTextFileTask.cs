@@ -106,15 +106,21 @@ public class ReadTextFileTask : MultipleIterationTask
             dataRow[colDef.ColumnName] = val;
         else if (colDef.ColumnDataType == ReadTextFileColumnDataType.Integer)
         {
-            dataRow[colDef.ColumnName] = int.Parse(val, GetCulture(colDef.ColumnExpectedCulture));
+            if (!int.TryParse(val, NumberStyles.Integer, GetCulture(colDef.ColumnExpectedCulture), out int intValue))
+                throw new FormatException($"Cannot parse value '{val}' as Integer for column '{colDef.ColumnName}'.");
+            dataRow[colDef.ColumnName] = intValue;
         }
         else if (colDef.ColumnDataType == ReadTextFileColumnDataType.Decimal)
         {
-            dataRow[colDef.ColumnName] = decimal.Parse(val, GetCulture(colDef.ColumnExpectedCulture));
+            if (!decimal.TryParse(val, NumberStyles.Number, GetCulture(colDef.ColumnExpectedCulture), out decimal decValue))
+                throw new FormatException($"Cannot parse value '{val}' as Decimal for column '{colDef.ColumnName}'.");
+            dataRow[colDef.ColumnName] = decValue;
         }
         else if (colDef.ColumnDataType == ReadTextFileColumnDataType.Datetime)
         {
-            dataRow[colDef.ColumnName] = DateTime.ParseExact(val, colDef.ColumnExpectedFormat, GetCulture(colDef.ColumnExpectedCulture));
+            if (!DateTime.TryParseExact(val, colDef.ColumnExpectedFormat, GetCulture(colDef.ColumnExpectedCulture), DateTimeStyles.None, out DateTime dtValue))
+                throw new FormatException($"Cannot parse value '{val}' as DateTime with format '{colDef.ColumnExpectedFormat}' for column '{colDef.ColumnName}'.");
+            dataRow[colDef.ColumnName] = dtValue;
         }
     }
 
@@ -245,13 +251,16 @@ public class ReadTextFileTask : MultipleIterationTask
 
         if (config.ReadRowNumberOption)
         {
-            readFromRow = int.Parse(config.ReadRowNumber);
+            if (!int.TryParse(config.ReadRowNumber, out readFromRow))
+                throw new ApplicationException($"Invalid configuration: '{config.ReadRowNumber}' is not a valid row number.");
             readToRow = readFromRow;
         }
         else
         {
-            readFromRow = int.Parse(config.ReadFromRow);
-            readToRow = int.Parse(config.ReadToRow);
+            if (!int.TryParse(config.ReadFromRow, out readFromRow))
+                throw new ApplicationException($"Invalid configuration: '{config.ReadFromRow}' is not a valid row number.");
+            if (!int.TryParse(config.ReadToRow, out readToRow))
+                throw new ApplicationException($"Invalid configuration: '{config.ReadToRow}' is not a valid row number.");
         }
 
         string[]? Row = null;
@@ -300,14 +309,17 @@ public class ReadTextFileTask : MultipleIterationTask
             if (config.ReadInterval == ReadTextFileIntervalType.ReadFromRowToLastRow)
             {
                 // From row to end
-                readFromRow = int.Parse(config.ReadFromRow);
+                if (!int.TryParse(config.ReadFromRow, out readFromRow))
+                    throw new ApplicationException($"Invalid configuration: '{config.ReadFromRow}' is not a valid row number.");
                 readFromRow--;
                 if (readFromRow < 0) readFromRow = 0;
             }
             else
             {
                 // Read N Last rows
-                readFromRow = (rows.Count - 1) - int.Parse(config.ReadNumberOfRows);
+                if (!int.TryParse(config.ReadNumberOfRows, out int numberOfRows))
+                    throw new ApplicationException($"Invalid configuration: '{config.ReadNumberOfRows}' is not a valid number of rows.");
+                readFromRow = (rows.Count - 1) - numberOfRows;
             }
 
             if (readFromRow <= (rows.Count - 1))

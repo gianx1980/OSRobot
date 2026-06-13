@@ -32,7 +32,7 @@ public class ClientUtilsController : AppControllerBase
     [HttpGet]
     [Route("OSInfo")]
     [Authorize]
-    public IActionResult OSInfo()
+    public ActionResult<ResponseModel<OSInfoResponse>> OSInfo()
     {
         ResponseModel<OSInfoResponse> response = new(ResponseCode.ResponseOk, null, new OSInfoResponse());
         return Ok(response);
@@ -42,7 +42,7 @@ public class ClientUtilsController : AppControllerBase
     [HttpGet]
     [Route("Drives")]
     [Authorize]
-    public IActionResult Drives()
+    public ActionResult<ResponseModel<List<DriveListItem>>> Drives()
     {
         DriveInfo[] systemDrives = DriveInfo.GetDrives();
         
@@ -55,7 +55,7 @@ public class ClientUtilsController : AppControllerBase
     [HttpGet]
     [Route("Folders")]
     [Authorize]
-    public IActionResult Folders(string path)
+    public ActionResult<ResponseModel<List<string>>> Folders(string path)
     {
         List<string> folders = [];
 
@@ -90,7 +90,7 @@ public class ClientUtilsController : AppControllerBase
     [HttpGet]
     [Route("Files")]
     [Authorize]
-    public IActionResult Files(string path)
+    public ActionResult<ResponseModel<List<string>>> Files(string path)
     {
         List<string> fileList = [];
      
@@ -118,7 +118,7 @@ public class ClientUtilsController : AppControllerBase
     [HttpGet]
     [Route("SqlServerConnectionTest")]
     [Authorize]
-    public IActionResult SqlServerConnectionTest([FromQuery] SqlServerConnectionRequest connectionInfo)
+    public ActionResult<ResponseModel> SqlServerConnectionTest([FromQuery] SqlServerConnectionRequest connectionInfo)
     {
         if (connectionInfo.Server == null
             || connectionInfo.Username == null
@@ -142,7 +142,7 @@ public class ClientUtilsController : AppControllerBase
     [HttpGet]
     [Route("SqlServerDatabases")]
     [Authorize]
-    public IActionResult SqlServerDatabases([FromQuery] SqlServerConnectionRequest connectionInfo)
+    public ActionResult<ResponseModel<List<DatabaseListItem>>> SqlServerDatabases([FromQuery] SqlServerConnectionRequest connectionInfo)
     {
         if (connectionInfo.Server == null
             || connectionInfo.Username == null

@@ -71,7 +71,8 @@ public class ExcelFileTask : SingleIterationTask
 
         if (config.TaskType == ExcelFileTaskType.InsertRow)
         {
-            int InsertAtRow = int.Parse(configCopy_0.InsertAtRow);
+            if (!int.TryParse(configCopy_0.InsertAtRow, out int InsertAtRow))
+                throw new ApplicationException($"Invalid configuration: '{configCopy_0.InsertAtRow}' is not a valid row number for InsertAtRow.");
             wksSheet.Row(InsertAtRow).InsertRowsAbove(_iterationsCount);
             lastRow = InsertAtRow;
         }
@@ -115,7 +116,10 @@ public class ExcelFileTask : SingleIterationTask
         int lastRow = wksSheet.RowsUsed().Count();
         int lastCol;
         if (!string.IsNullOrEmpty(config.NumColumnsToRead))
-            lastCol = int.Parse(config.NumColumnsToRead);
+        {
+            if (!int.TryParse(config.NumColumnsToRead, out lastCol))
+                throw new ApplicationException($"Invalid configuration: '{config.NumColumnsToRead}' is not a valid number for NumColumnsToRead.");
+        }
         else
             lastCol = wksSheet.CellsUsed().Count();
 
@@ -128,7 +132,8 @@ public class ExcelFileTask : SingleIterationTask
             }
             else
             {
-                readFromRow = int.Parse(config.ReadRowNumber);
+                if (!int.TryParse(config.ReadRowNumber, out readFromRow))
+                    throw new ApplicationException($"Invalid configuration: '{config.ReadRowNumber}' is not a valid row number for ReadRowNumber.");
                 readToRow = readFromRow;
             }
         }
@@ -137,7 +142,8 @@ public class ExcelFileTask : SingleIterationTask
             switch (config.ReadInterval)
             {
                 case ExcelReadIntervalType.ReadLastNRows:
-                    int numberOfRows = int.Parse(config.ReadNumberOfRows);
+                    if (!int.TryParse(config.ReadNumberOfRows, out int numberOfRows))
+                        throw new ApplicationException($"Invalid configuration: '{config.ReadNumberOfRows}' is not a valid number for ReadNumberOfRows.");
                     if (lastRow - numberOfRows >= 1)
                         readFromRow = lastRow - numberOfRows;
                     else
@@ -147,11 +153,13 @@ public class ExcelFileTask : SingleIterationTask
                     break;
 
                 case ExcelReadIntervalType.ReadFromRowToRow:
-                    readFromRow = int.Parse(config.ReadFromRow);
+                    if (!int.TryParse(config.ReadFromRow, out readFromRow))
+                        throw new ApplicationException($"Invalid configuration: '{config.ReadFromRow}' is not a valid row number for ReadFromRow.");
 
                     if (readFromRow <= lastRow)
                     {
-                        readToRow = int.Parse(config.ReadToRow);
+                        if (!int.TryParse(config.ReadToRow, out readToRow))
+                            throw new ApplicationException($"Invalid configuration: '{config.ReadToRow}' is not a valid row number for ReadToRow.");
 
                         if (readToRow > lastRow)
                             readToRow = lastRow;
@@ -159,7 +167,8 @@ public class ExcelFileTask : SingleIterationTask
                     break;
 
                 case ExcelReadIntervalType.ReadFromRowToLastRow:
-                    readFromRow = int.Parse(config.ReadFromRow);
+                    if (!int.TryParse(config.ReadFromRow, out readFromRow))
+                        throw new ApplicationException($"Invalid configuration: '{config.ReadFromRow}' is not a valid row number for ReadFromRow.");
                     readToRow = lastRow;
                     break;
             }

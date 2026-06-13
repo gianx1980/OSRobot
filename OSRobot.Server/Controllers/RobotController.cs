@@ -33,15 +33,16 @@ namespace OSRobot.Server.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSettings) : AppControllerBase
+public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSettings, ILogger<RobotController> logger) : AppControllerBase
 {
     private readonly IJobEngine _jobEngine = jobEngine;
     private readonly AppSettings _appSettings = appSettings.Value;
+    private readonly ILogger<RobotController> _logger = logger;
 
     [HttpGet]
     [Route("Objects")]
     [Authorize]
-    public IActionResult Objects()
+    public ActionResult<ResponseModel<List<PluginListItem>>> Objects()
     {
         List<PluginListItem> pluginList = [.. _jobEngine.GetPlugins().Select(t => new PluginListItem(t.Id, t.Title, t.PluginType.ToString().ToLowerInvariant(), t.GetPluginDefaultConfig(), t.SupportedOSPlatforms))];
         ResponseModel<List<PluginListItem>> response = new(ResponseCode.ResponseOk, null, pluginList);
@@ -51,7 +52,7 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
     [HttpGet]
     [Route("DynDataSamples")]
     [Authorize]
-    public IActionResult DynDataSamples(string pluginId)
+    public ActionResult<ResponseModel<List<PluginDynDataSampleListItem>>> DynDataSamples(string pluginId)
     {
         IPlugin? plugin = _jobEngine.GetPlugin(pluginId);
         if (plugin == null)
@@ -69,7 +70,7 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
     [HttpGet]
     [Route("WorkspaceJobs")]
     [Authorize]
-    public IActionResult WorkspaceJobs()
+    public ActionResult<ResponseModel<object>> WorkspaceJobs()
     {
         // Check the existence of data
         if (!System.IO.File.Exists(Path.Combine(_appSettings.JobEngineConfig.DataPath, "jobs.json")))
@@ -94,7 +95,7 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
     [HttpPost]
     [Route("WorkspaceJobs")]
     [Authorize]
-    public IActionResult WorkspaceJobs([FromBody] object requestBody)
+    public ActionResult<ResponseModel> WorkspaceJobs([FromBody] object requestBody)
     {
         string? workspaceJobs = requestBody.ToString();
         if (string.IsNullOrEmpty(workspaceJobs))
@@ -110,8 +111,9 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
             ResponseModel response = new(ResponseCode.ResponseOk, null);
             return Ok(response);
         }
-        catch
+        catch (Exception ex)
         {
+            _logger.LogError(ex, "An error occurred while saving jobs.json.");
             ResponseModel errResp = new(ResponseCode.ErrorSavingJobs, "An error occurred while saving the jobs.");
             return BadRequest(errResp);
         }
@@ -120,7 +122,7 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
     [HttpPost]
     [Route("StartTask")]
     [Authorize]
-    public IActionResult StartTask([FromQuery] int taskId)
+    public ActionResult<ResponseModel> StartTask([FromQuery] int taskId)
     {
         bool result = _jobEngine.StartTask(taskId);
 
@@ -137,7 +139,7 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
     [HttpPost]
     [Route("ReloadJobsConfig")]
     [Authorize]
-    public IActionResult ReloadJobsConfig()
+    public ActionResult<ResponseModel> ReloadJobsConfig()
     {
         ReloadJobsReturnValues result = _jobEngine.ReloadJobs();
 
@@ -161,7 +163,7 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
     [HttpGet]
     [Route("FolderLogs")]
     [Authorize]
-    public IActionResult FolderLogs([FromQuery] int folderId)
+    public ActionResult<ResponseModel<List<LogInfoListItem>>> FolderLogs([FromQuery] int folderId)
     {
         List<LogInfo> folderLogs = _jobEngine.GetFolderLogs(folderId);
 
@@ -181,7 +183,7 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
     [HttpGet]
     [Route("FolderInfo")]
     [Authorize]
-    public IActionResult FolderInfo([FromQuery] int folderId)
+    public ActionResult<ResponseModel<FolderInfo>> FolderInfo([FromQuery] int folderId)
     {
         FolderInfo? folderInfo = _jobEngine.GetFolderInfo(folderId);
         if (folderInfo == null)
@@ -198,7 +200,7 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
     [HttpGet]
     [Route("LogContent")]
     [Authorize]
-    public IActionResult LogContent([FromQuery] int folderId, [FromQuery] string logFileName)
+    public ActionResult<ResponseModel<string>> LogContent([FromQuery] int folderId, [FromQuery] string logFileName)
     {
         string? logContent = _jobEngine.GetLogContent(folderId, logFileName);
         if (logContent == null)

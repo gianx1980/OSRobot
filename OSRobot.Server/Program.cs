@@ -88,9 +88,24 @@ builder.Services.AddCors(options =>
 {
     options.AddPolicy("DefPolicy", policy =>
     {
-        policy.AllowAnyOrigin()
-              .AllowAnyHeader()
-              .AllowAnyMethod();
+        if (builder.Environment.IsDevelopment())
+        {
+            // In development allow any origin for ease of local frontend development
+            policy.AllowAnyOrigin()
+                  .AllowAnyHeader()
+                  .AllowAnyMethod();
+        }
+        else
+        {
+            // In production restrict to origins listed in AppSettings:AllowedOrigins (comma-separated)
+            string[]? allowedOrigins = builder.Configuration["AppSettings:AllowedOrigins"]
+                ?.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries);
+
+            if (allowedOrigins != null && allowedOrigins.Length > 0)
+                policy.WithOrigins(allowedOrigins)
+                      .AllowAnyHeader()
+                      .AllowAnyMethod();
+        }
     });
 });
 

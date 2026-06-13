@@ -390,19 +390,19 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
             // This guarantee that events will not trigger untils all tasks are initialized
             _log.Info("Starting tasks initialization");
             _tasks = GetTaskList(_rootFolder);
-            _tasks.ForEach(T =>
+            _tasks.ForEach(t =>
             {
-                _log.Info($"Initializing task: {T.Config.Id}:{T.Config.Name}:{T.GetType().Name}");
-                T.Init();
+                _log.Info($"Initializing task: {t.Config.Id}:{t.Config.Name}:{t.GetType().Name}");
+                t.Init();
             });
 
             _log.Info("Starting events initialization");
             _events = GetEventList(_rootFolder);
-            _events.ForEach(E =>
+            _events.ForEach(t =>
             {
-                _log.Info($"Initializing event: {E.Config.Id}:{E.Config.Name}:{E.GetType().Name}");
-                E.EventTriggered += Plugin_EventTriggered;
-                E.Init();
+                _log.Info($"Initializing event: {t.Config.Id}:{t.Config.Name}:{t.GetType().Name}");
+                t.EventTriggered += Plugin_EventTriggered;
+                t.Init();
             });
         }
         catch (Exception ex)

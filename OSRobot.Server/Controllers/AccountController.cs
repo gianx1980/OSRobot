@@ -39,11 +39,12 @@ namespace OSRobot.Server.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class AccountController(IJWTManager jWTManager, IOptions<AppSettings> appSettings, IUserRepository userRepository) : AppControllerBase
+public class AccountController(IJWTManager jWTManager, IOptions<AppSettings> appSettings, IUserRepository userRepository, ILogger<AccountController> logger) : AppControllerBase
 {
     private readonly IJWTManager _jWTManager = jWTManager;
     private readonly AppSettings _appSettings = appSettings.Value;
     private readonly IUserRepository _userRepository = userRepository;
+    private readonly ILogger<AccountController> _logger = logger;
     
     private string? GetPrincipalNameFromExpiredToken(string token)
     {
@@ -65,9 +66,13 @@ public class AccountController(IJWTManager jWTManager, IOptions<AppSettings> app
         {
             principal = tokenHandler.ValidateToken(token, tokenValidationParameters, out securityToken);
         }
-        catch
+        catch (SecurityTokenException ex)
         {
-
+            _logger.LogWarning(ex, "Token validation failed during refresh attempt.");
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Unexpected error validating expired token.");
         }
 
         if (principal == null
@@ -88,7 +93,7 @@ public class AccountController(IJWTManager jWTManager, IOptions<AppSettings> app
     /// <returns>If authentication succesful returns a response with a JWT token</returns>
     [HttpPost]
     [Route("Login")]
-    public async Task<IActionResult> Login([FromBody] UserLoginRequest userLogin)
+    public async Task<ActionResult<ResponseModel<UserLoginResponse>>> Login([FromBody] UserLoginRequest userLogin)
     {
         var loginResult = await _userRepository.Users_Login(userLogin.Username, userLogin.Password);    
         if (loginResult.ResultObject == null || loginResult.ResultCode == UserRepositoryResult.WrongCredentials)
@@ -115,7 +120,7 @@ public class AccountController(IJWTManager jWTManager, IOptions<AppSettings> app
     [HttpPost]
     [Authorize]
     [Route("ChangePassword")]
-    public async Task<IActionResult> ChangePassword([FromBody] UserChangePasswordRequest userChangePassowordRequest)
+    public async Task<ActionResult<ResponseModel>> ChangePassword([FromBody] UserChangePasswordRequest userChangePassowordRequest)
     {
         if (userChangePassowordRequest.NewPassword != userChangePassowordRequest.ConfirmPassword)
         {
@@ -139,7 +144,7 @@ public class AccountController(IJWTManager jWTManager, IOptions<AppSettings> app
 
     [HttpPost]
     [Route("RefreshToken")]
-    public async Task<IActionResult> RefreshToken([FromBody] UserRefreshTokenRequest userRefreshTokenRequest)
+    public async Task<ActionResult<ResponseModel<UserRefreshTokenResponse>>> RefreshToken([FromBody] UserRefreshTokenRequest userRefreshTokenRequest)
     {        
         string? userName = GetPrincipalNameFromExpiredToken(userRefreshTokenRequest.Token);
         if (userName == null)

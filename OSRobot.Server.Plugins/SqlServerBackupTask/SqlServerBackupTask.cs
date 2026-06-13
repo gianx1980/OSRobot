@@ -72,7 +72,7 @@ public class SqlServerBackupTask : MultipleIterationTask
                 SqlCommandBackup += ", NO_COMPRESSION";
 
             using SqlConnection Cnt = new(connectionString);
-            ManualResetEvent WaitInfoMessage = new(false);
+            using ManualResetEvent WaitInfoMessage = new(false);
             Cnt.InfoMessage += (sender, e) =>
             {
                 if (e.Message.Contains("BACKUP WITH CONTINUE_AFTER_ERROR successfully"))
@@ -138,7 +138,7 @@ public class SqlServerBackupTask : MultipleIterationTask
                 sqlCommandBackup += ", NO_COMPRESSION";
 
             using SqlConnection cnt = new(connectionString);
-            ManualResetEvent waitInfoMessage = new(false);
+            using ManualResetEvent waitInfoMessage = new(false);
             cnt.InfoMessage += (sender, e) =>
             {
                 if (e.Message.Contains("BACKUP WITH CONTINUE_AFTER_ERROR successfully"))
@@ -200,7 +200,7 @@ public class SqlServerBackupTask : MultipleIterationTask
             ";
 
             using SqlConnection cnt = new(connectionString);
-            ManualResetEvent WaitInfoMessage = new(false);
+            using ManualResetEvent WaitInfoMessage = new(false);
             cnt.InfoMessage += (sender, e) =>
             {
                 if (e.Message.Contains("is valid."))
