@@ -211,6 +211,8 @@ import { ref, onMounted, watch } from "vue";
 import {
   VueFlow,
   useVueFlow,
+  MarkerType,
+  Position,
   ConnectionMode,
 } from "@vue-flow/core";
 const {
@@ -242,13 +244,6 @@ import Utility from "src/infrastructure/Utility.js";
 import Robot from "src/infrastructure/server/Robot.js";
 import Workspace from "src/infrastructure/server/Workspace.js";
 import RobotObjectUtility from "src/infrastructure/workspace/RobotObjectUtility.js";
-import {
-  toFlowNode,
-  toFlowEdge,
-  fromFlowNode,
-  fromFlowEdge,
-  createDefaultConnection,
-} from "src/infrastructure/workspace/WorkspaceAdapter.js";
 import ChangePasswordDialog from "src/components/ChangePasswordDialog.vue";
 
 const _configForms = {
@@ -366,8 +361,30 @@ function _getId() {
 }
 
 function _createFlowElement(config, x, y, pluginInfo) {
-  const jobItem = { ...config, position: { x, y } };
-  return toFlowNode(jobItem, pluginInfo);
+  let icon = null;
+  if (pluginInfo !== null) {
+    icon = pluginInfo.icon;
+  } else {
+    icon = "folder";
+  }
+
+  return {
+    id: config.id.toString(),
+    data: {
+      label: config.name,
+      icon: icon,
+      type: pluginInfo === null ? "folder" : pluginInfo.type,
+      supportedOSPlatformList:
+        pluginInfo === null ? null : pluginInfo.supportedOSPlatformList,
+      pluginTitle: pluginInfo === null ? "Folder" : pluginInfo.title,
+    },
+    position: { x: x, y: y },
+    connectable: pluginInfo === null ? false : true,
+    type: pluginInfo === null ? "folder" : pluginInfo.type,
+    sourcePosition: Position.Right,
+    targetPosition: Position.Left,
+    workspaceItemConfig: config,
+  };
 }
 
 // Drawers status
@@ -441,8 +458,8 @@ async function _forceServerConfigReload(ev) {
 }
 
 async function _saveClick(ev) {
-  _workspaceJobs[`folder_${_selectedFolder.value}`].items = getNodes.value.map(fromFlowNode);
-  _workspaceJobs[`folder_${_selectedFolder.value}`].connections = getEdges.value.map(fromFlowEdge);
+  _workspaceJobs[`folder_${_selectedFolder.value}`].edges = getEdges.value;
+  _workspaceJobs[`folder_${_selectedFolder.value}`].nodes = getNodes.value;
 
   try {
     _isSaving.value = true;
@@ -651,8 +668,8 @@ function _drop(ev) {
     // Update workspace jobs configuration
     _workspaceJobs[`folder_${config.id}`] = {
       id: config.id,
-      items: [],
-      connections: [],
+      nodes: [],
+      edges: [],
     };
 
     // Update folder tree
@@ -778,26 +795,47 @@ function _exitClick() {
 // and load the status of the new selected folder
 watch(_selectedFolder, async (selectedValueCurrent, selectedValuePrev) => {
   if (selectedValuePrev !== null) {
-    // Persist current canvas state back to business model before switching
-    _workspaceJobs[`folder_${selectedValuePrev}`].items = getNodes.value.map(fromFlowNode);
-    _workspaceJobs[`folder_${selectedValuePrev}`].connections = getEdges.value.map(fromFlowEdge);
+    // Save the status of the previuos folder
+    _workspaceJobs[`folder_${selectedValuePrev}`].edges = getEdges.value;
+    _workspaceJobs[`folder_${selectedValuePrev}`].nodes = getNodes.value;
   }
 
   if (selectedValueCurrent !== null) {
-    const folder = _workspaceJobs[`folder_${selectedValueCurrent}`];
-    _selectedFolderNodes.value = (folder.items ?? []).map((item) =>
-      toFlowNode(item, _getPluginInfo(item.pluginId) ?? null)
-    );
-    _selectedFolderEdges.value = (folder.connections ?? []).map(toFlowEdge);
+    // Load the status of the new selected folder
+    _selectedFolderNodes.value =
+      _workspaceJobs[`folder_${selectedValueCurrent}`].nodes;
+    _selectedFolderEdges.value =
+      _workspaceJobs[`folder_${selectedValueCurrent}`].edges;
   }
 
   _rightDrawerOpen.value = false;
 });
 
 onConnect((params) => {
-  const edgeId = `${params.source}-${params.target}`;
-  const connection = createDefaultConnection(edgeId, params.source, params.target);
-  addEdges(toFlowEdge(connection));
+  params.type = "button";
+  params.markerEnd = MarkerType.Arrow;
+
+  const sourceInt = params.source;
+  const targetInt = params.target;
+
+  // Configure connection and add default exec condition
+  params.workspaceConnectionConfig = {
+    source: sourceInt,
+    target: targetInt,
+    enabled: true,
+    waitSeconds: 0,
+    executeConditions: [
+      {
+        dynamicDataCode: null,
+        operator: "ObjectExecutes",
+        minValue: null,
+        maxValue: null,
+      },
+    ],
+    dontExecuteConditions: [],
+  };
+
+  addEdges(params);
 });
 
 onMounted(async () => {
@@ -898,11 +936,8 @@ onMounted(async () => {
 
       // The first selected folder will always be 0 (0 = root)
       _selectedFolder.value = "0";
-      const rootFolder = _workspaceJobs["folder_0"];
-      _selectedFolderNodes.value = (rootFolder.items ?? []).map((item) =>
-        toFlowNode(item, _getPluginInfo(item.pluginId) ?? null)
-      );
-      _selectedFolderEdges.value = (rootFolder.connections ?? []).map(toFlowEdge);
+      _selectedFolderNodes.value = _workspaceJobs["folder_0"].nodes;
+      _selectedFolderEdges.value = _workspaceJobs["folder_0"].edges;
     } else {
       // No jobs from server, init with an empty tree
       console.error("No jobs from server...");
