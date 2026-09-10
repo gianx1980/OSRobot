@@ -45,7 +45,7 @@ public static partial class DynamicDataParser
 {
     private const string _codePlaceholder = "[CODE]";
     private readonly static Regex _regExFieldValue = DynamicDataRegex();
-    private readonly static Regex _regExEnvVarValue = DynamicDataRegex();
+    private readonly static Regex _regExEnvVarValue = EnvironmentRegex();
 
     public static List<DynamicDataInfo> GetDynamicDataInfo(string input)
     {

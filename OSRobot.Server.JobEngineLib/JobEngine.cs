@@ -60,15 +60,21 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
 
     private List<IEvent> _events = [];
     private List<ITask> _tasks = [];
-    private System.Timers.Timer _logCleanTimer = new();
+
+    // Log cleanup timer. Created in Start(), fully torn down in Stop().
+    private System.Timers.Timer? _logCleanTimer;
+    private int _logCleanInProgress;   // 0 = idle, 1 = running
 
     // Log name pattern
     private readonly Regex _logNameRegex = LogNameRegex();
 
-    // Keep track of running tasks
-    private long _runningTasksCount;
-    private readonly object _lockRunningTasksCount = new();
+    // Monotonic id source for _runningTasks. Never reset: ids must stay unique
+    // for the lifetime of the process so task continuations can't evict a live entry.
+    private long _taskIdSeq;
     private readonly ConcurrentDictionary<long, ITask> _runningTasks = new();
+
+    // Gate events while the engine is stopping/reloading.
+    private volatile bool _acceptingEvents;
 
     private bool IsValidLogName(string logName)
     {
@@ -190,11 +196,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
     private Task ExecuteTask(ITask task, DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, int? subInstanceIndex, IPluginInstanceLogger instanceLogger)
     {
         // Get running task id
-        long thisTaskId;
-        lock (_lockRunningTasksCount) {
-            _runningTasksCount++;
-            thisTaskId = _runningTasksCount;
-        }
+        long thisTaskId = Interlocked.Increment(ref _taskIdSeq);
 
         Task t = new(() =>
         {
@@ -268,6 +270,14 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
     private void Plugin_EventTriggered(object sender, EventTriggeredEventArgs e)
     {
         IEvent pluginEvent = (IEvent)sender;
+
+        // Ignore events raised while the engine is stopping/reloading.
+        if (!_acceptingEvents)
+        {
+            _log.Info($"Event from object {pluginEvent.Config.Id} ignored: engine is not accepting events.");
+            return;
+        }
+
         e.Logger.EventTriggered(pluginEvent);
         _log.Info($"Event triggered by object: {pluginEvent.Config.Id}:{pluginEvent.Config.Name}:{pluginEvent.GetType().Name}");
 
@@ -330,15 +340,22 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
 
     private void LogCleanTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
     {
+        // Skip if a previous cleanup is still running (long CleanUpLog + short interval).
+        if (Interlocked.CompareExchange(ref _logCleanInProgress, 1, 0) != 0)
+            return;
+
         try
         {
             _log.Info("Cleaning up old logs");
             CleanUpLog(_config.LogPath, _config.CleanUpLogsOlderThanHours);
-
         }
         catch (Exception ex)
         {
             _log.Error("An error occurred while cleaning up old logs", ex);
+        }
+        finally
+        {
+            Interlocked.Exchange(ref _logCleanInProgress, 0);
         }
     }
 
@@ -380,10 +397,10 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
                 _logCleanTimer = new()
                 {
                     Interval = new TimeSpan(0, _config.CleanUpLogsIntervalHours, 0, 0).TotalMilliseconds,
-                    Enabled = true,
                     AutoReset = true
                 };
                 _logCleanTimer.Elapsed += LogCleanTimer_Elapsed;
+                _logCleanTimer.Start();
             }
 
             // Initializes tasks first, then initializes events
@@ -404,6 +421,9 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
                 t.EventTriggered += Plugin_EventTriggered;
                 t.Init();
             });
+
+            // From here on events are allowed to trigger tasks.
+            _acceptingEvents = true;
         }
         catch (Exception ex)
         {
@@ -415,12 +435,29 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
     {
         try
         {
+            // Stop accepting new events before tearing anything down.
+            _acceptingEvents = false;
+
+            // Fully tear down the log cleanup timer (stop, unsubscribe, dispose).
+            if (_logCleanTimer is not null)
+            {
+                _logCleanTimer.Stop();
+                _logCleanTimer.Elapsed -= LogCleanTimer_Elapsed;
+                _logCleanTimer.Dispose();
+                _logCleanTimer = null;
+            }
+
             _log.Info("Destroying events");
             _events.ForEach(E =>
             {
                 _log.Info($"Destroying event: {E.Config.Id}:{E.Config.Name}:{E.GetType().Name}");
+                E.EventTriggered -= Plugin_EventTriggered;
                 E.Destroy();
             });
+            _events = [];
+
+            // Give in-flight tasks a bounded window to finish before destroying instances.
+            WaitForRunningTasksToDrain(TimeSpan.FromSeconds(30));
 
             _log.Info("Destroying tasks");
             _tasks.ForEach(T =>
@@ -428,18 +465,25 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
                 _log.Info($"Destroying task: {T.Config.Id}:{T.Config.Name}:{T.GetType().Name}");
                 T.Destroy();
             });
+            _tasks = [];
 
-            // Reset running tasks tracking
-            lock (_lockRunningTasksCount)
-            {
-                _runningTasksCount = 0;
-            }
+            if (!_runningTasks.IsEmpty)
+                _log.Warn($"{_runningTasks.Count} task(s) still running at shutdown; abandoning tracking.");
+
             _runningTasks.Clear();
+            // _taskIdSeq is intentionally NOT reset - ids must stay globally unique.
         }
         catch (Exception ex)
         {
             _log.Error("An error occurred while stopping JobEngine.", ex);
         }
+    }
+
+    private void WaitForRunningTasksToDrain(TimeSpan timeout)
+    {
+        System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+        while (!_runningTasks.IsEmpty && sw.Elapsed < timeout)
+            Thread.Sleep(100);
     }
 
     public bool StartTask(int taskID)
