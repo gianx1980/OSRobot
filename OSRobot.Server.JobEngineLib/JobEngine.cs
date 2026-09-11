@@ -73,8 +73,55 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
     private long _taskIdSeq;
     private readonly ConcurrentDictionary<long, ITask> _runningTasks = new();
 
-    // Gate events while the engine is stopping/reloading.
-    private volatile bool _acceptingEvents;
+    // Serializes concurrent ReloadJobs() calls.
+    private readonly object _reloadLock = new();
+
+    // Lifecycle gate. Guards _acceptingEvents and lets Stop() wait for any
+    // event/manual-start dispatch that already got past the "accepted" check
+    // (including a pending pre-dispatch delay) to finish before tearing down
+    // events/tasks. This closes the TOCTOU window where ReloadJobs() sees
+    // _runningTasks empty, but a dispatch that hasn't registered a task yet
+    // is still in flight.
+    private readonly object _lifecycleGate = new();
+    private bool _acceptingEvents;         // guarded by _lifecycleGate
+    private int _activeDispatches;         // guarded by _lifecycleGate
+
+    private bool TryBeginDispatch()
+    {
+        lock (_lifecycleGate)
+        {
+            if (!_acceptingEvents)
+                return false;
+            _activeDispatches++;
+            return true;
+        }
+    }
+
+    private void EndDispatch()
+    {
+        lock (_lifecycleGate)
+        {
+            _activeDispatches--;
+            if (_activeDispatches <= 0)
+                Monitor.PulseAll(_lifecycleGate);
+        }
+    }
+
+    /// <returns>true if all dispatches drained before the timeout; false if it timed out with some still active.</returns>
+    private bool WaitForDispatchesToDrain(TimeSpan timeout)
+    {
+        lock (_lifecycleGate)
+        {
+            System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+            while (_activeDispatches > 0)
+            {
+                TimeSpan remaining = timeout - sw.Elapsed;
+                if (remaining <= TimeSpan.Zero || !Monitor.Wait(_lifecycleGate, remaining))
+                    break;
+            }
+            return _activeDispatches == 0;
+        }
+    }
 
     private bool IsValidLogName(string logName)
     {
@@ -195,8 +242,11 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
 
     private Task ExecuteTask(ITask task, DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, int? subInstanceIndex, IPluginInstanceLogger instanceLogger)
     {
-        // Get running task id
+        // Get running task id and register it immediately - before the background
+        // Task is even started - so it's visible to Stop()/ReloadJobs() the instant
+        // this method returns, instead of only once the task body gets to run.
         long thisTaskId = Interlocked.Increment(ref _taskIdSeq);
+        _runningTasks.TryAdd(thisTaskId, task);
 
         Task t = new(() =>
         {
@@ -206,12 +256,14 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
                 taskCopy = (ITask?)CoreHelpers.CloneObjects(task);
                 if (taskCopy == null)
                     throw new ApplicationException("Cloning configuration returned null");
-                
+
+                // Replace the placeholder registered above with the actual running clone.
+                _runningTasks[thisTaskId] = taskCopy;
+
                 if (taskCopy.Config.Log)
                     instanceLogger.TaskStarting(taskCopy);
 
                 instanceLogger.Info($"About to run task {taskCopy.Config.Id} with generated id: {thisTaskId}");
-                _runningTasks.TryAdd(thisTaskId, taskCopy);
                 InstanceExecResult instExecResult = taskCopy.Run(dataChain, lastDynamicDataSet, subInstanceIndex, instanceLogger);
                 
                 if (taskCopy.Config.Log)
@@ -271,47 +323,56 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
     {
         IEvent pluginEvent = (IEvent)sender;
 
-        // Ignore events raised while the engine is stopping/reloading.
-        if (!_acceptingEvents)
+        // Ignore events raised while the engine is stopping/reloading. Held for the
+        // whole method (including any pre-dispatch delay below) so Stop() can safely
+        // wait for this to finish via WaitForDispatchesToDrain() before tearing down.
+        if (!TryBeginDispatch())
         {
             _log.Info($"Event from object {pluginEvent.Config.Id} ignored: engine is not accepting events.");
             return;
         }
 
-        e.Logger.EventTriggered(pluginEvent);
-        _log.Info($"Event triggered by object: {pluginEvent.Config.Id}:{pluginEvent.Config.Name}:{pluginEvent.GetType().Name}");
-
-        _log.Info("Building dynamic data chain");
-        DynamicDataChain dataChain = [];
-        dataChain.TryAdd(pluginEvent.Config.Id, e.DynamicData);
-
-        ExecResult execResult = new(true, e.DynamicData);
-
-        foreach (PluginInstanceConnection connection in pluginEvent.Connections)
+        try
         {
-            if (!connection.Enabled)
-                continue;
+            e.Logger.EventTriggered(pluginEvent);
+            _log.Info($"Event triggered by object: {pluginEvent.Config.Id}:{pluginEvent.Config.Name}:{pluginEvent.GetType().Name}");
 
-            if (connection.WaitSeconds != null
-                && connection.WaitSeconds != 0)
-                Thread.Sleep((int)connection.WaitSeconds * 1000);
+            _log.Info("Building dynamic data chain");
+            DynamicDataChain dataChain = [];
+            dataChain.TryAdd(pluginEvent.Config.Id, e.DynamicData);
 
-            if (connection.EvaluateExecConditions(execResult))
+            ExecResult execResult = new(true, e.DynamicData);
+
+            foreach (PluginInstanceConnection connection in pluginEvent.Connections)
             {
-                ITask taskToRun = (ITask)connection.ConnectTo;
+                if (!connection.Enabled)
+                    continue;
 
-                if (taskToRun.Config.Enabled)
+                if (connection.WaitSeconds != null
+                    && connection.WaitSeconds != 0)
+                    Thread.Sleep((int)connection.WaitSeconds * 1000);
+
+                if (connection.EvaluateExecConditions(execResult))
                 {
-                    _log.Info($"Calling ExecuteTask for: {taskToRun.Config.Id}:{taskToRun.Config.Name}:{taskToRun.GetType().Name}");
-                    ExecuteTask(taskToRun, dataChain, e.DynamicData, null, e.Logger);
-                }
-                else
-                {
-                    _log.Info($"Task: {taskToRun.Config.Id}:{taskToRun.Config.Name}:{taskToRun.GetType().Name} disabled, skipped");
+                    ITask taskToRun = (ITask)connection.ConnectTo;
+
+                    if (taskToRun.Config.Enabled)
+                    {
+                        _log.Info($"Calling ExecuteTask for: {taskToRun.Config.Id}:{taskToRun.Config.Name}:{taskToRun.GetType().Name}");
+                        ExecuteTask(taskToRun, dataChain, e.DynamicData, null, e.Logger);
+                    }
+                    else
+                    {
+                        _log.Info($"Task: {taskToRun.Config.Id}:{taskToRun.Config.Name}:{taskToRun.GetType().Name} disabled, skipped");
+                    }
                 }
             }
         }
-    }   
+        finally
+        {
+            EndDispatch();
+        }
+    }
 
     private bool IsDirectoryEmpty(string directoryPath)
     {
@@ -423,7 +484,10 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
             });
 
             // From here on events are allowed to trigger tasks.
-            _acceptingEvents = true;
+            lock (_lifecycleGate)
+            {
+                _acceptingEvents = true;
+            }
         }
         catch (Exception ex)
         {
@@ -435,8 +499,22 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
     {
         try
         {
-            // Stop accepting new events before tearing anything down.
-            _acceptingEvents = false;
+            // Stop accepting new dispatches, then wait (bounded) for any dispatch that
+            // already got past the check above - including one still in its pre-dispatch
+            // Thread.Sleep(WaitSeconds) - to finish. This is what closes the ReloadJobs()
+            // TOCTOU: even if _runningTasks looked empty at the check, nothing gets torn
+            // down while a dispatch that was "in" is still running.
+            lock (_lifecycleGate)
+            {
+                _acceptingEvents = false;
+            }
+            if (!WaitForDispatchesToDrain(TimeSpan.FromSeconds(30)))
+            {
+                lock (_lifecycleGate)
+                {
+                    _log.Warn($"{_activeDispatches} dispatch(es) still in flight after waiting to stop; proceeding with teardown anyway.");
+                }
+            }
 
             // Fully tear down the log cleanup timer (stop, unsubscribe, dispose).
             if (_logCleanTimer is not null)
@@ -490,6 +568,14 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
     {
         _log.Info($"Requested execution of task: {taskID}");
 
+        // Same gate as Plugin_EventTriggered: refuse (rather than race) a manual
+        // start while the engine is stopping/reloading.
+        if (!TryBeginDispatch())
+        {
+            _log.Info($"Cannot start task {taskID}: the engine is not accepting new work (stopping/reloading).");
+            return false;
+        }
+
         try
         {
             DateTime now = DateTime.Now;
@@ -513,25 +599,37 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
         {
             _log.Error("An error occurred while executing the requested task.", ex);
         }
+        finally
+        {
+            EndDispatch();
+        }
         return false;
     }
 
     public ReloadJobsReturnValues ReloadJobs()
     {
-        _log.Info("Trying to reload job data...");
-
-        if (!_runningTasks.IsEmpty)
+        // Serialize concurrent reload requests - two overlapping Stop()/Start()
+        // pairs would otherwise interleave and leave the engine in an inconsistent state.
+        lock (_reloadLock)
         {
-            _log.Info($"Cannot reload jobs now, there are {_runningTasks.Count} running tasks, please retry later.");
-            return ReloadJobsReturnValues.CannotReloadWhileRunningTask;
+            _log.Info("Trying to reload job data...");
+
+            // This is a cheap up-front check for a friendlier caller response; it can be
+            // stale (a dispatch can slip in right after it). Safety doesn't depend on it:
+            // Stop() itself blocks new dispatches and drains in-flight ones before it
+            // tears anything down, so a stale check here can't cause a mid-execution teardown.
+            if (!_runningTasks.IsEmpty)
+            {
+                _log.Info($"Cannot reload jobs now, there are {_runningTasks.Count} running tasks, please retry later.");
+                return ReloadJobsReturnValues.CannotReloadWhileRunningTask;
+            }
+
+            _log.Info("Stopping and restarting JobEngine to reload jobs...");
+            Stop();
+            Start();
+
+            return ReloadJobsReturnValues.Ok;
         }
-
-
-        _log.Info("Stopping and restarting JobEngine to reload jobs...");
-        Stop();
-        Start();
-
-        return ReloadJobsReturnValues.Ok;
     }
 
     public List<IPlugin> GetPlugins()
