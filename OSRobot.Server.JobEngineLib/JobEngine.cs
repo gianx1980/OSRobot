@@ -102,24 +102,26 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
         lock (_lifecycleGate)
         {
             _activeDispatches--;
-            if (_activeDispatches <= 0)
-                Monitor.PulseAll(_lifecycleGate);
         }
     }
 
-    /// <returns>true if all dispatches drained before the timeout; false if it timed out with some still active.</returns>
-    private bool WaitForDispatchesToDrain(TimeSpan timeout)
+    /// <returns>true if all dispatches drained before the timeout or cancellation; false if some are still active.</returns>
+    private bool WaitForDispatchesToDrain(TimeSpan timeout, CancellationToken cancellationToken)
     {
+        System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
+        while (sw.Elapsed < timeout && !cancellationToken.IsCancellationRequested)
+        {
+            lock (_lifecycleGate)
+            {
+                if (_activeDispatches <= 0)
+                    return true;
+            }
+            Thread.Sleep(100);
+        }
+
         lock (_lifecycleGate)
         {
-            System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
-            while (_activeDispatches > 0)
-            {
-                TimeSpan remaining = timeout - sw.Elapsed;
-                if (remaining <= TimeSpan.Zero || !Monitor.Wait(_lifecycleGate, remaining))
-                    break;
-            }
-            return _activeDispatches == 0;
+            return _activeDispatches <= 0;
         }
     }
 
@@ -420,8 +422,14 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
         }
     }
 
-    public void Start()
+    public void Start(CancellationToken cancellationToken = default)
     {
+        if (cancellationToken.IsCancellationRequested)
+        {
+            _log.Info("Start cancelled before JobEngine initialization began.");
+            return;
+        }
+
         try
         {
             Server.Core.Core.Init(_config.LogPath);
@@ -495,7 +503,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
         }
     }
 
-    public void Stop()
+    public void Stop(CancellationToken cancellationToken = default)
     {
         try
         {
@@ -504,15 +512,20 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
             // Thread.Sleep(WaitSeconds) - to finish. This is what closes the ReloadJobs()
             // TOCTOU: even if _runningTasks looked empty at the check, nothing gets torn
             // down while a dispatch that was "in" is still running.
+            //
+            // The wait also honors cancellationToken, so a host shutdown with a short
+            // configured HostOptions.ShutdownTimeout can cut it short rather than being
+            // forced to wait out the full 30 seconds regardless.
             lock (_lifecycleGate)
             {
                 _acceptingEvents = false;
             }
-            if (!WaitForDispatchesToDrain(TimeSpan.FromSeconds(30)))
+            if (!WaitForDispatchesToDrain(TimeSpan.FromSeconds(30), cancellationToken))
             {
                 lock (_lifecycleGate)
                 {
-                    _log.Warn($"{_activeDispatches} dispatch(es) still in flight after waiting to stop; proceeding with teardown anyway.");
+                    _log.Warn($"{_activeDispatches} dispatch(es) still in flight after waiting to stop " +
+                              $"({(cancellationToken.IsCancellationRequested ? "shutdown cancelled" : "timeout")}); proceeding with teardown anyway.");
                 }
             }
 
@@ -535,7 +548,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
             _events = [];
 
             // Give in-flight tasks a bounded window to finish before destroying instances.
-            WaitForRunningTasksToDrain(TimeSpan.FromSeconds(30));
+            WaitForRunningTasksToDrain(TimeSpan.FromSeconds(30), cancellationToken);
 
             _log.Info("Destroying tasks");
             _tasks.ForEach(T =>
@@ -557,10 +570,10 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
         }
     }
 
-    private void WaitForRunningTasksToDrain(TimeSpan timeout)
+    private void WaitForRunningTasksToDrain(TimeSpan timeout, CancellationToken cancellationToken)
     {
         System.Diagnostics.Stopwatch sw = System.Diagnostics.Stopwatch.StartNew();
-        while (!_runningTasks.IsEmpty && sw.Elapsed < timeout)
+        while (!_runningTasks.IsEmpty && sw.Elapsed < timeout && !cancellationToken.IsCancellationRequested)
             Thread.Sleep(100);
     }
 

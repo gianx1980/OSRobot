@@ -46,9 +46,9 @@ public struct FolderInfo
 
 public interface IJobEngine
 {
-    public void Start();
+    public void Start(CancellationToken cancellationToken = default);
 
-    public void Stop();
+    public void Stop(CancellationToken cancellationToken = default);
 
     public bool StartTask(int taskID);
 

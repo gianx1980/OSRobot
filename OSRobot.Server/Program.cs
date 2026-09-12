@@ -21,11 +21,14 @@ using Microsoft.Extensions.Hosting.WindowsServices;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.FileProviders;
+using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using OSRobot.Server;
 using OSRobot.Server.Configuration;
 using OSRobot.Server.Core.Logging;
+using OSRobot.Server.Core.Logging.Abstract;
 using OSRobot.Server.Infrastructure.DataAccess.Models;
+using OSRobot.Server.Infrastructure.Hosting;
 using OSRobot.Server.Infrastructure.Security;
 using OSRobot.Server.Infrastructure.Security.Abstract;
 using OSRobot.Server.JobEngineLib;
@@ -146,20 +149,16 @@ if (!File.Exists(jobsConfigPathName))
     _initConfigJobsFile(jobsConfigPathName);
 }
 
-//// Initialize JobEngine
-AppLogger appLogger = new(logger);
-JobEngineConfig jobEngineConfig = new()
-{
-    LogPath = builder.Configuration["AppSettings:JobEngineConfig:LogPath"]!,
-    DataPath = builder.Configuration["AppSettings:JobEngineConfig:DataPath"]!,
-    SerialExecution = Convert.ToBoolean(builder.Configuration["AppSettings:JobEngineConfig:SerialExecution"]!),
-    CleanUpLogsOlderThanHours = Convert.ToInt32(builder.Configuration["AppSettings:JobEngineConfig:CleanUpLogsOlderThanHours"]!),
-    CleanUpLogsIntervalHours = Convert.ToInt32(builder.Configuration["AppSettings:JobEngineConfig:CleanUpLogsIntervalHours"]!)
-};
-JobEngine jobEngine = new(appLogger, jobEngineConfig);
-jobEngine.Start();
+// JobEngine registration. The engine itself is a plain DI singleton; its lifecycle
+// (Start/Stop) is driven by JobEngineHostedService below, which the generic host
+// invokes only once all services have finished being built, and calls back into on
+// shutdown.
+builder.Services.AddSingleton(logger);
+builder.Services.AddSingleton<IAppLogger, AppLogger>();
+builder.Services.AddSingleton<IJobEngineConfig>(sp => sp.GetRequiredService<IOptions<AppSettings>>().Value.JobEngineConfig);
+builder.Services.AddSingleton<IJobEngine, JobEngine>();
+builder.Services.AddHostedService<JobEngineHostedService>();
 
-builder.Services.AddSingleton<IJobEngine>(jobEngine);
 builder.Services.AddDbContext<RobotDBContext>(options => options.UseSqlite(dbConnectionString));
 builder.Services.AddScoped<IUserRepository, UserRepository>();
 builder.Services.AddScoped<IJWTManager, JWTManager>();
