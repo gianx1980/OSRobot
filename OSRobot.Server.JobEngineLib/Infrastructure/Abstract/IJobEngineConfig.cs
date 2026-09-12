@@ -25,4 +25,11 @@ public interface IJobEngineConfig
     public bool SerialExecution { get; set; }
     public int CleanUpLogsOlderThanHours { get; set; }
     public int CleanUpLogsIntervalHours { get; set; }
+
+    /// <summary>
+    /// How long Stop() waits for in-flight event/task dispatches and running tasks to
+    /// drain (each, independently) before proceeding with teardown anyway. Used by
+    /// both WaitForDispatchesToDrain() and WaitForRunningTasksToDrain().
+    /// </summary>
+    public int StopDrainTimeoutSeconds { get; set; }
 }

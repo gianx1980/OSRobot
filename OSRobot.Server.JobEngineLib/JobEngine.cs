@@ -505,6 +505,11 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
 
     public void Stop(CancellationToken cancellationToken = default)
     {
+        // Bounds how long each of the two drain waits below (dispatches, then running
+        // tasks) may block before Stop() proceeds with teardown anyway. Configurable via
+        // AppSettings:JobEngineConfig:StopDrainTimeoutSeconds.
+        TimeSpan drainTimeout = TimeSpan.FromSeconds(Math.Max(0, _config.StopDrainTimeoutSeconds));
+
         try
         {
             // Stop accepting new dispatches, then wait (bounded) for any dispatch that
@@ -515,12 +520,12 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
             //
             // The wait also honors cancellationToken, so a host shutdown with a short
             // configured HostOptions.ShutdownTimeout can cut it short rather than being
-            // forced to wait out the full 30 seconds regardless.
+            // forced to wait out the full configured timeout regardless.
             lock (_lifecycleGate)
             {
                 _acceptingEvents = false;
             }
-            if (!WaitForDispatchesToDrain(TimeSpan.FromSeconds(30), cancellationToken))
+            if (!WaitForDispatchesToDrain(drainTimeout, cancellationToken))
             {
                 lock (_lifecycleGate)
                 {
@@ -548,7 +553,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
             _events = [];
 
             // Give in-flight tasks a bounded window to finish before destroying instances.
-            WaitForRunningTasksToDrain(TimeSpan.FromSeconds(30), cancellationToken);
+            WaitForRunningTasksToDrain(drainTimeout, cancellationToken);
 
             _log.Info("Destroying tasks");
             _tasks.ForEach(T =>

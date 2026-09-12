@@ -27,6 +27,7 @@ public class JobEngineConfig : IJobEngineConfig
     public bool SerialExecution { get; set; }
     public int CleanUpLogsOlderThanHours { get; set; }
     public int CleanUpLogsIntervalHours { get; set; }
+    public int StopDrainTimeoutSeconds { get; set; } = 30;
 }
 
 public class JWTConfig
