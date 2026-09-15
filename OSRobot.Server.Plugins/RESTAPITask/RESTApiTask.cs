@@ -45,7 +45,7 @@ public class RESTApiTask : MultipleIterationTask
         return jParsedJson;
     }
 
-    protected override void RunMultipleIterationTask(int currentIteration)
+    protected override async Task RunMultipleIterationTaskAsync(int currentIteration)
     {
         using HttpClient client = new();
         RESTApiTaskConfig config = (RESTApiTaskConfig)_iterationTaskConfig;
@@ -65,35 +65,34 @@ public class RESTApiTask : MultipleIterationTask
         if (config.Method == MethodType.Get)
         {
             _instanceLogger?.Info(this, $"Connecting to: {config.URL} Method: GET");
-            taskResponse = client.GetAsync(config.URL);
+            taskResponse = client.GetAsync(config.URL, _cancellationToken);
         }
         else if (config.Method == MethodType.Post)
         {
             _instanceLogger?.Info(this, $"Connecting to: {config.URL} Method: POST");
             StringContent contentParameters = new(config.Body, Encoding.UTF8, "application/json");
-            taskResponse = client.PostAsync(config.URL, contentParameters);
+            taskResponse = client.PostAsync(config.URL, contentParameters, _cancellationToken);
         }
         else if (config.Method == MethodType.Put)
         {
             _instanceLogger?.Info(this, $"Connecting to: {config.URL} Method: PUT");
             StringContent contentParameters = new(config.Body, Encoding.UTF8, "application/json");
-            taskResponse = client.PutAsync(config.URL, contentParameters);
+            taskResponse = client.PutAsync(config.URL, contentParameters, _cancellationToken);
         }
         else if (config.Method == MethodType.Delete)
         {
             _instanceLogger?.Info(this, $"Connecting to: {config.URL} Method: DELETE");
-            taskResponse = client.DeleteAsync(config.URL);
+            taskResponse = client.DeleteAsync(config.URL, _cancellationToken);
         }
         else
             throw new ApplicationException($"Http method '{config.Method}' not supported.");
 
-        // Wait for task to complete
-        using (response = taskResponse.Result)
+        // Wait for the response, without blocking the thread while doing so.
+        using (response = await taskResponse)
         {
             response.EnsureSuccessStatusCode();
 
-            // Wait for task to complete
-            _rawContent = response.Content.ReadAsStringAsync().Result;
+            _rawContent = await response.Content.ReadAsStringAsync(_cancellationToken);
             _httpResult = ((int)response.StatusCode).ToString();
         }
 

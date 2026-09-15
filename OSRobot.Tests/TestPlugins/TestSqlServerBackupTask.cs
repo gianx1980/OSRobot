@@ -28,7 +28,7 @@ namespace OSRobot.Tests.TestPlugins;
 public class TestSqlServerBackupTask
 {
     [TestMethod]
-    public void TestBackupDB()
+    public async Task TestBackupDB()
     {
         // ---------
         // Arrange
@@ -74,7 +74,7 @@ public class TestSqlServerBackupTask
         // Act
         // ---------
         task.Init();
-        InstanceExecResult result = task.Run(dynDataChain, dynDataSet, 0, logger);
+        InstanceExecResult result = await task.RunAsync(dynDataChain, dynDataSet, 0, logger, CancellationToken.None);
         task.Destroy();
 
         // ---------

@@ -119,7 +119,7 @@ public class SqlServerCommandTask : MultipleIterationTask
         return sqlParam;
     }
 
-    protected override void RunMultipleIterationTask(int currentIteration)
+    protected override async Task RunMultipleIterationTaskAsync(int currentIteration)
     {
         SqlServerCommandTaskConfig config = (SqlServerCommandTaskConfig)_iterationTaskConfig;
         _defaultRecordset = new DataTable();
@@ -128,7 +128,7 @@ public class SqlServerCommandTask : MultipleIterationTask
 
         using SqlConnection cnt = new(ConnectionString);
         using SqlCommand cmd = new(string.Empty, cnt);
-        cnt.Open();
+        await cnt.OpenAsync(_cancellationToken);
 
         if (config.Type == QueryTaskType.Text)
             cmd.CommandType = CommandType.Text;
@@ -151,12 +151,14 @@ public class SqlServerCommandTask : MultipleIterationTask
 
         if (config.ReturnsRecordset)
         {
+            // SqlDataAdapter.Fill has no async equivalent in ADO.NET; this call remains
+            // synchronous (a documented BCL gap, not an oversight).
             SqlDataAdapter da = new(cmd);
             da.Fill((DataTable)_defaultRecordset);
         }
         else
         {
-            _executionReturnValue = cmd.ExecuteNonQuery();
+            _executionReturnValue = await cmd.ExecuteNonQueryAsync(_cancellationToken);
         }
 
         if (cmd.CommandType == CommandType.StoredProcedure)

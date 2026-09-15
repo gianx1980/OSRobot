@@ -31,7 +31,7 @@ namespace OSRobot.Tests.TestPlugins;
 public class TestWriteBinaryFileTask
 {
     [TestMethod]
-    public void TestWrite()
+    public async Task TestWrite()
     {
         // ---------
         // Arrange
@@ -103,10 +103,10 @@ public class TestWriteBinaryFileTask
         // ---------
         taskRead.Init();
         taskWrite.Init();
-        ExecResult execResult = taskRead.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        ExecResult execResult = (await taskRead.RunAsync(dynDataChain, dynDataSet, 0, logger, CancellationToken.None)).ExecResults[0];
         dynDataSet = execResult.Data;
         dynDataChain.TryAdd(taskRead.Config.Id, execResult.Data);
-        ExecResult execResultWrite = taskWrite.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        ExecResult execResultWrite = (await taskWrite.RunAsync(dynDataChain, dynDataSet, 0, logger, CancellationToken.None)).ExecResults[0];
 
 
         // ---------

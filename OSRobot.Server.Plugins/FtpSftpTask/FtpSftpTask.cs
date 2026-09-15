@@ -190,7 +190,7 @@ public partial class FtpSftpTask : MultipleIterationTask
         }
     }
 
-    protected override void RunMultipleIterationTask(int currentIteration)
+    protected override Task RunMultipleIterationTaskAsync(int currentIteration)
     {
         FtpSftpTaskConfig config = (FtpSftpTaskConfig)_iterationTaskConfig;
 
@@ -226,6 +226,8 @@ public partial class FtpSftpTask : MultipleIterationTask
 
             _instanceLogger?.Info("Delete files completed");
         }
+
+        return Task.CompletedTask;
     }
 
     // Use Invariant Culture ("")

@@ -122,7 +122,7 @@ public static partial class DynamicDataParser
                         .WithReferences(thisAssembly)
                         .WithImports("OSRobot.Server.Core.DynamicData");
 
-        return CSharpScript.EvaluateAsync<string>(code, options, globals).Result;
+        return CSharpScript.EvaluateAsync<string>(code, options, globals).GetAwaiter().GetResult();
     }
 
     public static int GetRowIndex(string rowIndex, int iterationNumber, int? subInstanceIndex)

@@ -86,6 +86,8 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
     private bool _acceptingEvents;         // guarded by _lifecycleGate
     private int _activeDispatches;         // guarded by _lifecycleGate
 
+    private CancellationTokenSource? _runCts;
+
     private bool TryBeginDispatch()
     {
         lock (_lifecycleGate)
@@ -242,15 +244,16 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
         return new LogInfo() { FolderId = folderId, EventId = eventId, ExecDateTime = execDateTime, FileName = logName };
     }
 
-    private Task ExecuteTask(ITask task, DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, int? subInstanceIndex, IPluginInstanceLogger instanceLogger)
+    private async Task ExecuteTaskAsync(ITask task, DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, int? subInstanceIndex,
+                                         IPluginInstanceLogger instanceLogger, CancellationToken cancellationToken)
     {
         // Get running task id and register it immediately - before the background
-        // Task is even started - so it's visible to Stop()/ReloadJobs() the instant
+        // work is even dispatched - so it's visible to Stop()/ReloadJobs() the instant
         // this method returns, instead of only once the task body gets to run.
         long thisTaskId = Interlocked.Increment(ref _taskIdSeq);
         _runningTasks.TryAdd(thisTaskId, task);
-
-        Task t = new(() =>
+       
+        Task chainTask = Task.Run(async () =>
         {
             ITask? taskCopy = null;
             try
@@ -266,8 +269,8 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
                     instanceLogger.TaskStarting(taskCopy);
 
                 instanceLogger.Info($"About to run task {taskCopy.Config.Id} with generated id: {thisTaskId}");
-                InstanceExecResult instExecResult = taskCopy.Run(dataChain, lastDynamicDataSet, subInstanceIndex, instanceLogger);
-                
+                InstanceExecResult instExecResult = await taskCopy.RunAsync(dataChain, lastDynamicDataSet, subInstanceIndex, instanceLogger, cancellationToken);
+
                 if (taskCopy.Config.Log)
                     instanceLogger.TaskEnded(taskCopy);
 
@@ -280,8 +283,8 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
 
                         if (connection.WaitSeconds != null
                             && connection.WaitSeconds != 0)
-                            Thread.Sleep((int)connection.WaitSeconds * 1000);
-                        
+                            await Task.Delay((int)connection.WaitSeconds * 1000, cancellationToken);
+
                         ITask nextTask = (ITask)connection.ConnectTo;
 
                         if (!nextTask.Config.Enabled)
@@ -294,7 +297,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
                             {
                                 DynamicDataChain dataChainCopy = dataChain.Clone();
                                 dataChainCopy.TryAdd(taskCopy.Config.Id, execRes.Data);
-                                ExecuteTask(nextTask, dataChainCopy, execRes.Data, currentSubInstanceIndex, instanceLogger);
+                                await ExecuteTaskAsync(nextTask, dataChainCopy, execRes.Data, currentSubInstanceIndex, instanceLogger, cancellationToken);
                             }
 
                             currentSubInstanceIndex++;
@@ -309,70 +312,84 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
                 else
                     instanceLogger.Error("ExecuteTask: TaskCopy object is null.", ex);
             }
-        });
-        t.ContinueWith(t => {
-            _runningTasks.Remove(thisTaskId, out _);
-        });
-        t.Start();
+        }, cancellationToken);
+
+        _ = chainTask.ContinueWith(completedTask => _runningTasks.TryRemove(thisTaskId, out _), TaskScheduler.Default);
 
         if (_config.SerialExecution)
-            t.Wait();
-
-        return t;
+            await chainTask;
     }
 
     private void Plugin_EventTriggered(object sender, EventTriggeredEventArgs e)
     {
         IEvent pluginEvent = (IEvent)sender;
 
-        // Ignore events raised while the engine is stopping/reloading. Held for the
-        // whole method (including any pre-dispatch delay below) so Stop() can safely
-        // wait for this to finish via WaitForDispatchesToDrain() before tearing down.
+        // Ignore events raised while the engine is stopping/reloading. Held until the
+        // dispatched work below (HandleEventTriggeredAsync) completes, so Stop() can safely
+        // wait for it to finish via WaitForDispatchesToDrain() before tearing down.
         if (!TryBeginDispatch())
         {
             _log.Info($"Event from object {pluginEvent.Config.Id} ignored: engine is not accepting events.");
             return;
         }
 
-        try
+        // This handler is called synchronously by the event source (a Timer/FileSystemWatcher
+        // callback, typically). Task.Run hands off immediately so that thread is never blocked
+        // by the per-connection delay or by task dispatch - it also means a slow WaitSeconds no
+        // longer risks starving that event source's own callback thread, as it would have with
+        // the previous inline Thread.Sleep.
+        CancellationToken cancellationToken = _runCts?.Token ?? CancellationToken.None;
+        _ = Task.Run(async () =>
         {
-            e.Logger.EventTriggered(pluginEvent);
-            _log.Info($"Event triggered by object: {pluginEvent.Config.Id}:{pluginEvent.Config.Name}:{pluginEvent.GetType().Name}");
-
-            _log.Info("Building dynamic data chain");
-            DynamicDataChain dataChain = [];
-            dataChain.TryAdd(pluginEvent.Config.Id, e.DynamicData);
-
-            ExecResult execResult = new(true, e.DynamicData);
-
-            foreach (PluginInstanceConnection connection in pluginEvent.Connections)
+            try
             {
-                if (!connection.Enabled)
-                    continue;
+                await HandleEventTriggeredAsync(pluginEvent, e, cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                _log.Error("Unhandled error dispatching event", ex);
+            }
+            finally
+            {
+                EndDispatch();
+            }
+        }, cancellationToken);
+    }
 
-                if (connection.WaitSeconds != null
-                    && connection.WaitSeconds != 0)
-                    Thread.Sleep((int)connection.WaitSeconds * 1000);
+    private async Task HandleEventTriggeredAsync(IEvent pluginEvent, EventTriggeredEventArgs e, CancellationToken cancellationToken)
+    {
+        e.Logger.EventTriggered(pluginEvent);
+        _log.Info($"Event triggered by object: {pluginEvent.Config.Id}:{pluginEvent.Config.Name}:{pluginEvent.GetType().Name}");
 
-                if (connection.EvaluateExecConditions(execResult))
+        _log.Info("Building dynamic data chain");
+        DynamicDataChain dataChain = [];
+        dataChain.TryAdd(pluginEvent.Config.Id, e.DynamicData);
+
+        ExecResult execResult = new(true, e.DynamicData);
+
+        foreach (PluginInstanceConnection connection in pluginEvent.Connections)
+        {
+            if (!connection.Enabled)
+                continue;
+
+            if (connection.WaitSeconds != null
+                && connection.WaitSeconds != 0)
+                await Task.Delay((int)connection.WaitSeconds * 1000, cancellationToken);
+
+            if (connection.EvaluateExecConditions(execResult))
+            {
+                ITask taskToRun = (ITask)connection.ConnectTo;
+
+                if (taskToRun.Config.Enabled)
                 {
-                    ITask taskToRun = (ITask)connection.ConnectTo;
-
-                    if (taskToRun.Config.Enabled)
-                    {
-                        _log.Info($"Calling ExecuteTask for: {taskToRun.Config.Id}:{taskToRun.Config.Name}:{taskToRun.GetType().Name}");
-                        ExecuteTask(taskToRun, dataChain, e.DynamicData, null, e.Logger);
-                    }
-                    else
-                    {
-                        _log.Info($"Task: {taskToRun.Config.Id}:{taskToRun.Config.Name}:{taskToRun.GetType().Name} disabled, skipped");
-                    }
+                    _log.Info($"Calling ExecuteTask for: {taskToRun.Config.Id}:{taskToRun.Config.Name}:{taskToRun.GetType().Name}");
+                    await ExecuteTaskAsync(taskToRun, dataChain, e.DynamicData, null, e.Logger, cancellationToken);
+                }
+                else
+                {
+                    _log.Info($"Task: {taskToRun.Config.Id}:{taskToRun.Config.Name}:{taskToRun.GetType().Name} disabled, skipped");
                 }
             }
-        }
-        finally
-        {
-            EndDispatch();
         }
     }
 
@@ -435,6 +452,10 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
             Server.Core.Core.Init(_config.LogPath);
 
             _log.Info("Starting OSRobot.JobEngine...");
+
+            // Fresh cancellation source for this run - Stop() cancels it so any task/event
+            // dispatch in flight at that point actually gets asked to stop, not just abandoned.
+            _runCts = new CancellationTokenSource();
 
             _log.Info("Loading job data");
             if (!LoadJobData())
@@ -525,6 +546,12 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
             {
                 _acceptingEvents = false;
             }
+
+            // Ask any in-flight dispatch/task to actually stop (a mid-HTTP-call, a
+            // Task.Delay for a connection's WaitSeconds, etc.), rather than only waiting
+            // out a timeout below and then abandoning bookkeeping while it keeps running.
+            _runCts?.Cancel();
+
             if (!WaitForDispatchesToDrain(drainTimeout, cancellationToken))
             {
                 lock (_lifecycleGate)
@@ -568,6 +595,9 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
 
             _runningTasks.Clear();
             // _taskIdSeq is intentionally NOT reset - ids must stay globally unique.
+
+            _runCts?.Dispose();
+            _runCts = null;
         }
         catch (Exception ex)
         {
@@ -582,7 +612,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
             Thread.Sleep(100);
     }
 
-    public bool StartTask(int taskID)
+    public async Task<bool> StartTaskAsync(int taskID, CancellationToken cancellationToken = default)
     {
         _log.Info($"Requested execution of task: {taskID}");
 
@@ -593,6 +623,11 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
             _log.Info($"Cannot start task {taskID}: the engine is not accepting new work (stopping/reloading).");
             return false;
         }
+
+        // Combine "the caller gave up" (e.g. the HTTP request was aborted) with
+        // "the engine is stopping" - either should cancel this task's in-flight work.
+        CancellationToken engineToken = _runCts?.Token ?? CancellationToken.None;
+        using CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(engineToken, cancellationToken);
 
         try
         {
@@ -609,7 +644,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
             DynamicDataChain dataChain = [];
             DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(taskObj, true, 0, now, now, 1);
 
-            ExecuteTask(taskObj, dataChain, dDataSet, null, logger);
+            await ExecuteTaskAsync(taskObj, dataChain, dDataSet, null, logger, linkedCts.Token);
 
             return true;
         }

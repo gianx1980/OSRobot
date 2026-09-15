@@ -28,9 +28,9 @@ public abstract class MultipleIterationTask : BaseTask
     protected ITaskConfig _iterationTaskConfig;
     #pragma warning restore CS8618
 
-    protected abstract void RunMultipleIterationTask(int currentIteration);
+    protected abstract Task RunMultipleIterationTaskAsync(int currentIteration);
 
-    protected override void RunTask(DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, int? subInstanceIndex, IPluginInstanceLogger instanceLogger)
+    protected override async Task RunTaskAsync(DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, int? subInstanceIndex, IPluginInstanceLogger instanceLogger)
     {
         _iterationsCount = DynamicDataParser.GetIterationCount((ITaskConfig)Config, dataChain, lastDynamicDataSet);
 
@@ -42,7 +42,7 @@ public abstract class MultipleIterationTask : BaseTask
 
             try
             {
-                RunMultipleIterationTask(i);
+                await RunMultipleIterationTaskAsync(i);
 
                 DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, true, 0, executionStartDateTime, DateTime.Now, _iterationsCount);
                 ExecResult result = new(true, dDataSet);

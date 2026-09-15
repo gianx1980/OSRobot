@@ -23,5 +23,6 @@ namespace OSRobot.Server.Core;
 
 public interface ITask : IPluginInstance
 {
-    InstanceExecResult Run(DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, int? subInstanceIndex, IPluginInstanceLogger instanceLogger);
+    Task<InstanceExecResult> RunAsync(DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, int? subInstanceIndex,
+                                       IPluginInstanceLogger instanceLogger, CancellationToken cancellationToken);
 }

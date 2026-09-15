@@ -35,7 +35,7 @@ public class SqlServerBackupTask : MultipleIterationTask
     private int _successfulBackupsNumber = 0;
     private int _failedBackupsNumber = 0;
 
-    private int BackupDatabase(string connectionString, string databaseName, string destination, string fileName, bool overwriteIfExists,
+    private async Task<int> BackupDatabase(string connectionString, string databaseName, string destination, string fileName, bool overwriteIfExists,
                                     bool checksum, bool continueOnError, string mediaName, UseCompressionEnum compression,
                                     IPluginInstanceLogger? logger)
     {
@@ -83,13 +83,16 @@ public class SqlServerBackupTask : MultipleIterationTask
                 WaitInfoMessage.Set();
             };
 
-            Cnt.Open();
+            await Cnt.OpenAsync(_cancellationToken);
 
             using SqlCommand Cmd = new(SqlCommandBackup, Cnt);
             Cmd.Parameters.Add("@P_DBNAME", SqlDbType.NVarChar).Value = databaseName;
             Cmd.Parameters.Add("@P_PATH", SqlDbType.NVarChar).Value = FullPathDestination;
             Cmd.Parameters.Add("@P_MEDIANAME", SqlDbType.NVarChar).Value = mediaName;
-            Cmd.ExecuteNonQuery();
+            await Cmd.ExecuteNonQueryAsync(_cancellationToken);
+            // InfoMessage fires synchronously as part of the command completing, so by the
+            // time ExecuteNonQueryAsync above has finished this is already signaled (or
+            // signals essentially immediately) - not a meaningful blocking wait.
             WaitInfoMessage.WaitOne();
         }
         catch (Exception ex)
@@ -101,7 +104,7 @@ public class SqlServerBackupTask : MultipleIterationTask
         return Result;
     }
 
-    private int BackupTransactionLog(string connectionString, string databaseName, string destination, string fileName, bool overwriteIfExists,
+    private async Task<int> BackupTransactionLog(string connectionString, string databaseName, string destination, string fileName, bool overwriteIfExists,
                                         bool checksum, bool continueOnError, string mediaName, UseCompressionEnum compression,
                                         IPluginInstanceLogger? logger)
     {
@@ -149,13 +152,13 @@ public class SqlServerBackupTask : MultipleIterationTask
                 waitInfoMessage.Set();
             };
 
-            cnt.Open();
+            await cnt.OpenAsync(_cancellationToken);
 
             using SqlCommand cmd = new(sqlCommandBackup, cnt);
             cmd.Parameters.Add("@P_DBNAME", SqlDbType.NVarChar).Value = databaseName;
             cmd.Parameters.Add("@P_PATH", SqlDbType.NVarChar).Value = fullPathDestination;
             cmd.Parameters.Add("@P_MEDIANAME", SqlDbType.NVarChar).Value = mediaName;
-            cmd.ExecuteNonQuery();
+            await cmd.ExecuteNonQueryAsync(_cancellationToken);
             waitInfoMessage.WaitOne();
         }
         catch (Exception ex)
@@ -167,7 +170,7 @@ public class SqlServerBackupTask : MultipleIterationTask
         return result;
     }
 
-    private bool VerifyBackup(string connectionString, string databaseName, string destination, string fileName, BackupTypeEnum backupType, IPluginInstanceLogger? logger)
+    private async Task<bool> VerifyBackup(string connectionString, string databaseName, string destination, string fileName, BackupTypeEnum backupType, IPluginInstanceLogger? logger)
     {
         bool result = false;
 
@@ -210,12 +213,12 @@ public class SqlServerBackupTask : MultipleIterationTask
             };
 
 
-            cnt.Open();
+            await cnt.OpenAsync(_cancellationToken);
 
             using SqlCommand cmd = new(sqlCommandVerifyBackup, cnt);
             cmd.Parameters.Add("@P_DBNAME", SqlDbType.NVarChar).Value = databaseName;
             cmd.Parameters.Add("@P_PATH", SqlDbType.NVarChar).Value = fullPathDestination;
-            cmd.ExecuteNonQuery();
+            await cmd.ExecuteNonQueryAsync(_cancellationToken);
             WaitInfoMessage.WaitOne();
         }
         catch (Exception ex)
@@ -227,7 +230,7 @@ public class SqlServerBackupTask : MultipleIterationTask
         return result;
     }
 
-    protected override void RunMultipleIterationTask(int currentIteration)
+    protected override async Task RunMultipleIterationTaskAsync(int currentIteration)
     {
         _successfulBackupsNumber = 0;
         _failedBackupsNumber = 0;
@@ -262,7 +265,7 @@ public class SqlServerBackupTask : MultipleIterationTask
 
                 if (config.BackupType == BackupTypeEnum.Full)
                 {
-                    backupResult = BackupDatabase(connectionString, dbName, config.DestinationPath, config.FileNameTemplate, config.OverwriteIfExists,
+                    backupResult = await BackupDatabase(connectionString, dbName, config.DestinationPath, config.FileNameTemplate, config.OverwriteIfExists,
                                                     config.PerformChecksum, config.ContinueOnError,
                                                     $"OSRobot-Backup-{DateTime.Now.Ticks}", config.UseCompression, _instanceLogger);
 
@@ -275,7 +278,7 @@ public class SqlServerBackupTask : MultipleIterationTask
                 }
                 else
                 {
-                    backupResult = BackupTransactionLog(connectionString, dbName, config.DestinationPath, config.FileNameTemplate, config.OverwriteIfExists,
+                    backupResult = await BackupTransactionLog(connectionString, dbName, config.DestinationPath, config.FileNameTemplate, config.OverwriteIfExists,
                                                         config.PerformChecksum, config.ContinueOnError,
                                                         $"OSRobot-TranLogBackup-{DateTime.Now.Ticks}", config.UseCompression, _instanceLogger);
 
@@ -298,7 +301,7 @@ public class SqlServerBackupTask : MultipleIterationTask
                     {
                         _instanceLogger?.Info(this, $"Starting backup verification '{dbName}'...");
 
-                        if (VerifyBackup(connectionString, dbName, config.DestinationPath, config.FileNameTemplate, config.BackupType, _instanceLogger))
+                        if (await VerifyBackup(connectionString, dbName, config.DestinationPath, config.FileNameTemplate, config.BackupType, _instanceLogger))
                             _instanceLogger?.Info(this, "Verification OK");
                         else
                             _instanceLogger?.Info(this, "Verification failed");

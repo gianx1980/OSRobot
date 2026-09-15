@@ -122,9 +122,9 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
     [HttpPost]
     [Route("StartTask")]
     [Authorize]
-    public ActionResult<ResponseModel> StartTask([FromQuery] int taskId)
+    public async Task<ActionResult<ResponseModel>> StartTask([FromQuery] int taskId)
     {
-        bool result = _jobEngine.StartTask(taskId);
+        bool result = await _jobEngine.StartTaskAsync(taskId, HttpContext.RequestAborted);
 
         if (!result)
         {

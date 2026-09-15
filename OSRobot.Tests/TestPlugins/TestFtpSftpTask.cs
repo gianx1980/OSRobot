@@ -10,7 +10,7 @@ namespace OSRobot.Tests.TestPlugins;
 public sealed class TestFtpSftpTask
 {
     [TestMethod]
-    public void TestSftpCopyFolder()
+    public async Task TestSftpCopyFolder()
     {
         // ---------
         // Arrange
@@ -94,18 +94,18 @@ public sealed class TestFtpSftpTask
         // -------------------
 
         taskDelete.Init();
-        ExecResult erTaskDelete = taskDelete.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        ExecResult erTaskDelete = (await taskDelete.RunAsync(dynDataChain, dynDataSet, 0, logger, CancellationToken.None)).ExecResults[0];
         taskDelete.Destroy();
         Assert.IsTrue(erTaskDelete.Result, "TaskDelete failed.");
 
         taskUpload.Init();
-        ExecResult erTaskUpload = taskUpload.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        ExecResult erTaskUpload = (await taskUpload.RunAsync(dynDataChain, dynDataSet, 0, logger, CancellationToken.None)).ExecResults[0];
         taskUpload.Destroy();
         Assert.IsTrue(erTaskUpload.Result, "TaskUpload failed.");
     }
 
     [TestMethod]
-    public void TestSftpCopyFile()
+    public async Task TestSftpCopyFile()
     {
         // ---------
         // Arrange
@@ -186,18 +186,18 @@ public sealed class TestFtpSftpTask
         // -------------------
 
         taskDelete.Init();    
-        ExecResult erTaskDelete = taskDelete.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        ExecResult erTaskDelete = (await taskDelete.RunAsync(dynDataChain, dynDataSet, 0, logger, CancellationToken.None)).ExecResults[0];
         taskDelete.Destroy();
         Assert.IsTrue(erTaskDelete.Result, "TaskDelete failed.");
 
         taskUpload.Init();
-        ExecResult erTaskUpload = taskUpload.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        ExecResult erTaskUpload = (await taskUpload.RunAsync(dynDataChain, dynDataSet, 0, logger, CancellationToken.None)).ExecResults[0];
         taskUpload.Destroy();
         Assert.IsTrue(erTaskUpload.Result, "TaskUpload failed.");
     }
 
     [TestMethod]
-    public void TestFtpCopyFolder()
+    public async Task TestFtpCopyFolder()
     {
         // ---------
         // Arrange
@@ -279,12 +279,12 @@ public sealed class TestFtpSftpTask
         // Act && Assert
         // ---------------
         taskDelete.Init();
-        ExecResult erTaskDelete = taskDelete.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        ExecResult erTaskDelete = (await taskDelete.RunAsync(dynDataChain, dynDataSet, 0, logger, CancellationToken.None)).ExecResults[0];
         taskDelete.Destroy();
         Assert.IsTrue(erTaskDelete.Result, "TaskDelete failed.");
 
         taskUpload.Init();
-        ExecResult erTaskUpload = taskUpload.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        ExecResult erTaskUpload = (await taskUpload.RunAsync(dynDataChain, dynDataSet, 0, logger, CancellationToken.None)).ExecResults[0];
         taskUpload.Destroy();
         Assert.IsTrue(erTaskUpload.Result, "TaskUpload failed.");
     }

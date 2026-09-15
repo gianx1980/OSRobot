@@ -29,7 +29,7 @@ namespace OSRobot.Tests.TestPlugins;
 public sealed class TestExcelFileTask
 {
     [TestMethod]
-    public void TestReadWrite()
+    public async Task TestReadWrite()
     {
         // ---------
         // Arrange
@@ -132,8 +132,8 @@ public sealed class TestExcelFileTask
         taskWrite.Init();
         taskRead.Init();
 
-        taskWrite.Run(dynDataChain, dynDataSet, 0, logger);
-        ExecResult execResult = taskRead.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        await taskWrite.RunAsync(dynDataChain, dynDataSet, 0, logger, CancellationToken.None);
+        ExecResult execResult = (await taskRead.RunAsync(dynDataChain, dynDataSet, 0, logger, CancellationToken.None)).ExecResults[0];
 
         taskWrite.Destroy();
         taskRead.Destroy();

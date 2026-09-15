@@ -146,7 +146,7 @@ public class WriteTextFileTask : SingleIterationTask
         return sb.ToString();
     }
 
-    private void ExecuteTaskTypeAppendRow(WriteTextFileTaskConfig config)
+    private async Task ExecuteTaskTypeAppendRow(WriteTextFileTaskConfig config)
     {
         int i = 0;
         bool addHeader = ShouldAddHeader(config);
@@ -157,20 +157,20 @@ public class WriteTextFileTask : SingleIterationTask
             if (addHeader)
             {
                 string[] headerValues = BuildHeaderArray(config, _dataChain);
-                sw.WriteLine(BuildRow(config, headerValues));
+                await sw.WriteLineAsync(BuildRow(config, headerValues));
                 addHeader = false;
             }
 
             WriteTextFileTaskConfig configCopy = ParseDynamicData(i, (WriteTextFileTaskConfig)Config, _dataChain);
             string[] fieldValues = BuildDataArray(i, configCopy, _dataChain);
-            sw.WriteLine(BuildRow(configCopy, fieldValues));
+            await sw.WriteLineAsync(BuildRow(configCopy, fieldValues));
         }
     }
 
-    private void ExecuteTaskTypeInsertRow(WriteTextFileTaskConfig config)
+    private async Task ExecuteTaskTypeInsertRow(WriteTextFileTaskConfig config)
     {
         int i = 0;
-        List<string> fileLines = [.. File.ReadAllLines(config.FilePath)];
+        List<string> fileLines = [.. await File.ReadAllLinesAsync(config.FilePath, _cancellationToken)];
         bool addHeader = ShouldAddHeader(config);
 
         for (i = 0; i < _iterationsCount; i++)
@@ -186,32 +186,32 @@ public class WriteTextFileTask : SingleIterationTask
             string[] fieldValues = BuildDataArray(i, configCopy, _dataChain);
             fileLines.Insert(int.Parse(configCopy.InsertAtRow), BuildRow(configCopy, fieldValues));
         }
-        File.WriteAllLines(config.FilePath, fileLines);
+        await File.WriteAllLinesAsync(config.FilePath, fileLines, _cancellationToken);
     }
 
-    private void ExecuteTaskTypeReplaceText(WriteTextFileTaskConfig config)
+    private async Task ExecuteTaskTypeReplaceText(WriteTextFileTaskConfig config)
     {
-        string fileContent = File.ReadAllText(config.FilePath);
+        string fileContent = await File.ReadAllTextAsync(config.FilePath, _cancellationToken);
         fileContent = fileContent.Replace(config.FindText, config.ReplaceWithText);
-        File.WriteAllText(config.FilePath, fileContent);
+        await File.WriteAllTextAsync(config.FilePath, fileContent, _cancellationToken);
     }
 
-    protected override void RunSingleIterationTask()
+    protected override async Task RunSingleIterationTaskAsync()
     {
         WriteTextFileTaskConfig config = ParseDynamicData(0, (WriteTextFileTaskConfig)_taskConfig, _dataChain);
 
         switch (config.TaskType)
         {
             case WriteTextFileTaskType.AppendRow:
-                ExecuteTaskTypeAppendRow(config);
+                await ExecuteTaskTypeAppendRow(config);
                 break;
 
             case WriteTextFileTaskType.InsertRow:
-                ExecuteTaskTypeInsertRow(config);
+                await ExecuteTaskTypeInsertRow(config);
                 break;
 
             case WriteTextFileTaskType.ReplaceText:
-                ExecuteTaskTypeReplaceText(config);
+                await ExecuteTaskTypeReplaceText(config);
                 break;
         }
     }

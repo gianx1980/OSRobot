@@ -25,7 +25,7 @@ namespace OSRobot.Server.Plugins.SendEMailTask;
 
 public class SendEMailTask : MultipleIterationTask
 {
-    protected override void RunMultipleIterationTask(int currentIteration)
+    protected override async Task RunMultipleIterationTaskAsync(int currentIteration)
     {
         SendEMailTaskConfig config = (SendEMailTaskConfig)_iterationTaskConfig;
 
@@ -59,6 +59,6 @@ public class SendEMailTask : MultipleIterationTask
 
         mailClient.EnableSsl = config.UseSSL;
         mailClient.Port = int.Parse(config.Port);
-        mailClient.Send(mail);
+        await mailClient.SendMailAsync(mail).WaitAsync(_cancellationToken);
     }
 }

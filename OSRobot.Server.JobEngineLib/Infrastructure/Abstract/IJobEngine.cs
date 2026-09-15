@@ -50,7 +50,7 @@ public interface IJobEngine
 
     public void Stop(CancellationToken cancellationToken = default);
 
-    public bool StartTask(int taskID);
+    public Task<bool> StartTaskAsync(int taskID, CancellationToken cancellationToken = default);
 
     public ReloadJobsReturnValues ReloadJobs();
 

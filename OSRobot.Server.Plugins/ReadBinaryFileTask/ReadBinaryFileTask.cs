@@ -26,7 +26,7 @@ namespace OSRobot.Server.Plugins.ReadBinaryFileTask;
 
 public class ReadBinaryFileTask : MultipleIterationTask
 {
-    protected override void RunMultipleIterationTask(int currentIteration)
+    protected override async Task RunMultipleIterationTaskAsync(int currentIteration)
     {
         ReadBinaryFileTaskConfig config = (ReadBinaryFileTaskConfig)_iterationTaskConfig;
 
@@ -46,7 +46,7 @@ public class ReadBinaryFileTask : MultipleIterationTask
         {
             _instanceLogger?.Info(this, $"Reading file \"{file}\"...");
 
-            byte[] fileContent = File.ReadAllBytes(file);
+            byte[] fileContent = await File.ReadAllBytesAsync(file, _cancellationToken);
             FileInfo fileInfo = new FileInfo(file);
             DataRow dr = dtFiles.NewRow();
             dr["FullName"] = fileInfo.FullName;

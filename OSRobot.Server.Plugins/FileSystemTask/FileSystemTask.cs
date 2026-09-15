@@ -424,7 +424,7 @@ public class FileSystemTask : MultipleIterationTask
         }
     }
 
-    protected override void RunMultipleIterationTask(int currentIteration)
+    protected override Task RunMultipleIterationTaskAsync(int currentIteration)
     {
         FileSystemTaskConfig config = (FileSystemTaskConfig)_iterationTaskConfig;
 
@@ -444,6 +444,8 @@ public class FileSystemTask : MultipleIterationTask
         {
             throw new ApplicationException("FileSystemTask: unknown command type");
         }
+
+        return Task.CompletedTask;
     }
 
     protected override void PostTaskSucceded(int currentIteration, ExecResult result, DynamicDataSet dDataSet)

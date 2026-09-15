@@ -29,7 +29,7 @@ namespace OSRobot.Tests.TestPlugins;
 public sealed class TestRESTApiTask
 {
     [TestMethod]
-    public void TestGet()
+    public async Task TestGet()
     {
         // ---------
         // Arrange
@@ -65,7 +65,7 @@ public sealed class TestRESTApiTask
         // Act
         // ---------
         task.Init();
-        InstanceExecResult result = task.Run(dynDataChain, dynDataSet, 0, logger);
+        InstanceExecResult result = await task.RunAsync(dynDataChain, dynDataSet, 0, logger, CancellationToken.None);
         task.Destroy();
 
         // ---------

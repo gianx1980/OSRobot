@@ -24,7 +24,7 @@ namespace OSRobot.Server.Plugins.RunProgramTask;
 
 public class RunProgramTask : MultipleIterationTask
 {
-    protected override void RunMultipleIterationTask(int currentIteration)
+    protected override async Task RunMultipleIterationTaskAsync(int currentIteration)
     {
         RunProgramTaskConfig config = (RunProgramTaskConfig)_iterationTaskConfig;
 
@@ -39,7 +39,7 @@ public class RunProgramTask : MultipleIterationTask
             _instanceLogger.Error(this, "Run program failed: Process.Start returned null.");
             return;
         }
-        
-        newProc.WaitForExit();    
+
+        await newProc.WaitForExitAsync(_cancellationToken);
     }
 }
