@@ -153,7 +153,7 @@ if (!File.Exists(jobsConfigPathName))
 // (Start/Stop) is driven by JobEngineHostedService below, which the generic host
 // invokes only once all services have finished being built, and calls back into on
 // shutdown.
-builder.Services.AddSingleton(logger);
+builder.Services.AddSingleton<Serilog.ILogger>(logger);
 builder.Services.AddSingleton<IAppLogger, AppLogger>();
 builder.Services.AddSingleton<IJobEngineConfig>(sp => sp.GetRequiredService<IOptions<AppSettings>>().Value.JobEngineConfig);
 builder.Services.AddSingleton<IJobEngine, JobEngine>();

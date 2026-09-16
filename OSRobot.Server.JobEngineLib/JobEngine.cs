@@ -276,33 +276,28 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
 
                 if (taskCopy.Connections != null)
                 {
+                    // Each connection gets its own independent (delay + dispatch) unit, so one
+                    // connection's WaitSeconds can't block a sibling connection from being
+                    // evaluated/dispatched. They run concurrently unless SerialExecution demands
+                    // everything happen strictly one at a time - in which case each is awaited
+                    // in turn.
+                    List<Task> siblingDispatches = [];
+
                     foreach (PluginInstanceConnection connection in taskCopy.Connections)
                     {
                         if (!connection.Enabled)
                             continue;
 
-                        if (connection.WaitSeconds != null
-                            && connection.WaitSeconds != 0)
-                            await Task.Delay((int)connection.WaitSeconds * 1000, cancellationToken);
+                        Task dispatch = DispatchConnectionAsync(connection, dataChain, taskCopy.Config.Id, instExecResult, instanceLogger, cancellationToken);
 
-                        ITask nextTask = (ITask)connection.ConnectTo;
-
-                        if (!nextTask.Config.Enabled)
-                            continue;
-
-                        int currentSubInstanceIndex = 0;
-                        foreach (ExecResult execRes in instExecResult.ExecResults)
-                        {
-                            if (connection.EvaluateExecConditions(execRes))
-                            {
-                                DynamicDataChain dataChainCopy = dataChain.Clone();
-                                dataChainCopy.TryAdd(taskCopy.Config.Id, execRes.Data);
-                                await ExecuteTaskAsync(nextTask, dataChainCopy, execRes.Data, currentSubInstanceIndex, instanceLogger, cancellationToken);
-                            }
-
-                            currentSubInstanceIndex++;
-                        }
+                        if (_config.SerialExecution)
+                            await dispatch;
+                        else
+                            siblingDispatches.Add(dispatch);
                     }
+
+                    if (siblingDispatches.Count > 0)
+                        await Task.WhenAll(siblingDispatches);
                 }
             }
             catch (Exception ex)
@@ -318,6 +313,32 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
 
         if (_config.SerialExecution)
             await chainTask;
+    }
+
+    private async Task DispatchConnectionAsync(PluginInstanceConnection connection, DynamicDataChain dataChain, int sourceTaskId,
+                                                InstanceExecResult instExecResult, IPluginInstanceLogger instanceLogger, CancellationToken cancellationToken)
+    {
+        if (connection.WaitSeconds != null
+            && connection.WaitSeconds != 0)
+            await Task.Delay((int)connection.WaitSeconds * 1000, cancellationToken);
+
+        ITask nextTask = (ITask)connection.ConnectTo;
+
+        if (!nextTask.Config.Enabled)
+            return;
+
+        int currentSubInstanceIndex = 0;
+        foreach (ExecResult execRes in instExecResult.ExecResults)
+        {
+            if (connection.EvaluateExecConditions(execRes))
+            {
+                DynamicDataChain dataChainCopy = dataChain.Clone();
+                dataChainCopy.TryAdd(sourceTaskId, execRes.Data);
+                await ExecuteTaskAsync(nextTask, dataChainCopy, execRes.Data, currentSubInstanceIndex, instanceLogger, cancellationToken);
+            }
+
+            currentSubInstanceIndex++;
+        }
     }
 
     private void Plugin_EventTriggered(object sender, EventTriggeredEventArgs e)
@@ -367,28 +388,48 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
 
         ExecResult execResult = new(true, e.DynamicData);
 
+        // Same fix as ExecuteTaskAsync's own connection loop: each connection is its own
+        // independent (delay + dispatch) unit, so one connection's WaitSeconds can't block a
+        // sibling connection's task from starting. Concurrent unless SerialExecution demands
+        // strictly one at a time.
+        List<Task> siblingDispatches = [];
+
         foreach (PluginInstanceConnection connection in pluginEvent.Connections)
         {
             if (!connection.Enabled)
                 continue;
 
-            if (connection.WaitSeconds != null
-                && connection.WaitSeconds != 0)
-                await Task.Delay((int)connection.WaitSeconds * 1000, cancellationToken);
+            Task dispatch = DispatchEventConnectionAsync(connection, dataChain, execResult, e, cancellationToken);
 
-            if (connection.EvaluateExecConditions(execResult))
+            if (_config.SerialExecution)
+                await dispatch;
+            else
+                siblingDispatches.Add(dispatch);
+        }
+
+        if (siblingDispatches.Count > 0)
+            await Task.WhenAll(siblingDispatches);
+    }
+
+    private async Task DispatchEventConnectionAsync(PluginInstanceConnection connection, DynamicDataChain dataChain, ExecResult execResult,
+                                                      EventTriggeredEventArgs e, CancellationToken cancellationToken)
+    {
+        if (connection.WaitSeconds != null
+            && connection.WaitSeconds != 0)
+            await Task.Delay((int)connection.WaitSeconds * 1000, cancellationToken);
+
+        if (connection.EvaluateExecConditions(execResult))
+        {
+            ITask taskToRun = (ITask)connection.ConnectTo;
+
+            if (taskToRun.Config.Enabled)
             {
-                ITask taskToRun = (ITask)connection.ConnectTo;
-
-                if (taskToRun.Config.Enabled)
-                {
-                    _log.Info($"Calling ExecuteTask for: {taskToRun.Config.Id}:{taskToRun.Config.Name}:{taskToRun.GetType().Name}");
-                    await ExecuteTaskAsync(taskToRun, dataChain, e.DynamicData, null, e.Logger, cancellationToken);
-                }
-                else
-                {
-                    _log.Info($"Task: {taskToRun.Config.Id}:{taskToRun.Config.Name}:{taskToRun.GetType().Name} disabled, skipped");
-                }
+                _log.Info($"Calling ExecuteTask for: {taskToRun.Config.Id}:{taskToRun.Config.Name}:{taskToRun.GetType().Name}");
+                await ExecuteTaskAsync(taskToRun, dataChain, e.DynamicData, null, e.Logger, cancellationToken);
+            }
+            else
+            {
+                _log.Info($"Task: {taskToRun.Config.Id}:{taskToRun.Config.Name}:{taskToRun.GetType().Name} disabled, skipped");
             }
         }
     }
