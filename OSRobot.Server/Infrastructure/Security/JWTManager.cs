@@ -59,6 +59,7 @@ public class JWTManager(IConfiguration configuration) : IJWTManager
             [
                 new(ClaimTypes.Sid, userConfig.Id.ToString()),
                 new(ClaimTypes.NameIdentifier, userConfig.Username),
+                new(OSRobotClaimTypes.MustChangePassword, userConfig.MustChangePassword ? "true" : "false"),
                 new(JwtRegisteredClaimNames.Aud, _configuration["AppSettings:JWT:Audience"]!),
                 new(JwtRegisteredClaimNames.Iss, _configuration["AppSettings:JWT:Issuer"]!)
             ]),

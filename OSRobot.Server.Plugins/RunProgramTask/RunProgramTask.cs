@@ -28,6 +28,9 @@ public class RunProgramTask : MultipleIterationTask
     {
         RunProgramTaskConfig config = (RunProgramTaskConfig)_iterationTaskConfig;
 
+        if (!Server.Core.Core.IsExecutablePathAllowed(config.ProgramPath))
+            throw new ApplicationException($"'{config.ProgramPath}' is not in the configured AppSettings:JobEngineConfig:RunProgramAllowedExecutablePaths allowlist. See SECURITY.md.");
+
         ProcessStartInfo pInfo = new(config.ProgramPath, config.Parameters);
         string defaultWorkingFolder = Path.GetDirectoryName(config.ProgramPath) ?? string.Empty;
         pInfo.WorkingDirectory = string.IsNullOrEmpty(config.WorkingFolder) ? defaultWorkingFolder : config.WorkingFolder;

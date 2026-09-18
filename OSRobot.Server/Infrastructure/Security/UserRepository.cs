@@ -19,12 +19,14 @@
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
+using OSRobot.Server.Configuration;
 using OSRobot.Server.Infrastructure.Security.Abstract;
 using OSRobot.Server.Infrastructure.DataAccess.Models;
 
 namespace OSRobot.Server.Infrastructure.Security;
 
-public class UserRepository(RobotDBContext context) : IUserRepository, IDisposable
+public class UserRepository(RobotDBContext context, IOptions<AppSettings> appSettings) : IUserRepository, IDisposable
 {
     private const int _saltSizeBytes = 16;                 // 128-bit salt
     private const int _pbkdf2KeyLengthBytes = 32;           // 256-bit derived key
@@ -37,6 +39,7 @@ public class UserRepository(RobotDBContext context) : IUserRepository, IDisposab
     private static readonly string _dummyPasswordField = HashPassword("no-such-user-dummy-password", _dummySalt, _pbkdf2IterationCount);
 
     private readonly RobotDBContext _dbContext = context;
+    private readonly SecurityConfig _securityConfig = appSettings.Value.Security;
 
     private static string GetSalt()
     {
@@ -124,6 +127,12 @@ public class UserRepository(RobotDBContext context) : IUserRepository, IDisposab
     {
         User? user = await _dbContext.Users.Where(u => u.UserName == userName).FirstOrDefaultAsync();
 
+        // Locked out: refuse before spending a PBKDF2 derivation on a password that wouldn't be
+        // checked anyway. This is a deliberately disclosed state (unlike "wrong password" vs
+        // "no such user"), so short-circuiting here doesn't reopen the timing side-channel below.
+        if (user != null && user.LockedOutUntil is DateTime lockedOutUntil && lockedOutUntil > DateTime.Now)
+            return new UserRepositoryResponse<User?>(UserRepositoryResult.AccountLockedOut, null);
+
         // Always run a full password verification - using a fixed dummy salt/hash when the
         // username doesn't exist - so a request for a nonexistent username takes essentially
         // the same time as one for a real username with a wrong password. Returning immediately
@@ -131,11 +140,27 @@ public class UserRepository(RobotDBContext context) : IUserRepository, IDisposab
         // response timing (a missing user skips the ~expensive PBKDF2 derivation entirely).
         bool passwordOk = VerifyPassword(password, user?.Salt ?? _dummySalt, user?.Password ?? _dummyPasswordField, out bool needsRehash);
 
-        if (user == null || !passwordOk)
+        if (user == null)
             return new UserRepositoryResponse<User?>(UserRepositoryResult.WrongCredentials, null);
 
+        if (!passwordOk)
+        {
+            user.FailedLoginAttempts++;
+            if (user.FailedLoginAttempts >= _securityConfig.MaxFailedLoginAttempts)
+                user.LockedOutUntil = DateTime.Now.AddMinutes(_securityConfig.LockoutDurationMinutes);
+
+            await _dbContext.SaveChangesAsync();
+            return new UserRepositoryResponse<User?>(UserRepositoryResult.WrongCredentials, null);
+        }
+
+        bool lockoutStateChanged = user.FailedLoginAttempts != 0 || user.LockedOutUntil != null;
+        user.FailedLoginAttempts = 0;
+        user.LockedOutUntil = null;
+
         if (needsRehash)
-            await RehashPasswordAsync(user, password);
+            await RehashPasswordAsync(user, password);     // saves the whole entity, including the reset above
+        else if (lockoutStateChanged)
+            await _dbContext.SaveChangesAsync();
 
         return new UserRepositoryResponse<User?>(UserRepositoryResult.Ok, user);
     }
@@ -151,6 +176,7 @@ public class UserRepository(RobotDBContext context) : IUserRepository, IDisposab
         if (user == null)
             return new UserRepositoryResponse<object?>(UserRepositoryResult.InvalidUser, null);
 
+        user.MustChangePassword = false;
         await RehashPasswordAsync(user, newPassword);
 
         return new UserRepositoryResponse<object?>(UserRepositoryResult.Ok, null);
@@ -171,27 +197,29 @@ public class UserRepository(RobotDBContext context) : IUserRepository, IDisposab
         return new UserRepositoryResponse<object?>(UserRepositoryResult.Ok, null);
     }
 
-    public async Task<UserRepositoryResponse<object?>> Users_RefreshTokenValidate(string userName, string refreshToken, int tokenDurationMinutes)
+    public async Task<UserRepositoryResponse<User?>> Users_RefreshTokenValidate(string userName, string refreshToken, int tokenDurationMinutes)
     {
         var result = await _dbContext.UserRefreshTokens.Join(_dbContext.Users,
                                                                 urt => urt.UserId,
                                                                 u => u.Id,
-                                                                (urt, u) => new {   u.UserName,
+                                                                (urt, u) => new {   User = u,
                                                                                     urt.RefreshToken,
                                                                                     urt.DateCreate
                                                                                 })
-                                                            .Where(t => t.UserName == userName && t.RefreshToken == refreshToken)
+                                                            .Where(t => t.User.UserName == userName && t.RefreshToken == refreshToken)
                                                             .FirstOrDefaultAsync();
 
         // Refresh token not found or not belong to user
         if (result == null)
-            return new UserRepositoryResponse<object?>(UserRepositoryResult.InvalidRefreshToken, null);
+            return new UserRepositoryResponse<User?>(UserRepositoryResult.InvalidRefreshToken, null);
 
         // Refresh token expired
         if (result.DateCreate.AddMinutes(tokenDurationMinutes) < DateTime.Now)
-            return new UserRepositoryResponse<object?>(UserRepositoryResult.InvalidRefreshToken, null);
+            return new UserRepositoryResponse<User?>(UserRepositoryResult.InvalidRefreshToken, null);
 
-        return new UserRepositoryResponse<object?>(UserRepositoryResult.RefreshTokenOk, null);
+        // Returned so the caller can mint a fresh token with an up-to-date MustChangePassword
+        // claim, rather than copying a possibly-stale one from the expired token being refreshed.
+        return new UserRepositoryResponse<User?>(UserRepositoryResult.RefreshTokenOk, result.User);
     }
 
     // IDisposable interface

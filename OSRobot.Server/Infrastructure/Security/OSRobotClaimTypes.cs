@@ -1,4 +1,4 @@
-﻿/*======================================================================================
+/*======================================================================================
     Copyright 2025 by Gianluca Di Bucci (gianx1980) (https://www.os-robot.com)
 
     This file is part of OSRobot.
@@ -16,15 +16,11 @@
     You should have received a copy of the GNU General Public License
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
-namespace OSRobot.Server.Models.DTO.User;
+namespace OSRobot.Server.Infrastructure.Security;
 
-public class UserLoginResponse(string username, string token, string refreshToken, bool mustChangePassword)
+/// <summary>Custom JWT claim types, shared between the code that mints tokens (JWTManager) and
+/// the code that reads them back (MustChangePasswordFilter).</summary>
+public static class OSRobotClaimTypes
 {
-    public string Username { get; set; } = username;
-
-    public string Token { get; set; } = token;
-
-    public string RefreshToken { get; set; } = refreshToken;
-
-    public bool MustChangePassword { get; set; } = mustChangePassword;
+    public const string MustChangePassword = "mustChangePassword";
 }

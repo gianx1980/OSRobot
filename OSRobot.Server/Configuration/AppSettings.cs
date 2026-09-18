@@ -28,6 +28,8 @@ public class JobEngineConfig : IJobEngineConfig
     public int CleanUpLogsOlderThanHours { get; set; }
     public int CleanUpLogsIntervalHours { get; set; }
     public int StopDrainTimeoutSeconds { get; set; } = 30;
+    public bool ScriptingEnabled { get; set; } = true;
+    public string RunProgramAllowedExecutablePaths { get; set; } = string.Empty;
 }
 
 public class JWTConfig
@@ -56,6 +58,7 @@ public class UserConfig
 {
     public long Id { get; set; }
     public string Username { get; set; } = string.Empty;
+    public bool MustChangePassword { get; set; }
 }
 
 /// <summary>
@@ -74,6 +77,13 @@ public class ReverseProxyConfig
     public string KnownNetworks { get; set; } = string.Empty;
 }
 
+/// <summary>Login lockout policy. See SECURITY.md.</summary>
+public class SecurityConfig
+{
+    public int MaxFailedLoginAttempts { get; set; } = 5;
+    public int LockoutDurationMinutes { get; set; } = 15;
+}
+
 public class AppSettings
 {
     public JWTConfig JWT { get; private set; } = new JWTConfig();
@@ -81,4 +91,5 @@ public class AppSettings
     public ClientSettingsConfig ClientSettings { get; private set; } = new ClientSettingsConfig();
     public JobEngineConfig JobEngineConfig { get; set; } = new JobEngineConfig();
     public ReverseProxyConfig ReverseProxy { get; private set; } = new ReverseProxyConfig();
+    public SecurityConfig Security { get; private set; } = new SecurityConfig();
 }

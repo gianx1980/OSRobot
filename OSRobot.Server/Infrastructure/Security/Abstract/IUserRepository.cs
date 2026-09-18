@@ -30,5 +30,5 @@ public interface IUserRepository
 
     public Task<UserRepositoryResponse<object?>> Users_RefreshTokenSave(long userId, string refreshToken);
 
-    public Task<UserRepositoryResponse<object?>> Users_RefreshTokenValidate(string userName, string refreshToken, int tokenDurationMinutes);
+    public Task<UserRepositoryResponse<User?>> Users_RefreshTokenValidate(string userName, string refreshToken, int tokenDurationMinutes);
 }

@@ -107,6 +107,9 @@ public static partial class DynamicDataParser
 
     public static string ParseCSharpCode(string input, DynamicDataChain dynamicDataChain, int iterationNumber, int? subInstanceIndex)
     {
+        if (!Core.ScriptingEnabled)
+            throw new ApplicationException("C# scripting ([CODE] expressions) is disabled by AppSettings:JobEngineConfig:ScriptingEnabled. See SECURITY.md.");
+
         string code = input[_codePlaceholder.Length..];
 
         ScriptGlobals globals = new()

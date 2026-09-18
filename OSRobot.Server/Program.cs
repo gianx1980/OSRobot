@@ -95,6 +95,39 @@ void _initConfigDatabase(string dbConnectionString)
     command.ExecuteNonQuery();
 }
 
+// Idempotent, additive schema upgrade for a database that already existed before the
+// MustChangePassword/FailedLoginAttempts/LockedOutUntil columns were introduced. Runs every
+// startup, unconditionally - unlike _initConfigDatabase, which only ever runs once against a
+// brand new file. New columns default to "not locked out, no forced change" for an existing
+// database, since we have no way to know whether its admin password was already changed - only
+// a freshly seeded database (InitDB.txt) starts with MustChangePassword forced on.
+void _upgradeUserSchema(string dbConnectionString)
+{
+    using SqliteConnection connection = new(dbConnectionString);
+    connection.Open();
+
+    HashSet<string> existingColumns = [];
+    using (SqliteCommand pragma = new("PRAGMA table_info(Users);", connection))
+    using (SqliteDataReader reader = pragma.ExecuteReader())
+    {
+        int nameOrdinal = reader.GetOrdinal("name");
+        while (reader.Read())
+            existingColumns.Add(reader.GetString(nameOrdinal));
+    }
+
+    void AddColumnIfMissing(string columnName, string columnDefinition)
+    {
+        if (existingColumns.Contains(columnName))
+            return;
+        using SqliteCommand alter = new($"ALTER TABLE Users ADD COLUMN {columnDefinition};", connection);
+        alter.ExecuteNonQuery();
+    }
+
+    AddColumnIfMissing("MustChangePassword", "MustChangePassword INTEGER NOT NULL DEFAULT 0");
+    AddColumnIfMissing("FailedLoginAttempts", "FailedLoginAttempts INTEGER NOT NULL DEFAULT 0");
+    AddColumnIfMissing("LockedOutUntil", "LockedOutUntil TEXT NULL");
+}
+
 void _initConfigJobsFile(string jobsConfigPathName)
 {
     AssemblyName info = Assembly.GetExecutingAssembly().GetName();
@@ -125,7 +158,12 @@ var logger = new LoggerConfiguration()
 builder.Services.Configure<AppSettings>(builder.Configuration.GetSection("AppSettings"));
 
 // Add services to the container.
-builder.Services.AddControllers();
+builder.Services.AddControllers(options =>
+{
+    // Server-side enforcement of "must change password before anything else" - see
+    // MustChangePasswordFilter / SECURITY.md.
+    options.Filters.Add<MustChangePasswordFilter>();
+});
 // Learn more about configuring Swagger/OpenAPI at https://aka.ms/aspnetcore/swashbuckle
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
@@ -207,6 +245,7 @@ if (!File.Exists(dbConfigPathName))
 {
     _initConfigDatabase(dbConnectionString);
 }
+_upgradeUserSchema(dbConnectionString);
 
 // Initialize jobs configuration file
 string jobsConfigPathName = Path.Combine(builder.Configuration["AppSettings:JobEngineConfig:DataPath"]!, "jobs.json");
@@ -221,6 +260,17 @@ if (!File.Exists(jobsConfigPathName))
 // shutdown.
 builder.Services.AddSingleton<Serilog.ILogger>(logger);
 builder.Services.AddSingleton<IAppLogger, AppLogger>();
+
+// Dedicated audit trail - logins, lockouts, job-configuration saves, manual task starts - kept
+// separate from the general application log (its own rolling file) so it's easy to review or
+// ship to a SIEM independently of routine framework/app noise. See SECURITY.md.
+string auditLogPath = Path.Combine(builder.Configuration["AppSettings:JobEngineConfig:LogPath"]!, "audit-.log");
+Serilog.ILogger auditLogger = new LoggerConfiguration()
+    .WriteTo.File(auditLogPath, rollingInterval: RollingInterval.Day,
+                  outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} {Message:lj}{NewLine}")
+    .CreateLogger();
+builder.Services.AddSingleton<IAuditLogger>(new AppLogger(auditLogger));
+
 builder.Services.AddSingleton<IJobEngineConfig>(sp => sp.GetRequiredService<IOptions<AppSettings>>().Value.JobEngineConfig);
 builder.Services.AddSingleton<IJobEngine, JobEngine>();
 builder.Services.AddHostedService<JobEngineHostedService>();

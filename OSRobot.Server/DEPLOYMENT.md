@@ -133,6 +133,35 @@ Kestrel terminates TLS itself. Use this if you don't want to run IIS or a separa
 
 ---
 
+## Run under a dedicated, least-privilege service account
+
+This matters regardless of which HTTPS option above you pick, and arguably matters more: as
+documented in [SECURITY.md](../SECURITY.md), a job can run any program and any inline C# it
+wants, with no sandboxing. The account OSRobot Server runs as is the *only* real ceiling on what
+that can do to the host.
+
+- **Don't** run the Windows Service as `LocalSystem` or a domain administrator account. Both are
+  the default in a lot of quick setups, and both mean a malicious or buggy job has full control
+  of the host (or the domain).
+- **Do** create a dedicated local or domain service account, grant it *only*:
+  - Read/write on the folders OSRobot needs (`Data`, `ExecLogs`, and whatever paths your jobs
+    actually read/write/zip/copy).
+  - Logins/permissions on exactly the SQL Server / FTP / SMTP endpoints your jobs use — not
+    `sysadmin`, not a shared admin credential.
+  - "Log on as a service" right, and nothing else privilege-wise.
+- Configure the service to run as that account: `sc.exe config OSRobotServer obj= ".\OSRobotSvc"
+  password= "..."` (or via the Services MMC snap-in → Properties → Log On).
+- If different jobs legitimately need different privilege levels (e.g., one job needs
+  write access to a folder others shouldn't touch), that's a sign they should run as separate
+  OSRobot instances/services under separate accounts, since OSRobot itself doesn't scope
+  permissions per-job — every job an instance runs shares that instance's one set of OS
+  privileges.
+
+A compromised job editor on a least-privilege account is a contained incident. The same
+compromise running as `LocalSystem` is a full host takeover.
+
+---
+
 ## If you must expose OSRobot without any of the above
 
 This only makes sense on a fully trusted, isolated network (never the open internet). Rebinding

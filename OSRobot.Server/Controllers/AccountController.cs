@@ -22,6 +22,7 @@ using Microsoft.Extensions.Options;
 using Microsoft.IdentityModel.Tokens;
 using OSRobot.Server.Configuration;
 using OSRobot.Server.Controllers.Base;
+using OSRobot.Server.Core.Logging.Abstract;
 using OSRobot.Server.Infrastructure.Security;
 using OSRobot.Server.Infrastructure.Security.Abstract;
 using OSRobot.Server.Models;
@@ -39,11 +40,13 @@ namespace OSRobot.Server.Controllers;
 /// </summary>
 [ApiController]
 [Route("api/[controller]")]
-public class AccountController(IJWTManager jWTManager, IOptions<AppSettings> appSettings, IUserRepository userRepository, ILogger<AccountController> logger) : AppControllerBase
+public class AccountController(IJWTManager jWTManager, IOptions<AppSettings> appSettings, IUserRepository userRepository,
+                                IAuditLogger auditLogger, ILogger<AccountController> logger) : AppControllerBase
 {
     private readonly IJWTManager _jWTManager = jWTManager;
     private readonly AppSettings _appSettings = appSettings.Value;
     private readonly IUserRepository _userRepository = userRepository;
+    private readonly IAuditLogger _auditLogger = auditLogger;
     private readonly ILogger<AccountController> _logger = logger;
     
     private string? GetPrincipalNameFromExpiredToken(string token)
@@ -95,14 +98,28 @@ public class AccountController(IJWTManager jWTManager, IOptions<AppSettings> app
     [Route("Login")]
     public async Task<ActionResult<ResponseModel<UserLoginResponse>>> Login([FromBody] UserLoginRequest userLogin)
     {
-        var loginResult = await _userRepository.Users_Login(userLogin.Username, userLogin.Password);    
+        var loginResult = await _userRepository.Users_Login(userLogin.Username, userLogin.Password);
+
+        if (loginResult.ResultCode == UserRepositoryResult.AccountLockedOut)
+        {
+            _auditLogger.Warn($"Login attempt for locked-out user '{userLogin.Username}'.");
+            ResponseModel errorResp = new(ResponseCode.AccountLockedOut, "Account temporarily locked out due to repeated failed login attempts.");
+            return StatusCode(StatusCodes.Status423Locked, errorResp);
+        }
+
         if (loginResult.ResultObject == null || loginResult.ResultCode == UserRepositoryResult.WrongCredentials)
         {
+            _auditLogger.Warn($"Failed login attempt for user '{userLogin.Username}'.");
             ResponseModel errorResp = new(ResponseCode.ResponseWrongCredentials, null);
             return BadRequest(errorResp);
         }
 
-        Tokens token = _jWTManager.CreateToken(new UserConfig() { Id = loginResult.ResultObject.Id, Username = loginResult.ResultObject.UserName });
+        Tokens token = _jWTManager.CreateToken(new UserConfig()
+        {
+            Id = loginResult.ResultObject.Id,
+            Username = loginResult.ResultObject.UserName,
+            MustChangePassword = loginResult.ResultObject.MustChangePassword
+        });
         if (token.Token == null)
         {
             ResponseModel errorResp = new(ResponseCode.ResponseGenericError, "Error during the creation of the token");
@@ -112,15 +129,18 @@ public class AccountController(IJWTManager jWTManager, IOptions<AppSettings> app
         // Store the refresh token in the database
         await _userRepository.Users_RefreshTokenSave(loginResult.ResultObject.Id, token.RefreshToken);
 
-        UserLoginResponse userLoginResponse = new(userLogin.Username, token.Token, token.RefreshToken);
+        _auditLogger.Info($"User '{userLogin.Username}' logged in successfully.");
+
+        UserLoginResponse userLoginResponse = new(userLogin.Username, token.Token, token.RefreshToken, loginResult.ResultObject.MustChangePassword);
         ResponseModel<UserLoginResponse> response = new(ResponseCode.ResponseOk, null, userLoginResponse);
         return Ok(response);
     }
 
     [HttpPost]
     [Authorize]
+    [AllowWhenPasswordChangeRequired]
     [Route("ChangePassword")]
-    public async Task<ActionResult<ResponseModel>> ChangePassword([FromBody] UserChangePasswordRequest userChangePassowordRequest)
+    public async Task<ActionResult<ResponseModel<UserLoginResponse>>> ChangePassword([FromBody] UserChangePasswordRequest userChangePassowordRequest)
     {
         if (userChangePassowordRequest.NewPassword != userChangePassowordRequest.ConfirmPassword)
         {
@@ -130,6 +150,12 @@ public class AccountController(IJWTManager jWTManager, IOptions<AppSettings> app
 
         // Call Users_Login to check current credentials
         var loginResult = await _userRepository.Users_Login(AppUser!.Username, userChangePassowordRequest.CurrentPassword);
+        if (loginResult.ResultCode == UserRepositoryResult.AccountLockedOut)
+        {
+            ResponseModel errorResp = new(ResponseCode.AccountLockedOut, "Account temporarily locked out due to repeated failed login attempts.");
+            return StatusCode(StatusCodes.Status423Locked, errorResp);
+        }
+
         if (loginResult.ResultObject == null || loginResult.ResultCode == UserRepositoryResult.WrongCredentials)
         {
             ResponseModel errorResp = new(ResponseCode.ResponseWrongCredentials, "Wrong credentials");
@@ -137,8 +163,16 @@ public class AccountController(IJWTManager jWTManager, IOptions<AppSettings> app
         }
 
         await _userRepository.Users_ChangePassword(AppUser!.Id, userChangePassowordRequest.NewPassword);
+        _auditLogger.Info($"User '{AppUser!.Username}' changed their password.");
 
-        ResponseModel response = new(ResponseCode.ResponseOk, null);
+        // Mint a fresh token with MustChangePassword=false, so the client isn't stuck honoring
+        // the stale "true" claim from the token used to make this very request for the rest of
+        // its (short) remaining lifetime.
+        Tokens newToken = _jWTManager.CreateToken(new UserConfig() { Id = AppUser!.Id, Username = AppUser!.Username, MustChangePassword = false });
+        await _userRepository.Users_RefreshTokenSave(AppUser!.Id, newToken.RefreshToken);
+
+        UserLoginResponse changePasswordResponse = new(AppUser!.Username, newToken.Token!, newToken.RefreshToken, false);
+        ResponseModel<UserLoginResponse> response = new(ResponseCode.ResponseOk, null, changePasswordResponse);
         return Ok(response);
     }
 
@@ -162,7 +196,15 @@ public class AccountController(IJWTManager jWTManager, IOptions<AppSettings> app
             return Unauthorized(errorResp);
         }
 
-        Tokens token = _jWTManager.CreateToken(new UserConfig() { Username = userName });
+        // Mint the new claim set from the current DB state (repResp.ResultObject), not copied
+        // from the expired token being refreshed - otherwise a MustChangePassword change made
+        // after that token was issued wouldn't take effect until the user logs in again fresh.
+        Tokens token = _jWTManager.CreateToken(new UserConfig()
+        {
+            Id = repResp.ResultObject?.Id ?? 0,
+            Username = userName,
+            MustChangePassword = repResp.ResultObject?.MustChangePassword ?? false
+        });
         if (token.Token == null)
         {
             ResponseModel errorResp = new(ResponseCode.ResponseGenericError, "Error during the creation of the token");

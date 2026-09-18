@@ -1,4 +1,4 @@
-﻿/*======================================================================================
+/*======================================================================================
     Copyright 2025 by Gianluca Di Bucci (gianx1980) (https://www.os-robot.com)
 
     This file is part of OSRobot.
@@ -16,15 +16,17 @@
     You should have received a copy of the GNU General Public License
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
-namespace OSRobot.Server.Models.DTO.User;
+namespace OSRobot.Server.Core.Logging.Abstract;
 
-public class UserLoginResponse(string username, string token, string refreshToken, bool mustChangePassword)
+/// <summary>
+/// A distinct logging channel for security-relevant events - logins, lockouts, job-configuration
+/// saves, manual task starts - so exercise of OSRobot's (deliberately unsandboxed - see
+/// SECURITY.md) automation power is never anonymous. Registered against a separate Serilog sink
+/// (ExecLogs/audit-*.log) from the general application log, kept as its own interface (rather
+/// than reusing IAppLogger directly) so a class can depend on "the audit log" specifically. Same
+/// method shape as IAppLogger by design - AppLogger, a thin wrapper over any Serilog.ILogger,
+/// implements both.
+/// </summary>
+public interface IAuditLogger : IAppLogger
 {
-    public string Username { get; set; } = username;
-
-    public string Token { get; set; } = token;
-
-    public string RefreshToken { get; set; } = refreshToken;
-
-    public bool MustChangePassword { get; set; } = mustChangePassword;
 }

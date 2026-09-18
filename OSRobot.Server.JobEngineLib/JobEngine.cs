@@ -490,7 +490,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
 
         try
         {
-            Server.Core.Core.Init(_config.LogPath);
+            Server.Core.Core.Init(_config.LogPath, _config.ScriptingEnabled, _config.RunProgramAllowedExecutablePaths);
 
             _log.Info("Starting OSRobot.JobEngine...");
 

@@ -3,14 +3,19 @@
 -- --------------------------------------
 CREATE TABLE Users
 (
-	Id				INTEGER PRIMARY KEY AUTOINCREMENT,
-	UserName		TEXT	NOT NULL UNIQUE,
-	Salt			TEXT	NOT NULL,
-	Password		TEXT	NOT NULL
+	Id					INTEGER PRIMARY KEY AUTOINCREMENT,
+	UserName			TEXT	NOT NULL UNIQUE,
+	Salt				TEXT	NOT NULL,
+	Password			TEXT	NOT NULL,
+	MustChangePassword	INTEGER	NOT NULL DEFAULT 0,
+	FailedLoginAttempts	INTEGER	NOT NULL DEFAULT 0,
+	LockedOutUntil		TEXT	NULL
 );
 
--- Default credentials: admin / admin
-INSERT INTO Users(UserName, Salt, Password) VALUES('admin', '(Th£m3qFc=b,-R£)j)£2OGjelJf|(XQhB.2AF7bHSdg3(13O}m;&0zyu&7%i(&M$', 'z6VBl1gxUv87M6d3x4i5If8WNNx8WmsjznDlxUn17SEA0rQiLOPMeWa5Wu+rvznpPz7tbepODFcY0/+9t3OF9w==');
+-- Default credentials: admin / admin. MustChangePassword = 1 forces a change on first login -
+-- the API refuses everything else until it's cleared. Password is upgraded from this legacy
+-- SHA-512 hash to PBKDF2 transparently on first successful login (see UserRepository).
+INSERT INTO Users(UserName, Salt, Password, MustChangePassword) VALUES('admin', '(Th£m3qFc=b,-R£)j)£2OGjelJf|(XQhB.2AF7bHSdg3(13O}m;&0zyu&7%i(&M$', 'z6VBl1gxUv87M6d3x4i5If8WNNx8WmsjznDlxUn17SEA0rQiLOPMeWa5Wu+rvznpPz7tbepODFcY0/+9t3OF9w==', 1);
 
 
 CREATE TABLE UserRefreshTokens

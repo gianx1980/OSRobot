@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using OSRobot.Server.Core;
 using OSRobot.Server.Controllers.Base;
+using OSRobot.Server.Core.Logging.Abstract;
 using OSRobot.Server.JobEngineLib.Infrastructure.Abstract;
 using OSRobot.Server.Models.DTO;
 using OSRobot.Server.Models.DTO.Robot;
@@ -33,10 +34,11 @@ namespace OSRobot.Server.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSettings, ILogger<RobotController> logger) : AppControllerBase
+public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSettings, IAuditLogger auditLogger, ILogger<RobotController> logger) : AppControllerBase
 {
     private readonly IJobEngine _jobEngine = jobEngine;
     private readonly AppSettings _appSettings = appSettings.Value;
+    private readonly IAuditLogger _auditLogger = auditLogger;
     private readonly ILogger<RobotController> _logger = logger;
 
     [HttpGet]
@@ -107,6 +109,7 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
         try
         {
             System.IO.File.WriteAllText(Path.Combine(_appSettings.JobEngineConfig.DataPath, "jobs.json"), workspaceJobs);
+            _auditLogger.Info($"User '{AppUser?.Username}' saved the job configuration ({workspaceJobs.Length} bytes).");
 
             ResponseModel response = new(ResponseCode.ResponseOk, null);
             return Ok(response);
@@ -124,6 +127,8 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
     [Authorize]
     public async Task<ActionResult<ResponseModel>> StartTask([FromQuery] int taskId)
     {
+        _auditLogger.Info($"User '{AppUser?.Username}' manually started task {taskId}.");
+
         bool result = await _jobEngine.StartTaskAsync(taskId, HttpContext.RequestAborted);
 
         if (!result)
@@ -141,6 +146,8 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
     [Authorize]
     public ActionResult<ResponseModel> ReloadJobsConfig()
     {
+        _auditLogger.Info($"User '{AppUser?.Username}' reloaded the job configuration.");
+
         ReloadJobsReturnValues result = _jobEngine.ReloadJobs();
 
         if (result == ReloadJobsReturnValues.CannotReloadWhileRunningTask)

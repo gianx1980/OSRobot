@@ -21,7 +21,10 @@ using Serilog;
 
 namespace OSRobot.Server.Core.Logging;
 
-public class AppLogger(ILogger logger) : IAppLogger
+// Also satisfies IAuditLogger: both interfaces share the same Info/Error/Warn shape, and a
+// second instance of this class, wrapping a separate Serilog sink, is registered as IAuditLogger
+// in Program.cs.
+public class AppLogger(ILogger logger) : IAppLogger, IAuditLogger
 {
     private readonly ILogger _logger = logger;
 

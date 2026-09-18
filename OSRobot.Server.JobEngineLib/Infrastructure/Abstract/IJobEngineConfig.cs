@@ -32,4 +32,17 @@ public interface IJobEngineConfig
     /// both WaitForDispatchesToDrain() and WaitForRunningTasksToDrain().
     /// </summary>
     public int StopDrainTimeoutSeconds { get; set; }
+
+    /// <summary>
+    /// When false, [CODE] C# scripting expressions fail instead of executing. Default true
+    /// (full power, unrestricted). See SECURITY.md.
+    /// </summary>
+    public bool ScriptingEnabled { get; set; }
+
+    /// <summary>
+    /// Comma-separated allowlist of executable paths/directories RunProgramTask may launch.
+    /// Empty (default) means unrestricted. Only meaningful alongside ScriptingEnabled = false -
+    /// see SECURITY.md.
+    /// </summary>
+    public string RunProgramAllowedExecutablePaths { get; set; }
 }
