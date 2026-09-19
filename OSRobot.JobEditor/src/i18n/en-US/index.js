@@ -15,6 +15,8 @@ export default {
   addParameter: "Add parameter",
   and: "And",
   allDays: "All days",
+  accountTemporarilyLockedOut:
+    "Your account has been temporarily locked out due to repeated failed login attempts. Please try again later.",
   allDatabases: "All databases",
   allUserDatabases: "All user databases",
   anErrorOccurredDuringTheOperation: "An error occurred during the operation",
@@ -431,6 +433,8 @@ export default {
   workspaceTree: "Workspace tree",
   wrongUserNameOrPassword: "Wrong user name or password",
   yes: "Yes",
+  youMustChangeYourPasswordBeforeContinuing:
+    "You must change your password before continuing.",
   yourSessionHasExpiredLoginAgain:
     "Your session has expired, please login again",
 
