@@ -300,6 +300,10 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
                         await Task.WhenAll(siblingDispatches);
                 }
             }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                instanceLogger.Info($"Task {thisTaskId} cancelled: engine is stopping or the request was aborted.");
+            }
             catch (Exception ex)
             {
                 if (taskCopy != null)
@@ -366,6 +370,10 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
             {
                 await HandleEventTriggeredAsync(pluginEvent, e, cancellationToken);
             }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                _log.Info($"Dispatch of event {pluginEvent.Config.Id} cancelled: engine is stopping.");
+            }
             catch (Exception ex)
             {
                 _log.Error("Unhandled error dispatching event", ex);
@@ -374,7 +382,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
             {
                 EndDispatch();
             }
-        }, cancellationToken);
+        });  // Deliberately no cancellationToken here: if it were cancelled before the lambda started, the finally (EndDispatch) would never run.
     }
 
     private async Task HandleEventTriggeredAsync(IEvent pluginEvent, EventTriggeredEventArgs e, CancellationToken cancellationToken)
@@ -576,7 +584,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
         {
             // Stop accepting new dispatches, then wait (bounded) for any dispatch that
             // already got past the check above - including one still in its pre-dispatch
-            // Thread.Sleep(WaitSeconds) - to finish. This is what closes the ReloadJobs()
+            // Task.Delay(WaitSeconds) - to finish. This is what closes the ReloadJobs()
             // TOCTOU: even if _runningTasks looked empty at the check, nothing gets torn
             // down while a dispatch that was "in" is still running.
             //
