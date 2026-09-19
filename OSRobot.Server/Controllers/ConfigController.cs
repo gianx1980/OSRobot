@@ -21,6 +21,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using OSRobot.Server.Configuration;
 using OSRobot.Server.Controllers.Base;
+using OSRobot.Server.Infrastructure.Security;
 using OSRobot.Server.Models.DTO;
 using OSRobot.Server.Models.DTO.Config;
 
@@ -35,6 +36,7 @@ namespace OSRobot.Server.Controllers
         [HttpPost]
         [Route("GetConfig")]
         [Authorize]
+        [AllowWhenPasswordChangeRequired]
         public ActionResult<ResponseModel<ConfigResponse>> GetConfig()
         {
             ConfigResponse configResponse = new(_appSettings.JWT.RequestNewTokenIfMinutesLeft, 
