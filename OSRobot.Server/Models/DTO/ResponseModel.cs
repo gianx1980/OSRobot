@@ -29,6 +29,7 @@ public enum ResponseCode : int
     MustChangePassword = -12,
     ErrorLoadingJobs = -100,
     ErrorSavingJobs = -101,
+    InvalidJobsConfiguration = -102,
     CannotStartTask = -200,
     ResponseGenericError = int.MinValue
 }

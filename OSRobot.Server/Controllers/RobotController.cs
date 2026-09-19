@@ -22,6 +22,7 @@ using Microsoft.Extensions.Options;
 using OSRobot.Server.Core;
 using OSRobot.Server.Controllers.Base;
 using OSRobot.Server.Core.Logging.Abstract;
+using OSRobot.Server.Core.Persistence;
 using OSRobot.Server.JobEngineLib.Infrastructure.Abstract;
 using OSRobot.Server.Models.DTO;
 using OSRobot.Server.Models.DTO.Robot;
@@ -97,18 +98,50 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
     [HttpPost]
     [Route("WorkspaceJobs")]
     [Authorize]
-    public ActionResult<ResponseModel> WorkspaceJobs([FromBody] object requestBody)
+    public ActionResult<ResponseModel> WorkspaceJobs([FromBody] JsonElement requestBody)
     {
-        string? workspaceJobs = requestBody.ToString();
-        if (string.IsNullOrEmpty(workspaceJobs))
+        if (requestBody.ValueKind != JsonValueKind.Object)
         {
             ResponseModel errorResp = new(ResponseCode.ErrorSavingJobs, "Jobs configuration is empty");
             return BadRequest(errorResp);
         }
 
+        string workspaceJobs = requestBody.GetRawText();
+
+        // Validate structurally before touching anything on disk, using the exact same
+        // deserializer JobEngine uses to load jobs.json at startup/reload. If this can't build a
+        // valid Folder tree (an unknown plugin id, a connection pointing at a nonexistent
+        // object, a malformed plugin config, ...) nothing gets written - a bad save can no
+        // longer corrupt the live workspace or silently break the next engine reload.
         try
         {
-            System.IO.File.WriteAllText(Path.Combine(_appSettings.JobEngineConfig.DataPath, "jobs.json"), workspaceJobs);
+            using JsonDocument jsonDoc = JsonDocument.Parse(workspaceJobs);
+            _ = new JsonDeserialization(jsonDoc).Deserialize();
+        }
+        catch (Exception ex)
+        {
+            _logger.LogWarning(ex, "Rejected an invalid job configuration submitted by user '{Username}'.", AppUser?.Username);
+            ResponseModel errorResp = new(ResponseCode.InvalidJobsConfiguration, $"The submitted job configuration is invalid: {ex.Message}");
+            return BadRequest(errorResp);
+        }
+
+        string jobsFilePath = Path.Combine(_appSettings.JobEngineConfig.DataPath, "jobs.json");
+        string tempFilePath = jobsFilePath + ".tmp";
+        string backupFilePath = jobsFilePath + ".bak";
+
+        try
+        {
+            // Write to a temp file, then swap it into place with a single atomic filesystem
+            // operation (File.Replace also preserves the previous live file as a .bak). A crash
+            // or power loss mid-write can now only ever leave the .tmp file incomplete - never
+            // the live jobs.json, which either fully updates or isn't touched at all.
+            System.IO.File.WriteAllText(tempFilePath, workspaceJobs);
+
+            if (System.IO.File.Exists(jobsFilePath))
+                System.IO.File.Replace(tempFilePath, jobsFilePath, backupFilePath);
+            else
+                System.IO.File.Move(tempFilePath, jobsFilePath);
+
             _auditLogger.Info($"User '{AppUser?.Username}' saved the job configuration ({workspaceJobs.Length} bytes).");
 
             ResponseModel response = new(ResponseCode.ResponseOk, null);
@@ -117,6 +150,17 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
         catch (Exception ex)
         {
             _logger.LogError(ex, "An error occurred while saving jobs.json.");
+
+            try
+            {
+                if (System.IO.File.Exists(tempFilePath))
+                    System.IO.File.Delete(tempFilePath);
+            }
+            catch (Exception cleanupEx)
+            {
+                _logger.LogWarning(cleanupEx, "Failed to clean up temporary file '{TempFilePath}' after a failed save.", tempFilePath);
+            }
+
             ResponseModel errResp = new(ResponseCode.ErrorSavingJobs, "An error occurred while saving the jobs.");
             return BadRequest(errResp);
         }
