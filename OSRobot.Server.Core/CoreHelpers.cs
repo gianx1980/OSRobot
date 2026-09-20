@@ -39,6 +39,7 @@ public static class CoreHelpers
         
         string output = serializer.SerializeToXmlString(pluginInstance, "OSRobot");
 
+        // TODO: consider removing lock
         lock (_objectCloning)
         {
             XmlDocument xmlDoc = new();
