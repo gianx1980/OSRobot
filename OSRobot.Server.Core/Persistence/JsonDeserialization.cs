@@ -151,13 +151,13 @@ public class JsonDeserialization(JsonDocument jsonDoc)
                     continue;
 
                 // Get plugininstance type and create an instance of it
-                Type? pluginInstanceType = Type.GetType($"OSRobot.Server.Plugins.{pluginId}.{pluginId}, OSRobot.Server.Plugins") ?? throw new ApplicationException($"Cannot get type for: {pluginId}");
-                IPluginInstance? pluginInstance = (IPluginInstance?)Activator.CreateInstance(pluginInstanceType) ?? throw new ApplicationException($"An error occurred while creating an instance of type {pluginId}");
+                IPlugin plugin = PluginRegistry.GetPlugin(pluginId) ?? throw new ApplicationException($"Cannot get type for: {pluginId}");
+                IPluginInstance pluginInstance = plugin.GetInstance();
                 pluginInstance.ParentFolder = folder;
                 folder.Add(pluginInstance);
 
                 // Deserialize configuration of the plugin instance
-                Type? pluginInstanceConfigType = Type.GetType($"OSRobot.Server.Plugins.{pluginId}.{pluginId}Config, OSRobot.Server.Plugins") ?? throw new ApplicationException($"Cannot get configuration type for: {pluginId}");
+                Type pluginInstanceConfigType = plugin.GetPluginDefaultConfig().GetType();
                 IPluginInstanceConfig? pluginInstanceConfig = (IPluginInstanceConfig?)jsonPluginObjectConfig.Deserialize(pluginInstanceConfigType, jsonSerializerOptions) ?? throw new ApplicationException($"An error occurred while creating an instance of type {pluginId}Config");
                 pluginInstance.Config = pluginInstanceConfig;
 

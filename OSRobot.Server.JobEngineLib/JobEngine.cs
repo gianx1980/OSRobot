@@ -25,29 +25,6 @@ using OSRobot.Server.Core.Logging;
 using OSRobot.Server.Core.Logging.Abstract;
 using OSRobot.Server.Core.Persistence;
 using OSRobot.Server.JobEngineLib.Infrastructure.Abstract;
-using OSRobot.Server.Plugins.CpuEvent;
-using OSRobot.Server.Plugins.DateTimeEvent;
-using OSRobot.Server.Plugins.DiskSpaceEvent;
-using OSRobot.Server.Plugins.ExcelFileTask;
-using OSRobot.Server.Plugins.FileSystemEvent;
-using OSRobot.Server.Plugins.FileSystemTask;
-using OSRobot.Server.Plugins.FtpSftpTask;
-using OSRobot.Server.Plugins.MemoryEvent;
-using OSRobot.Server.Plugins.OSRobotServiceStartEvent;
-using OSRobot.Server.Plugins.PingTask;
-using OSRobot.Server.Plugins.ReadBinaryFileTask;
-using OSRobot.Server.Plugins.ReadTextFileTask;
-using OSRobot.Server.Plugins.RESTApiTask;
-using OSRobot.Server.Plugins.RunProgramTask;
-using OSRobot.Server.Plugins.SendEMailTask;
-using OSRobot.Server.Plugins.SqlServerBackupTask;
-using OSRobot.Server.Plugins.SqlServerBulkCopyTask;
-using OSRobot.Server.Plugins.SqlServerCommandTask;
-using OSRobot.Server.Plugins.SystemEventsEvent;
-using OSRobot.Server.Plugins.UnzipTask;
-using OSRobot.Server.Plugins.WriteBinaryFileTask;
-using OSRobot.Server.Plugins.WriteTextFileTask;
-using OSRobot.Server.Plugins.ZipTask;
 
 
 namespace OSRobot.Server.JobEngineLib;
@@ -734,46 +711,9 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
         }
     }
 
-    public List<IPlugin> GetPlugins()
-    {
-        return
-        [
-            new CpuEventPlugin(),
-            new DateTimeEventPlugin(),
-            new DiskSpaceEventPlugin(),
-            new ExcelFileTaskPlugin(),
-            new FileSystemEventPlugin(),
-            new FileSystemTaskPlugin(),
-            new FtpSftpTaskPlugin(),
-            new MemoryEventPlugin(),
-            new OSRobotServiceStartEventPlugin(),
-            new ReadBinaryFileTaskPlugin(),
-            new ReadTextFileTaskPlugin(),
-            new RESTApiTaskPlugin(),
-            new RunProgramTaskPlugin(),
-            new SendEMailTaskPlugin(),
-            new SqlServerBackupTaskPlugin(),
-            new SqlServerBulkCopyTaskPlugin(),
-            new SqlServerCommandTaskPlugin(),
-            new SystemEventsEventPlugin(),
-            new UnzipTaskPlugin(),
-            new WriteBinaryFileTaskPlugin(),
-            new WriteTextFileTaskPlugin(),
-            new ZipTaskPlugin(),
-            new PingTaskPlugin()
-        ];
-    }
+    public List<IPlugin> GetPlugins() => PluginRegistry.GetPlugins();
 
-    public IPlugin? GetPlugin(string pluginId)
-    {
-        string pluginFullTypeName = $"OSRobot.Server.Plugins.{pluginId}.{pluginId}Plugin, OSRobot.Server.Plugins";
-
-        Type? pluginType = Type.GetType(pluginFullTypeName);
-        if (pluginType == null)
-            return null;
-
-        return (IPlugin?)Activator.CreateInstance(pluginType);
-    }
+    public IPlugin? GetPlugin(string pluginId) => PluginRegistry.GetPlugin(pluginId);
 
     public List<LogInfo> GetFolderLogs(int folderId)
     {
