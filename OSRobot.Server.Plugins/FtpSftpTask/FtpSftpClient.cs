@@ -24,7 +24,7 @@ using System.Net;
 
 namespace OSRobot.Server.Plugins.FtpSftpTask;
 
-public class FtpSftpClient : IDisposable
+public class FtpSftpClient : IFileTransferClient
 {
     private bool _disposed;
     private FtpClient? _ftpClient;

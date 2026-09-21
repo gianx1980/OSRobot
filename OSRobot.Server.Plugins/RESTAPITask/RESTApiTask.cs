@@ -21,6 +21,7 @@ using Newtonsoft.Json;
 using Newtonsoft.Json.Linq;
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
+using OSRobot.Server.Plugins.Infrastructure.Network;
 using System.Data;
 using System.Text;
 
@@ -47,7 +48,7 @@ public class RESTApiTask : MultipleIterationTask
 
     protected override async Task RunMultipleIterationTaskAsync(int currentIteration)
     {
-        using HttpClient client = new();
+        using HttpClient client = PluginServices.CreateHttpClient();
         RESTApiTaskConfig config = (RESTApiTaskConfig)_iterationTaskConfig;
 
         client.DefaultRequestHeaders.Clear();
