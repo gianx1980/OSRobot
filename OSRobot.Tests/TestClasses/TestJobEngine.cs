@@ -272,45 +272,61 @@ public sealed class TestJobEngine
     }
 
     [TestMethod]
-    [Ignore("Known production bug: in non-serial mode JobEngine.StartTaskAsync returns as soon as the task is dispatched, " +
-            "and its 'using' disposes the linked CancellationTokenSource right then. Disposing removes the link to the engine's " +
-            "run token and to the caller's token, so neither Stop() nor the caller can cancel the still-running task. " +
-            "Remove this attribute once fixed.")]
-    public async Task Cancelling_the_caller_token_cancels_a_manually_started_task()
+    public async Task Cancelling_the_caller_token_cancels_the_task_in_serial_mode()
     {
+        // Serial mode: StartTaskAsync only returns when the task is done, so the caller is still waiting
+        // and its cancellation (e.g. an aborted HTTP request) must reach the task.
         JobGraph graph = new JobGraph()
             .Task(2, "Long", delayMs: 30_000)
             .Connect(JobGraph.EventId, 2);
-        using EngineHarness h = new(graph, stopDrainTimeoutSeconds: 20);
+        using EngineHarness h = new(graph, serialExecution: true, stopDrainTimeoutSeconds: 20);
         using CancellationTokenSource cts = new();
 
-        await h.Engine.StartTaskAsync(2, cts.Token);
+        Task<bool> start = h.Engine.StartTaskAsync(2, cts.Token);
         Thread.Sleep(300);
         cts.Cancel();
 
         Assert.IsTrue(EngineHarness.WaitFor(() => ProbeLog.Find("Long")?.Cancelled == true, TimeSpan.FromSeconds(3)),
                       "The running task should observe the caller's cancellation.");
+        await start;
     }
 
     [TestMethod]
-    [Ignore("Known production bug: in non-serial mode JobEngine.StartTaskAsync returns as soon as the task is dispatched, " +
-            "and its 'using' disposes the linked CancellationTokenSource right then. Disposing removes the link to the engine's " +
-            "run token and to the caller's token, so neither Stop() nor the caller can cancel the still-running task. " +
-            "Remove this attribute once fixed.")]
-    public async Task Stop_cancels_a_manually_started_task()
+    public async Task Cancelling_the_caller_token_does_not_cancel_a_task_already_dispatched_in_the_background()
+    {
+        // Non-serial mode: StartTaskAsync returns as soon as the task is dispatched, like an HTTP request
+        // that has been answered "started". The request's token must not kill the task afterwards.
+        JobGraph graph = new JobGraph()
+            .Task(2, "Bg", delayMs: 800)
+            .Connect(JobGraph.EventId, 2);
+        using EngineHarness h = new(graph);
+        using CancellationTokenSource cts = new();
+
+        Assert.IsTrue(await h.Engine.StartTaskAsync(2, cts.Token));
+        cts.Cancel();
+
+        Assert.IsTrue(EngineHarness.WaitFor(() => Ran("Bg"), Timeout), "The background task should still complete.");
+        Assert.IsFalse(ProbeLog.Find("Bg")!.Cancelled);
+    }
+
+    [TestMethod]
+    [DataRow(false)]
+    [DataRow(true)]
+    public async Task Stop_cancels_a_manually_started_task(bool serialExecution)
     {
         JobGraph graph = new JobGraph()
             .Task(2, "Long", delayMs: 30_000)
             .Connect(JobGraph.EventId, 2);
-        using EngineHarness h = new(graph, stopDrainTimeoutSeconds: 20);
+        using EngineHarness h = new(graph, serialExecution: serialExecution, stopDrainTimeoutSeconds: 20);
 
-        await h.Engine.StartTaskAsync(2);
+        Task<bool> start = h.Engine.StartTaskAsync(2);
         Thread.Sleep(300);
 
         TimeSpan stopTime = h.Stop();
 
         Assert.IsLessThan(TimeSpan.FromSeconds(5), stopTime, $"Stop() took {stopTime.TotalSeconds:F1} s: the task was not cancelled.");
         Assert.IsTrue(EngineHarness.WaitFor(() => ProbeLog.Find("Long")?.Cancelled == true, TimeSpan.FromSeconds(3)));
+        await start;
     }
 
     [TestMethod]

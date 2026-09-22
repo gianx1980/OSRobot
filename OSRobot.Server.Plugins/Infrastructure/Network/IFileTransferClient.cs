@@ -35,6 +35,7 @@ public interface IFileTransferClient : IDisposable
     bool RemoteFileExists(string remoteFile);
     bool RemoteDirectoryExists(string remoteDirectory);
     bool RemoteIsDirectory(string remotePath);
+    List<FtpSftpFileInfo> RemoteListing(string remotePath);
     void RemoteFileDelete(string remoteFile);
     void RemoteDirectoryDelete(string remoteDirectory);
 

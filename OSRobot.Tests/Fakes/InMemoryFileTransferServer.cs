@@ -92,6 +92,7 @@ public sealed class InMemoryFileTransferServer
     private sealed class Client(InMemoryFileTransferServer server) : IFileTransferClient
     {
         private bool _connected;
+        private ProtocolEnum _protocol;
 
         private void Log(string op) => server._operations.Add(op);
 
@@ -108,6 +109,7 @@ public sealed class InMemoryFileTransferServer
                 Log($"CONNECT {protocol} {username}@{host}:{port}");
                 if (username != server.Username || password != server.Password)
                     throw new UnauthorizedAccessException("Permission denied (fake server: bad credentials).");
+                _protocol = protocol;
                 _connected = true;
             }
         }
@@ -179,6 +181,33 @@ public sealed class InMemoryFileTransferServer
                 if (server._directories.Contains(p)) return true;
                 if (server._files.ContainsKey(p)) return false;
                 throw new FileNotFoundException($"No such file or directory: {p}");
+            }
+        }
+
+        public List<FtpSftpFileInfo> RemoteListing(string remotePath)
+        {
+            RequireConnected();
+            lock (server._gate)
+            {
+                string p = Normalize(remotePath);
+                if (!server._directories.Contains(p))
+                    throw new DirectoryNotFoundException($"No such directory: {p}");
+
+                List<FtpSftpFileInfo> result = [];
+
+                // SFTP servers list the "." and ".." entries; FTP listings (via FluentFTP) do not.
+                if (_protocol == ProtocolEnum.SFTP)
+                {
+                    result.Add(new FtpSftpFileInfo(".", p, false, true, false));
+                    result.Add(new FtpSftpFileInfo("..", ParentOf(p), false, true, false));
+                }
+
+                foreach (string dir in server._directories.Where(d => d != "/" && ParentOf(d) == p).Order(StringComparer.Ordinal))
+                    result.Add(new FtpSftpFileInfo(dir[(dir.LastIndexOf('/') + 1)..], dir, false, true, false));
+                foreach (string file in server._files.Keys.Where(f => ParentOf(f) == p).Order(StringComparer.Ordinal))
+                    result.Add(new FtpSftpFileInfo(file[(file.LastIndexOf('/') + 1)..], file, true, false, false));
+
+                return result;
             }
         }
 

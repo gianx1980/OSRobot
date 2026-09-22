@@ -77,8 +77,6 @@ public sealed class TestExecutionConditions
     }
 
     [TestMethod]
-    [Ignore("Known production bug: ExecutionCondition unboxes values with (int), so ValueGreaterThan/LessThan/Between throw " +
-            "InvalidCastException for any non-int value (float, long, double, decimal, numeric strings). Remove this attribute once fixed.")]
     public void Numeric_operators_work_on_a_float_value_such_as_PingTasks_ThresholdSuccessRate()
     {
         // PingTask publishes ThresholdSuccessRate as a float (see its sample dynamic data: "50%").
@@ -88,8 +86,6 @@ public sealed class TestExecutionConditions
     }
 
     [TestMethod]
-    [Ignore("Known production bug: ExecutionCondition unboxes values with (int), so ValueGreaterThan/LessThan/Between throw " +
-            "InvalidCastException for any non-int value (float, long, double, decimal, numeric strings). Remove this attribute once fixed.")]
     public void Numeric_operators_work_on_a_long_value_such_as_a_tick_count()
     {
         ExecResult r = Result(true, ("ExecutionStartDateTicks", 638_000_000_000_000_000L));
@@ -128,5 +124,48 @@ public sealed class TestExecutionConditions
 
         Assert.IsTrue(c.EvaluateExecConditions(Result(true, ("Msg", "carry on"))));
         Assert.IsFalse(c.EvaluateExecConditions(Result(true, ("Msg", "please skip me"))));
+    }
+
+    [TestMethod]
+    [DataRow(75.5, "75", "80", true)]
+    [DataRow(75.5, "75.5", "75.5", true)]
+    [DataRow(75.5, "76", "80", false)]
+    public void ValueBetween_supports_decimal_bounds_and_values(double value, string min, string max, bool expected)
+    {
+        ExecutionCondition c = Condition(EnumExecutionConditionOperator.ValueBetween, min: min, max: max, code: "V");
+
+        Assert.AreEqual(expected, c.EvaluateCondition(Result(true, ("V", value))));
+    }
+
+    [TestMethod]
+    public void Numeric_operators_accept_numeric_text_and_other_numeric_types()
+    {
+        Assert.IsTrue(Condition(EnumExecutionConditionOperator.ValueGreaterThan, min: "5", code: "V").EvaluateCondition(Result(true, ("V", "10"))));
+        Assert.IsTrue(Condition(EnumExecutionConditionOperator.ValueGreaterThan, min: "5", code: "V").EvaluateCondition(Result(true, ("V", 10m))));
+        Assert.IsTrue(Condition(EnumExecutionConditionOperator.ValueLessThan, min: "5", code: "V").EvaluateCondition(Result(true, ("V", (short)3))));
+        Assert.IsTrue(Condition(EnumExecutionConditionOperator.ValueGreaterThan, min: "5", code: "V").EvaluateCondition(Result(true, ("V", 6.5d))));
+    }
+
+    [TestMethod]
+    public void Long_values_are_compared_exactly()
+    {
+        // Beyond what a double can represent exactly: 2^60 + 1 versus 2^60.
+        ExecResult r = Result(true, ("V", 1_152_921_504_606_846_977L));
+
+        Assert.IsTrue(Condition(EnumExecutionConditionOperator.ValueGreaterThan, min: "1152921504606846976", code: "V").EvaluateCondition(r));
+    }
+
+    [TestMethod]
+    public void A_non_numeric_value_does_not_satisfy_a_numeric_condition_instead_of_throwing()
+    {
+        Assert.IsFalse(Condition(EnumExecutionConditionOperator.ValueGreaterThan, min: "5", code: "V").EvaluateCondition(Result(true, ("V", "not a number"))));
+        Assert.IsFalse(Condition(EnumExecutionConditionOperator.ValueLessThan, min: "5", code: "V").EvaluateCondition(Result(true, ("V", double.NaN))));
+        Assert.IsFalse(Condition(EnumExecutionConditionOperator.ValueBetween, min: "1", max: "9", code: "V").EvaluateCondition(Result(true, ("V", new object()))));
+    }
+
+    [TestMethod]
+    public void An_unparseable_threshold_does_not_satisfy_the_condition_instead_of_throwing()
+    {
+        Assert.IsFalse(Condition(EnumExecutionConditionOperator.ValueGreaterThan, min: "abc", code: "V").EvaluateCondition(Result(true, ("V", 10))));
     }
 }

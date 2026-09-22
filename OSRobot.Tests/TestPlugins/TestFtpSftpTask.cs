@@ -268,15 +268,14 @@ public sealed class TestFtpSftpTask
     }
 
     [TestMethod]
-    [Ignore("Known production bug: FtpSftpTask.ManageCopyItem calls RemoteIsDirectory(copyItem.LocalPath) " +
-            "(should be RemotePath), so every remote-to-local copy fails; BuildLocalPath and DownloadDirectory " +
-            "also mix up local and remote paths. Remove this attribute once fixed.")]
-    public async Task DownloadFile_copies_the_remote_file_to_the_local_path()
+    [DataRow(ProtocolEnum.SFTP)]
+    [DataRow(ProtocolEnum.FTP)]
+    public async Task DownloadFile_copies_the_remote_file_and_creates_the_local_directories(ProtocolEnum protocol)
     {
         _server.SeedFile("/Remote/file.txt", "downloaded");
-        string localTarget = Path.Combine(_localRoot, "out", "file.txt");
+        string localTarget = Path.Combine(_localRoot, "out", "deeper", "file.txt");
 
-        FtpSftpTaskConfig config = NewConfig(ProtocolEnum.SFTP, CommandEnum.Copy);
+        FtpSftpTaskConfig config = NewConfig(protocol, CommandEnum.Copy);
         config.CopyItems.Add(new FtpSftpCopyItem
         {
             LocalToRemote = false,
@@ -289,5 +288,83 @@ public sealed class TestFtpSftpTask
 
         Assert.IsTrue(result.Result, "Download failed.");
         Assert.AreEqual("downloaded", File.ReadAllText(localTarget));
+        Assert.IsFalse(_server.Operations.Any(o => o.StartsWith("MKDIR")), "Local directories must be created locally, not on the server.");
+    }
+
+    [TestMethod]
+    public async Task DownloadFile_keeps_the_local_file_when_overwrite_is_off()
+    {
+        _server.SeedFile("/Remote/file.txt", "remote content");
+        string local = CreateLocalFile("file.txt", "local content");
+
+        FtpSftpTaskConfig config = NewConfig(ProtocolEnum.SFTP, CommandEnum.Copy);
+        config.CopyItems.Add(new FtpSftpCopyItem
+        {
+            LocalToRemote = false,
+            LocalPath = local,
+            RemotePath = "/Remote/file.txt",
+            OverwriteFileIfExists = false
+        });
+
+        ExecResult result = await RunAsync(config);
+
+        Assert.IsTrue(result.Result, "Task failed.");
+        Assert.AreEqual("local content", File.ReadAllText(local));
+        Assert.IsFalse(_server.Operations.Any(o => o.StartsWith("DOWNLOAD")), "Nothing should have been downloaded.");
+    }
+
+    [TestMethod]
+    [DataRow(ProtocolEnum.SFTP)]
+    [DataRow(ProtocolEnum.FTP)]
+    public async Task DownloadFolder_copies_the_whole_remote_tree(ProtocolEnum protocol)
+    {
+        _server.SeedFile("/Remote/a.txt", "a");
+        _server.SeedFile("/Remote/b.txt", "b");
+        _server.SeedFile("/Remote/Sub/c.txt", "c");
+        _server.SeedFile("/Remote/Sub/Deep/d.txt", "d");
+        _server.SeedFile("/Elsewhere/not-copied.txt", "x");
+        string target = Path.Combine(_localRoot, "downloaded");
+
+        FtpSftpTaskConfig config = NewConfig(protocol, CommandEnum.Copy);
+        config.CopyItems.Add(new FtpSftpCopyItem
+        {
+            LocalToRemote = false,
+            LocalPath = target,
+            RemotePath = "/Remote",
+            OverwriteFileIfExists = true,
+            RecursivelyCopyDirectories = true
+        });
+
+        ExecResult result = await RunAsync(config);
+
+        Assert.IsTrue(result.Result, "Download failed.");
+        Assert.AreEqual("a", File.ReadAllText(Path.Combine(target, "a.txt")));
+        Assert.AreEqual("b", File.ReadAllText(Path.Combine(target, "b.txt")));
+        Assert.AreEqual("c", File.ReadAllText(Path.Combine(target, "Sub", "c.txt")));
+        Assert.AreEqual("d", File.ReadAllText(Path.Combine(target, "Sub", "Deep", "d.txt")));
+        Assert.AreEqual(4, Directory.GetFiles(target, "*", SearchOption.AllDirectories).Length, "Only the remote folder's files should arrive.");
+    }
+
+    [TestMethod]
+    public async Task DownloadFolder_without_recursion_skips_subfolders()
+    {
+        _server.SeedFile("/Remote/top.txt", "top");
+        _server.SeedFile("/Remote/Sub/nested.txt", "nested");
+        string target = Path.Combine(_localRoot, "downloaded");
+
+        FtpSftpTaskConfig config = NewConfig(ProtocolEnum.SFTP, CommandEnum.Copy);
+        config.CopyItems.Add(new FtpSftpCopyItem
+        {
+            LocalToRemote = false,
+            LocalPath = target,
+            RemotePath = "/Remote",
+            OverwriteFileIfExists = true,
+            RecursivelyCopyDirectories = false
+        });
+
+        ExecResult result = await RunAsync(config);
+
+        Assert.IsTrue(result.Result, "Download failed.");
+        CollectionAssert.AreEqual(new[] { Path.Combine(target, "top.txt") }, Directory.GetFiles(target, "*", SearchOption.AllDirectories));
     }
 }

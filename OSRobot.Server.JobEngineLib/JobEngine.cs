@@ -650,10 +650,20 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
             return false;
         }
 
-        // Combine "the caller gave up" (e.g. the HTTP request was aborted) with
-        // "the engine is stopping" - either should cancel this task's in-flight work.
+        // In serial mode this call only returns once the task has finished, so the caller is still
+        // waiting on it: combine "the caller gave up" (e.g. the HTTP request was aborted) with "the
+        // engine is stopping" - either should cancel the task's in-flight work.
+        //
+        // Otherwise ExecuteTaskAsync returns as soon as the task is dispatched and the task keeps
+        // running in the background. It must then follow only the engine's token: a linked source
+        // would be disposed on return (severing its link to both tokens, so nothing could cancel the
+        // task any more), and a caller token such as an HTTP request's RequestAborted must not
+        // outlive the request that is already being answered.
         CancellationToken engineToken = _runCts?.Token ?? CancellationToken.None;
-        using CancellationTokenSource linkedCts = CancellationTokenSource.CreateLinkedTokenSource(engineToken, cancellationToken);
+        CancellationTokenSource? linkedCts = _config.SerialExecution
+            ? CancellationTokenSource.CreateLinkedTokenSource(engineToken, cancellationToken)
+            : null;
+        CancellationToken runToken = linkedCts?.Token ?? engineToken;
 
         try
         {
@@ -670,7 +680,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
             DynamicDataChain dataChain = [];
             DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(taskObj, true, 0, now, now, 1);
 
-            await ExecuteTaskAsync(taskObj, dataChain, dDataSet, null, logger, linkedCts.Token);
+            await ExecuteTaskAsync(taskObj, dataChain, dDataSet, null, logger, runToken);
 
             return true;
         }
@@ -680,6 +690,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
         }
         finally
         {
+            linkedCts?.Dispose();
             EndDispatch();
         }
         return false;

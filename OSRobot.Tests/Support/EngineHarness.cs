@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using System.Text.Json;
+using OSRobot.Server.Core.Logging;
 using OSRobot.Server.Core.Logging.Abstract;
 using OSRobot.Server.JobEngineLib;
 using OSRobot.Server.JobEngineLib.Infrastructure.Abstract;
@@ -111,6 +112,7 @@ public sealed class JobGraph
 public sealed class EngineHarness : IDisposable
 {
     private readonly string _root;
+    private readonly string _previousLogPath = PluginInstanceLogger.LogPath;
     private bool _stopped;
 
     public JobEngine Engine { get; }
@@ -164,6 +166,10 @@ public sealed class EngineHarness : IDisposable
     {
         if (!_stopped)
             Engine.Stop();
+
+        // JobEngine.Start() points the process-wide logger at this harness's temp folder: put it back
+        // before deleting that folder, so later tests don't log into a directory that no longer exists.
+        PluginInstanceLogger.LogPath = _previousLogPath;
 
         try { Directory.Delete(_root, true); } catch { /* best effort: log files may still be released */ }
     }
