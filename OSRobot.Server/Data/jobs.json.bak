@@ -1,1 +1,415 @@
-{"folder_0":{"edges":[{"id":"vueflow__edge-1-2","type":"button","source":"1","target":"2","sourceHandle":null,"targetHandle":null,"data":{},"events":{},"label":"","markerEnd":"arrow","workspaceConnectionConfig":{"source":"1","target":"2","enabled":true,"waitSeconds":0,"executeConditions":[{"dynamicDataCode":null,"operator":"ObjectExecutes","minValue":null,"maxValue":null}],"dontExecuteConditions":[]},"sourceNode":{"id":"1","type":"event","dimensions":{"width":200,"height":52},"computedPosition":{"x":96,"y":135,"z":0},"handleBounds":{"source":[{"id":null,"position":"right","x":196,"y":23.21875,"width":6,"height":6}],"target":[]},"connectable":true,"selected":false,"dragging":false,"resizing":false,"initialized":false,"isParent":false,"position":{"x":96,"y":135},"data":{"label":"Every 10 secondos","icon":"calendar_month","type":"event","supportedOSPlatformList":["All platforms"],"pluginTitle":"Date / Time event"},"events":{},"sourcePosition":"right","targetPosition":"left","workspaceItemConfig":{"id":"1","name":"Every 10 secondos","enabled":true,"log":true,"atDate":"2026-09-20T08:20:31.297674+02:00","oneTime":false,"everyDaysHoursSecs":false,"everyNumDays":0,"everyNumHours":0,"everyNumMinutes":5,"everySeconds":true,"everyNumSeconds":10,"onDays":[1,2,3,4,5,6,0],"onAllDays":true,"pluginId":"DateTimeEvent","supportedOSPlatformList":["All platforms"],"onMonday":true,"onTuesday":true,"onWednesday":true,"onThursday":true,"onFriday":true,"onSaturday":true,"onSunday":true,"periodicity":"EverySeconds"}},"targetNode":{"id":"2","type":"task","dimensions":{"width":200,"height":54},"computedPosition":{"x":450,"y":220,"z":1000},"handleBounds":{"source":[{"id":null,"position":"right","x":195,"y":24.21875,"width":6,"height":6}],"target":[{"id":null,"position":"left","x":-1,"y":24.21875,"width":6,"height":6}]},"connectable":true,"selected":true,"dragging":false,"resizing":false,"initialized":false,"isParent":false,"position":{"x":450,"y":220},"data":{"label":"Write file","icon":"edit_note","type":"task","supportedOSPlatformList":["All platforms"],"pluginTitle":"Write text file task"},"events":{},"sourcePosition":"right","targetPosition":"left","workspaceItemConfig":{"id":"2","name":"Write file","enabled":true,"log":true,"pluginIterationMode":"IterateDefaultRecordset","iterationObject":"","iterationsCount":0,"filePath":"C:\\Users\\gluca\\OneDrive\\Desktop\\File1.txt","taskType":"AppendRow","columnsDefinition":[],"formatAsDelimitedFile":false,"delimiterTab":false,"delimiterSemicolon":false,"delimiterComma":false,"delimiterSpace":false,"delimiterOther":false,"delimiterOtherChar":"","encloseInDoubleQuotes":false,"formatAsFixedLengthColumnsFile":false,"addHeaderIfEmpty":false,"insertAtRow":"","findText":"","replaceWithText":"","pluginId":"WriteTextFileTask","supportedOSPlatformList":["All platforms"]}},"sourceX":298,"sourceY":161.21875,"targetX":449,"targetY":247.21875}],"id":"0","nodes":[{"id":"1","type":"event","dimensions":{"width":200,"height":52},"computedPosition":{"x":96,"y":135,"z":0},"handleBounds":{"source":[{"id":null,"position":"right","x":196,"y":23.21875,"width":6,"height":6}],"target":[]},"connectable":true,"selected":false,"dragging":false,"resizing":false,"initialized":false,"isParent":false,"position":{"x":96,"y":135},"data":{"label":"Every 10 secondos","icon":"calendar_month","type":"event","supportedOSPlatformList":["All platforms"],"pluginTitle":"Date / Time event"},"events":{},"sourcePosition":"right","targetPosition":"left","workspaceItemConfig":{"id":"1","name":"Every 10 secondos","enabled":true,"log":true,"atDate":"2026-09-20T08:20:31.297674+02:00","oneTime":false,"everyDaysHoursSecs":false,"everyNumDays":0,"everyNumHours":0,"everyNumMinutes":5,"everySeconds":true,"everyNumSeconds":10,"onDays":[1,2,3,4,5,6,0],"onAllDays":true,"pluginId":"DateTimeEvent","supportedOSPlatformList":["All platforms"],"onMonday":true,"onTuesday":true,"onWednesday":true,"onThursday":true,"onFriday":true,"onSaturday":true,"onSunday":true,"periodicity":"EverySeconds"}},{"id":"2","type":"task","dimensions":{"width":200,"height":54},"computedPosition":{"x":450,"y":220,"z":1000},"handleBounds":{"source":[{"id":null,"position":"right","x":195,"y":24.21875,"width":6,"height":6}],"target":[{"id":null,"position":"left","x":-1,"y":24.21875,"width":6,"height":6}]},"connectable":true,"selected":true,"dragging":false,"resizing":false,"initialized":false,"isParent":false,"position":{"x":450,"y":220},"data":{"label":"Write file","icon":"edit_note","type":"task","supportedOSPlatformList":["All platforms"],"pluginTitle":"Write text file task"},"events":{},"sourcePosition":"right","targetPosition":"left","workspaceItemConfig":{"id":"2","name":"Write file","enabled":true,"log":true,"pluginIterationMode":"IterateDefaultRecordset","iterationObject":"","iterationsCount":0,"filePath":"C:\\Users\\gluca\\OneDrive\\Desktop\\File1.txt","taskType":"AppendRow","columnsDefinition":[],"formatAsDelimitedFile":false,"delimiterTab":false,"delimiterSemicolon":false,"delimiterComma":false,"delimiterSpace":false,"delimiterOther":false,"delimiterOtherChar":"","encloseInDoubleQuotes":false,"formatAsFixedLengthColumnsFile":false,"addHeaderIfEmpty":false,"insertAtRow":"","findText":"","replaceWithText":"","pluginId":"WriteTextFileTask","supportedOSPlatformList":["All platforms"]}}]},"folderTree":[{"children":[],"icon":"folder","id":"0","label":"Root"}],"lastId":2}
+{
+    "folder_0": {
+        "edges": [
+            {
+                "data": {
+                },
+                "events": {
+                },
+                "id": "vueflow__edge-1-2",
+                "label": "",
+                "markerEnd": "arrow",
+                "source": "1",
+                "sourceHandle": null,
+                "sourceNode": {
+                    "computedPosition": {
+                        "x": 96,
+                        "y": 135,
+                        "z": 0
+                    },
+                    "connectable": true,
+                    "data": {
+                        "icon": "calendar_month",
+                        "label": "Every 10 secondos",
+                        "pluginTitle": "Date / Time event",
+                        "supportedOSPlatformList": [
+                            "All platforms"
+                        ],
+                        "type": "event"
+                    },
+                    "dimensions": {
+                        "height": 52,
+                        "width": 200
+                    },
+                    "dragging": false,
+                    "events": {
+                    },
+                    "handleBounds": {
+                        "source": [
+                            {
+                                "height": 6,
+                                "id": null,
+                                "position": "right",
+                                "width": 6,
+                                "x": 196,
+                                "y": 23.21875
+                            }
+                        ],
+                        "target": [
+                        ]
+                    },
+                    "id": "1",
+                    "initialized": false,
+                    "isParent": false,
+                    "position": {
+                        "x": 96,
+                        "y": 135
+                    },
+                    "resizing": false,
+                    "selected": false,
+                    "sourcePosition": "right",
+                    "targetPosition": "left",
+                    "type": "event",
+                    "workspaceItemConfig": {
+                        "atDate": "2026-09-20T08:20:31.297674+02:00",
+                        "enabled": true,
+                        "everyDaysHoursSecs": false,
+                        "everyNumDays": 0,
+                        "everyNumHours": 0,
+                        "everyNumMinutes": 5,
+                        "everyNumSeconds": 10,
+                        "everySeconds": true,
+                        "id": "1",
+                        "log": true,
+                        "name": "Every 10 secondos",
+                        "onAllDays": true,
+                        "onDays": [
+                            1,
+                            2,
+                            3,
+                            4,
+                            5,
+                            6,
+                            0
+                        ],
+                        "oneTime": false,
+                        "onFriday": true,
+                        "onMonday": true,
+                        "onSaturday": true,
+                        "onSunday": true,
+                        "onThursday": true,
+                        "onTuesday": true,
+                        "onWednesday": true,
+                        "periodicity": "EverySeconds",
+                        "pluginId": "DateTimeEvent",
+                        "supportedOSPlatformList": [
+                            "All platforms"
+                        ]
+                    }
+                },
+                "sourceX": 298,
+                "sourceY": 161.21875,
+                "target": "2",
+                "targetHandle": null,
+                "targetNode": {
+                    "computedPosition": {
+                        "x": 450,
+                        "y": 220,
+                        "z": 1000
+                    },
+                    "connectable": true,
+                    "data": {
+                        "icon": "edit_note",
+                        "label": "Write file",
+                        "pluginTitle": "Write text file task",
+                        "supportedOSPlatformList": [
+                            "All platforms"
+                        ],
+                        "type": "task"
+                    },
+                    "dimensions": {
+                        "height": 54,
+                        "width": 200
+                    },
+                    "dragging": false,
+                    "events": {
+                    },
+                    "handleBounds": {
+                        "source": [
+                            {
+                                "height": 6,
+                                "id": null,
+                                "position": "right",
+                                "width": 6,
+                                "x": 195,
+                                "y": 24.21875
+                            }
+                        ],
+                        "target": [
+                            {
+                                "height": 6,
+                                "id": null,
+                                "position": "left",
+                                "width": 6,
+                                "x": -1,
+                                "y": 24.21875
+                            }
+                        ]
+                    },
+                    "id": "2",
+                    "initialized": false,
+                    "isParent": false,
+                    "position": {
+                        "x": 450,
+                        "y": 220
+                    },
+                    "resizing": false,
+                    "selected": true,
+                    "sourcePosition": "right",
+                    "targetPosition": "left",
+                    "type": "task",
+                    "workspaceItemConfig": {
+                        "addHeaderIfEmpty": false,
+                        "columnsDefinition": [
+                            {
+                                "fieldValue": "{object[1].ExecutionStartDate}",
+                                "fieldWidth": null,
+                                "headerTitle": null,
+                                "id": 1,
+                                "isNew": false
+                            }
+                        ],
+                        "delimiterComma": false,
+                        "delimiterOther": false,
+                        "delimiterOtherChar": "",
+                        "delimiterSemicolon": false,
+                        "delimiterSpace": false,
+                        "delimiterTab": false,
+                        "enabled": true,
+                        "encloseInDoubleQuotes": false,
+                        "filePath": "C:\\Users\\gluca\\OneDrive\\Desktop\\File1.txt",
+                        "findText": "",
+                        "formatAsDelimitedFile": false,
+                        "formatAsFixedLengthColumnsFile": false,
+                        "id": "2",
+                        "insertAtRow": "",
+                        "iterationObject": "",
+                        "iterationsCount": 0,
+                        "log": true,
+                        "name": "Write file",
+                        "pluginId": "WriteTextFileTask",
+                        "pluginIterationMode": "IterateDefaultRecordset",
+                        "replaceWithText": "",
+                        "supportedOSPlatformList": [
+                            "All platforms"
+                        ],
+                        "taskType": "AppendRow"
+                    }
+                },
+                "targetX": 449,
+                "targetY": 247.21875,
+                "type": "button",
+                "workspaceConnectionConfig": {
+                    "dontExecuteConditions": [
+                    ],
+                    "enabled": true,
+                    "executeConditions": [
+                        {
+                            "dynamicDataCode": null,
+                            "maxValue": null,
+                            "minValue": null,
+                            "operator": "ObjectExecutes"
+                        }
+                    ],
+                    "source": "1",
+                    "target": "2",
+                    "waitSeconds": 0
+                }
+            }
+        ],
+        "id": "0",
+        "nodes": [
+            {
+                "computedPosition": {
+                    "x": 96,
+                    "y": 135,
+                    "z": 0
+                },
+                "connectable": true,
+                "data": {
+                    "icon": "calendar_month",
+                    "label": "Every 10 secondos",
+                    "pluginTitle": "Date / Time event",
+                    "supportedOSPlatformList": [
+                        "All platforms"
+                    ],
+                    "type": "event"
+                },
+                "dimensions": {
+                    "height": 52,
+                    "width": 200
+                },
+                "dragging": false,
+                "events": {
+                },
+                "handleBounds": {
+                    "source": [
+                        {
+                            "height": 6,
+                            "id": null,
+                            "position": "right",
+                            "width": 6,
+                            "x": 196,
+                            "y": 23.21875
+                        }
+                    ],
+                    "target": [
+                    ]
+                },
+                "id": "1",
+                "initialized": false,
+                "isParent": false,
+                "position": {
+                    "x": 96,
+                    "y": 135
+                },
+                "resizing": false,
+                "selected": false,
+                "sourcePosition": "right",
+                "targetPosition": "left",
+                "type": "event",
+                "workspaceItemConfig": {
+                    "atDate": "2026-09-20T08:20:31.297674+02:00",
+                    "enabled": true,
+                    "everyDaysHoursSecs": false,
+                    "everyNumDays": 0,
+                    "everyNumHours": 0,
+                    "everyNumMinutes": 5,
+                    "everyNumSeconds": 10,
+                    "everySeconds": true,
+                    "id": "1",
+                    "log": true,
+                    "name": "Every 10 secondos",
+                    "onAllDays": true,
+                    "onDays": [
+                        1,
+                        2,
+                        3,
+                        4,
+                        5,
+                        6,
+                        0
+                    ],
+                    "oneTime": false,
+                    "onFriday": true,
+                    "onMonday": true,
+                    "onSaturday": true,
+                    "onSunday": true,
+                    "onThursday": true,
+                    "onTuesday": true,
+                    "onWednesday": true,
+                    "periodicity": "EverySeconds",
+                    "pluginId": "DateTimeEvent",
+                    "supportedOSPlatformList": [
+                        "All platforms"
+                    ]
+                }
+            },
+            {
+                "computedPosition": {
+                    "x": 450,
+                    "y": 220,
+                    "z": 1000
+                },
+                "connectable": true,
+                "data": {
+                    "icon": "edit_note",
+                    "label": "Write file",
+                    "pluginTitle": "Write text file task",
+                    "supportedOSPlatformList": [
+                        "All platforms"
+                    ],
+                    "type": "task"
+                },
+                "dimensions": {
+                    "height": 54,
+                    "width": 200
+                },
+                "dragging": false,
+                "events": {
+                },
+                "handleBounds": {
+                    "source": [
+                        {
+                            "height": 6,
+                            "id": null,
+                            "position": "right",
+                            "width": 6,
+                            "x": 195,
+                            "y": 24.21875
+                        }
+                    ],
+                    "target": [
+                        {
+                            "height": 6,
+                            "id": null,
+                            "position": "left",
+                            "width": 6,
+                            "x": -1,
+                            "y": 24.21875
+                        }
+                    ]
+                },
+                "id": "2",
+                "initialized": false,
+                "isParent": false,
+                "position": {
+                    "x": 450,
+                    "y": 220
+                },
+                "resizing": false,
+                "selected": true,
+                "sourcePosition": "right",
+                "targetPosition": "left",
+                "type": "task",
+                "workspaceItemConfig": {
+                    "addHeaderIfEmpty": false,
+                    "columnsDefinition": [
+                        {
+                            "fieldValue": "{object[1].ExecutionStartDate}",
+                            "fieldWidth": null,
+                            "headerTitle": null,
+                            "id": 1,
+                            "isNew": false
+                        }
+                    ],
+                    "delimiterComma": false,
+                    "delimiterOther": false,
+                    "delimiterOtherChar": "",
+                    "delimiterSemicolon": false,
+                    "delimiterSpace": false,
+                    "delimiterTab": false,
+                    "enabled": true,
+                    "encloseInDoubleQuotes": false,
+                    "filePath": "C:\\Users\\gluca\\OneDrive\\Desktop\\File1.txt",
+                    "findText": "",
+                    "formatAsDelimitedFile": false,
+                    "formatAsFixedLengthColumnsFile": false,
+                    "id": "2",
+                    "insertAtRow": "",
+                    "iterationObject": "",
+                    "iterationsCount": 0,
+                    "log": true,
+                    "name": "Write file",
+                    "pluginId": "WriteTextFileTask",
+                    "pluginIterationMode": "IterateDefaultRecordset",
+                    "replaceWithText": "",
+                    "supportedOSPlatformList": [
+                        "All platforms"
+                    ],
+                    "taskType": "AppendRow"
+                }
+            }
+        ]
+    },
+    "folderTree": [
+        {
+            "children": [
+            ],
+            "icon": "folder",
+            "id": "0",
+            "label": "Root"
+        }
+    ],
+    "lastId": 2
+}

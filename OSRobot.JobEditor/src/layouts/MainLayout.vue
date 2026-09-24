@@ -360,6 +360,13 @@ function _getId() {
   return `${++_workspaceJobs.lastId}`;
 }
 
+// getEdges.value() returns VueFlow's enriched GraphEdge objects, which carry a full copy of
+// the connected nodes under sourceNode/targetNode for internal use. Only source/target ids are
+// ever needed once persisted, so strip the duplicated node copies before saving.
+function _edgesForSave() {
+  return getEdges.value.map(({ sourceNode, targetNode, ...edge }) => edge);
+}
+
 function _createFlowElement(config, x, y, pluginInfo) {
   let icon = null;
   if (pluginInfo !== null) {
@@ -458,7 +465,7 @@ async function _forceServerConfigReload(ev) {
 }
 
 async function _saveClick(ev) {
-  _workspaceJobs[`folder_${_selectedFolder.value}`].edges = getEdges.value;
+  _workspaceJobs[`folder_${_selectedFolder.value}`].edges = _edgesForSave();
   _workspaceJobs[`folder_${_selectedFolder.value}`].nodes = getNodes.value;
 
   try {
@@ -796,7 +803,7 @@ function _exitClick() {
 watch(_selectedFolder, async (selectedValueCurrent, selectedValuePrev) => {
   if (selectedValuePrev !== null) {
     // Save the status of the previuos folder
-    _workspaceJobs[`folder_${selectedValuePrev}`].edges = getEdges.value;
+    _workspaceJobs[`folder_${selectedValuePrev}`].edges = _edgesForSave();
     _workspaceJobs[`folder_${selectedValuePrev}`].nodes = getNodes.value;
   }
 
