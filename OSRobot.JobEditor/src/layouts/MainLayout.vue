@@ -360,11 +360,27 @@ function _getId() {
   return `${++_workspaceJobs.lastId}`;
 }
 
-// getEdges.value() returns VueFlow's enriched GraphEdge objects, which carry a full copy of
-// the connected nodes under sourceNode/targetNode for internal use. Only source/target ids are
-// ever needed once persisted, so strip the duplicated node copies before saving.
+// getEdges.value() returns VueFlow's enriched GraphEdge objects (sourceNode/targetNode,
+// sourceX/Y, targetX/Y, ...). None of that needs to persist: VueFlow recomputes all of it from
+// the connected nodes' positions on every render. The only thing worth keeping is the
+// connection's own business config - id/type/markerEnd/coordinates are all rebuilt on load.
 function _edgesForSave() {
-  return getEdges.value.map(({ sourceNode, targetNode, ...edge }) => edge);
+  return getEdges.value.map((edge) => ({
+    workspaceConnectionConfig: edge.workspaceConnectionConfig,
+  }));
+}
+
+// Rebuilds a VueFlow edge from its persisted (minimal) form.
+function _edgeFromSaved(storedEdge) {
+  const connectionConfig = storedEdge.workspaceConnectionConfig;
+  return {
+    id: `${connectionConfig.source}_${connectionConfig.target}`,
+    source: connectionConfig.source,
+    target: connectionConfig.target,
+    type: "button",
+    markerEnd: MarkerType.Arrow,
+    workspaceConnectionConfig: connectionConfig,
+  };
 }
 
 function _createFlowElement(config, x, y, pluginInfo) {
@@ -392,6 +408,28 @@ function _createFlowElement(config, x, y, pluginInfo) {
     targetPosition: Position.Left,
     workspaceItemConfig: config,
   };
+}
+
+// getNodes.value() returns VueFlow's enriched GraphNode objects (dimensions, computedPosition,
+// handleBounds, isParent, selected, dragging, resizing, a derived data{} block, ...). All of
+// that is measured/computed from the DOM and pluginId on every render or mount, same as the
+// edge-only fields stripped above. The only things that aren't recoverable that way are the
+// node's own config and the position the user actually dragged it to.
+function _nodesForSave() {
+  return getNodes.value.map((node) => ({
+    workspaceItemConfig: node.workspaceItemConfig,
+    position: { x: node.position.x, y: node.position.y },
+  }));
+}
+
+// Rebuilds a VueFlow node from its persisted (minimal) form.
+function _nodeFromSaved(storedNode) {
+  const config = storedNode.workspaceItemConfig;
+  const pluginInfo =
+    config.pluginId === "Folder" ? null : _getPluginInfo(config.pluginId);
+  const position = storedNode.position ?? { x: 0, y: 0 };
+
+  return _createFlowElement(config, position.x, position.y, pluginInfo);
 }
 
 // Drawers status
@@ -466,7 +504,7 @@ async function _forceServerConfigReload(ev) {
 
 async function _saveClick(ev) {
   _workspaceJobs[`folder_${_selectedFolder.value}`].edges = _edgesForSave();
-  _workspaceJobs[`folder_${_selectedFolder.value}`].nodes = getNodes.value;
+  _workspaceJobs[`folder_${_selectedFolder.value}`].nodes = _nodesForSave();
 
   try {
     _isSaving.value = true;
@@ -804,15 +842,17 @@ watch(_selectedFolder, async (selectedValueCurrent, selectedValuePrev) => {
   if (selectedValuePrev !== null) {
     // Save the status of the previuos folder
     _workspaceJobs[`folder_${selectedValuePrev}`].edges = _edgesForSave();
-    _workspaceJobs[`folder_${selectedValuePrev}`].nodes = getNodes.value;
+    _workspaceJobs[`folder_${selectedValuePrev}`].nodes = _nodesForSave();
   }
 
   if (selectedValueCurrent !== null) {
     // Load the status of the new selected folder
-    _selectedFolderNodes.value =
-      _workspaceJobs[`folder_${selectedValueCurrent}`].nodes;
-    _selectedFolderEdges.value =
-      _workspaceJobs[`folder_${selectedValueCurrent}`].edges;
+    _selectedFolderNodes.value = _workspaceJobs[
+      `folder_${selectedValueCurrent}`
+    ].nodes.map(_nodeFromSaved);
+    _selectedFolderEdges.value = _workspaceJobs[
+      `folder_${selectedValueCurrent}`
+    ].edges.map(_edgeFromSaved);
   }
 
   _rightDrawerOpen.value = false;
@@ -943,8 +983,10 @@ onMounted(async () => {
 
       // The first selected folder will always be 0 (0 = root)
       _selectedFolder.value = "0";
-      _selectedFolderNodes.value = _workspaceJobs["folder_0"].nodes;
-      _selectedFolderEdges.value = _workspaceJobs["folder_0"].edges;
+      _selectedFolderNodes.value =
+        _workspaceJobs["folder_0"].nodes.map(_nodeFromSaved);
+      _selectedFolderEdges.value =
+        _workspaceJobs["folder_0"].edges.map(_edgeFromSaved);
     } else {
       // No jobs from server, init with an empty tree
       console.error("No jobs from server...");

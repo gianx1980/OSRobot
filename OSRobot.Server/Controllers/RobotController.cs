@@ -131,11 +131,15 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
 
         try
         {
+            // Written indented rather than the client's raw (compact) request body, so jobs.json
+            // stays readable/diffable on disk - purely cosmetic, doesn't change what's stored.
+            string formattedWorkspaceJobs = JsonSerializer.Serialize(requestBody, new JsonSerializerOptions { WriteIndented = true });
+
             // Write to a temp file, then swap it into place with a single atomic filesystem
             // operation (File.Replace also preserves the previous live file as a .bak). A crash
             // or power loss mid-write can now only ever leave the .tmp file incomplete - never
             // the live jobs.json, which either fully updates or isn't touched at all.
-            System.IO.File.WriteAllText(tempFilePath, workspaceJobs);
+            System.IO.File.WriteAllText(tempFilePath, formattedWorkspaceJobs);
 
             if (System.IO.File.Exists(jobsFilePath))
                 System.IO.File.Replace(tempFilePath, jobsFilePath, backupFilePath);
