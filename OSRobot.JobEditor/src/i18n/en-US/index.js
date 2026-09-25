@@ -111,6 +111,7 @@ export default {
   doesntExecute: "doesn't execute",
   dontExecuteConditions: "Don't execute conditions",
   doNotCompressBackup: "Do not compress backup",
+  doYouWantToCutSelection: "Do you want to cut the selected items?",
   doYouWantToDeleteItem: "Do you want to delete the selected item?",
   doYouWantToStartTheTask: "Do you want to start the task?",
   doYouWantToExit: "Do you want to exit?",

@@ -132,6 +132,7 @@
           :nodes="_selectedFolderNodes"
           :edges="_selectedFolderEdges"
           :connection-mode="ConnectionMode.Strict"
+          :delete-key-code="null"
           @dragover="_vueFlowAllowDrop"
           @nodeClick="_vueFlowNodeClick"
           @edgeClick="_vueFlowEdgeClick"
@@ -207,7 +208,7 @@ import WriteBinaryFileTaskConfigForm from "src/robotObjects/writeBinaryFileTask/
 import WriteTextFileTaskConfigForm from "src/robotObjects/writeTextFileTask/writeTextFileTaskConfigForm.vue";
 import PingTaskConfigForm from "src/robotObjects/pingTask/PingTaskConfigForm.vue";
 
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, onUnmounted, watch } from "vue";
 import {
   VueFlow,
   useVueFlow,
@@ -226,6 +227,9 @@ const {
   removeEdges,
   getNodes,
   getEdges,
+  getSelectedNodes,
+  getSelectedEdges,
+  addSelectedElements,
   screenToFlowCoordinate,
 } = useVueFlow();
 import { Background } from "@vue-flow/background";
@@ -324,6 +328,11 @@ function _hideReconnectWindow() {
 // Workspace tree
 let _workspaceJobs = null;
 const _containingFolderItems = ref([]);
+
+// Cut/copy/paste clipboard - in-memory only, never leaves this session
+let _clipboard = null;
+let _pasteCount = 0;
+const _PASTE_OFFSET = 40;
 const _rootFolder = ref([]);
 const _selectedFolder = ref(null);
 const _selectedFolderNodes = ref([]);
@@ -555,17 +564,7 @@ function _nodeDelete(ev) {
       removeNodes(ev.id);
 
       // Update folder tree if needed
-      if (ev.data.type === "folder") {
-        const nodeToDelete = _findTreeNode(_rootFolder.value, ev.id);
-        const nodeChildren = _getNodeChildren(nodeToDelete);
-
-        delete _workspaceJobs[`folder_${nodeToDelete.id}`];
-        for (let node of nodeChildren) {
-          delete _workspaceJobs[`folder_${node.id}`];
-        }
-
-        _deleteTreeNode(_rootFolder.value, ev.id);
-      }
+      _removeFolderDataIfFolder(ev.id);
     });
 }
 
@@ -678,6 +677,21 @@ function _deleteTreeNode(nodes, id) {
   }
 }
 
+// Deletes a folder node's own workspace data and its folderTree entry, recursively for any
+// nested subfolders. No-op if nodeId isn't a folder. Shared by single-item delete and cut.
+function _removeFolderDataIfFolder(nodeId) {
+  const treeNode = _findTreeNode(_rootFolder.value, nodeId);
+  if (treeNode === null) return;
+
+  const descendants = _getNodeChildren(treeNode);
+  delete _workspaceJobs[`folder_${treeNode.id}`];
+  for (const node of descendants) {
+    delete _workspaceJobs[`folder_${node.id}`];
+  }
+
+  _deleteTreeNode(_rootFolder.value, nodeId);
+}
+
 function _getPluginInfo(pluginId) {
   return _robotObjects.value.filter((v) => v.id === pluginId)[0];
 }
@@ -772,6 +786,263 @@ function _updateContainingFolderItems() {
       pluginId: t.workspaceItemConfig.pluginId,
     };
   });
+}
+
+function _isEditableTarget(el) {
+  if (!el || !el.tagName) return false;
+  const tag = el.tagName;
+  return (
+    tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable
+  );
+}
+
+// Deep-clones one folder's entire nested structure (its own nodes/edges, and recursively any
+// subfolders' data) out of _workspaceJobs, independent of it from this point on - so paste still
+// works even if the source folder is later cut/edited/deleted.
+function _snapshotFolderSubtree(folderId) {
+  const folderData = _workspaceJobs[`folder_${folderId}`];
+
+  return {
+    nodes: folderData.nodes.map((storedNode) => ({
+      workspaceItemConfig: _deepCopy(storedNode.workspaceItemConfig),
+      position: { ...storedNode.position },
+      subtree:
+        storedNode.workspaceItemConfig.pluginId === "Folder"
+          ? _snapshotFolderSubtree(storedNode.workspaceItemConfig.id)
+          : null,
+    })),
+    edges: folderData.edges.map((storedEdge) => ({
+      workspaceConnectionConfig: _deepCopy(storedEdge.workspaceConnectionConfig),
+    })),
+  };
+}
+
+// Materializes a snapshot produced by _snapshotFolderSubtree into a fresh _workspaceJobs entry
+// (recursively for nested subfolders), assigning brand new ids throughout. Returns the
+// folderTree-shaped entries for any subfolders found, so the caller can attach them.
+function _materializeSubtree(snapshot) {
+  const idMap = new Map();
+  const newNodes = [];
+  const newTreeChildren = [];
+
+  for (const item of snapshot.nodes) {
+    const newId = _getId();
+    idMap.set(item.workspaceItemConfig.id, newId);
+
+    const newConfig = { ..._deepCopy(item.workspaceItemConfig), id: newId };
+    newNodes.push({
+      workspaceItemConfig: newConfig,
+      position: { ...item.position },
+    });
+
+    if (item.subtree) {
+      const nested = _materializeSubtree(item.subtree);
+      _workspaceJobs[`folder_${newId}`] = {
+        id: newId,
+        nodes: nested.newNodes,
+        edges: nested.newEdges,
+      };
+      newTreeChildren.push({
+        id: newId,
+        icon: "folder",
+        label: newConfig.name,
+        children: nested.newTreeChildren,
+      });
+    }
+  }
+
+  const newEdges = snapshot.edges.map((storedEdge) => ({
+    workspaceConnectionConfig: {
+      ..._deepCopy(storedEdge.workspaceConnectionConfig),
+      source: idMap.get(storedEdge.workspaceConnectionConfig.source),
+      target: idMap.get(storedEdge.workspaceConnectionConfig.target),
+    },
+  }));
+
+  return { newNodes, newEdges, newTreeChildren };
+}
+
+// Snapshots the current selection into the in-memory clipboard. Returns false (leaving any
+// previous clipboard untouched) if nothing is selected.
+function _copySelection() {
+  const selectedNodes = getSelectedNodes.value;
+  if (selectedNodes.length === 0) return false;
+
+  const selectedIds = new Set(selectedNodes.map((node) => node.id));
+
+  // Only connections wholly within the selection make sense to copy - getSelectedEdges can
+  // include edges dangling to a node outside the selection (VueFlow's box-select marks any edge
+  // touching a selected node, not just ones fully inside it).
+  const internalEdges = getEdges.value.filter(
+    (edge) => selectedIds.has(edge.source) && selectedIds.has(edge.target)
+  );
+
+  _clipboard = {
+    items: selectedNodes.map((node) => ({
+      workspaceItemConfig: _deepCopy(node.workspaceItemConfig),
+      position: { x: node.position.x, y: node.position.y },
+      subtree:
+        node.workspaceItemConfig.pluginId === "Folder"
+          ? _snapshotFolderSubtree(node.workspaceItemConfig.id)
+          : null,
+    })),
+    connections: internalEdges.map((edge) => ({
+      workspaceConnectionConfig: _deepCopy(edge.workspaceConnectionConfig),
+    })),
+  };
+  _pasteCount = 0;
+
+  return true;
+}
+
+// Removes an already-captured selection from the canvas: the nodes (which also removes every
+// edge touching them), any edge that was selected on its own, and - for any folder node in the
+// selection - its entire workspace data/folderTree subtree. Shared by cut and delete.
+function _removeSelectionFromCanvas(selectedNodes, selectedEdgeIds) {
+  const selectedNodeIds = selectedNodes.map((node) => node.id);
+
+  removeNodes(selectedNodeIds);
+  removeEdges(selectedEdgeIds);
+
+  for (const node of selectedNodes) {
+    _removeFolderDataIfFolder(node.id);
+  }
+
+  _updateContainingFolderItems();
+}
+
+function _cutSelection() {
+  if (!_copySelection()) return;
+
+  const selectedNodes = getSelectedNodes.value;
+  const selectedEdgeIds = getSelectedEdges.value.map((edge) => edge.id);
+
+  _$q
+    .dialog({
+      title: _$t("osRobot"),
+      message: _$t("doYouWantToCutSelection"),
+      cancel: true,
+      persistent: true,
+    })
+    .onOk(() => {
+      _rightDrawerOpen.value = false;
+      _removeSelectionFromCanvas(selectedNodes, selectedEdgeIds);
+    });
+}
+
+function _deleteSelection() {
+  const selectedNodes = getSelectedNodes.value;
+  const selectedEdges = getSelectedEdges.value;
+  if (selectedNodes.length === 0 && selectedEdges.length === 0) return;
+
+  const selectedEdgeIds = selectedEdges.map((edge) => edge.id);
+
+  _$q
+    .dialog({
+      title: _$t("osRobot"),
+      message: _$t("doYouWantToDeleteItem"),
+      cancel: true,
+      persistent: true,
+    })
+    .onOk(() => {
+      _rightDrawerOpen.value = false;
+      _removeSelectionFromCanvas(selectedNodes, selectedEdgeIds);
+    });
+}
+
+function _pasteClipboard() {
+  if (!_clipboard || _clipboard.items.length === 0) return;
+
+  _pasteCount += 1;
+  const offset = _PASTE_OFFSET * _pasteCount;
+  const idMap = new Map();
+  const currentTreeNode = _findTreeNode(_rootFolder.value, _selectedFolder.value);
+
+  const newFlowNodes = _clipboard.items.map((item) => {
+    const newId = _getId();
+    idMap.set(item.workspaceItemConfig.id, newId);
+
+    const newConfig = { ..._deepCopy(item.workspaceItemConfig), id: newId };
+    const position = {
+      x: item.position.x + offset,
+      y: item.position.y + offset,
+    };
+
+    if (item.subtree) {
+      const nested = _materializeSubtree(item.subtree);
+      _workspaceJobs[`folder_${newId}`] = {
+        id: newId,
+        nodes: nested.newNodes,
+        edges: nested.newEdges,
+      };
+      if (currentTreeNode !== null) {
+        currentTreeNode.children.push({
+          id: newId,
+          icon: "folder",
+          label: newConfig.name,
+          children: nested.newTreeChildren,
+        });
+      }
+    }
+
+    const pluginInfo =
+      newConfig.pluginId === "Folder" ? null : _getPluginInfo(newConfig.pluginId);
+    return _createFlowElement(newConfig, position.x, position.y, pluginInfo);
+  });
+
+  const newFlowEdges = _clipboard.connections
+    .map((storedEdge) => {
+      const source = idMap.get(storedEdge.workspaceConnectionConfig.source);
+      const target = idMap.get(storedEdge.workspaceConnectionConfig.target);
+      if (!source || !target) return null;
+
+      return _edgeFromSaved({
+        workspaceConnectionConfig: {
+          ..._deepCopy(storedEdge.workspaceConnectionConfig),
+          source,
+          target,
+        },
+      });
+    })
+    .filter((edge) => edge !== null);
+
+  addNodes(newFlowNodes);
+  addEdges(newFlowEdges);
+  addSelectedElements([...newFlowNodes, ...newFlowEdges]);
+
+  _updateContainingFolderItems();
+}
+
+function _onKeyDown(ev) {
+  if (_isEditableTarget(ev.target)) return;
+
+  if (ev.key === "Delete" || ev.key === "Backspace") {
+    // Also prevents Backspace's browser-default "navigate back" outside of any input.
+    ev.preventDefault();
+    _deleteSelection();
+    return;
+  }
+
+  const ctrlOrCmd = ev.ctrlKey || ev.metaKey;
+  if (!ctrlOrCmd) return;
+
+  switch (ev.key.toLowerCase()) {
+    case "c":
+      if (_copySelection()) ev.preventDefault();
+      break;
+    case "x":
+      if (getSelectedNodes.value.length > 0 || getSelectedEdges.value.length > 0) {
+        _cutSelection();
+        ev.preventDefault();
+      }
+      break;
+    case "v":
+      if (_clipboard) {
+        _pasteClipboard();
+        ev.preventDefault();
+      }
+      break;
+  }
 }
 
 function _vueFlowNodeClick(ev) {
@@ -885,7 +1156,13 @@ onConnect((params) => {
   addEdges(params);
 });
 
+onUnmounted(() => {
+  window.removeEventListener("keydown", _onKeyDown);
+});
+
 onMounted(async () => {
+  window.addEventListener("keydown", _onKeyDown);
+
   // If connected flag is false, show the reconnect window immediately
   // (needed if the user press F5)
   if (!_appStore.getConnected() && _dialog == null) {

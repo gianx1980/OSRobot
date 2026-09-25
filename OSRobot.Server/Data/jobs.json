@@ -189,16 +189,475 @@
           "x": 968,
           "y": 237
         }
+      },
+      {
+        "workspaceItemConfig": {
+          "id": "7",
+          "name": "Excel file task 7",
+          "enabled": true,
+          "log": true,
+          "pluginIterationMode": "IterateDefaultRecordset",
+          "iterationObject": "",
+          "iterationsCount": 0,
+          "taskType": "AppendRow",
+          "filePath": "",
+          "sheetName": "",
+          "columnsDefinition": [],
+          "addHeaderIfEmpty": false,
+          "insertAtRow": "",
+          "readLastRowOption": true,
+          "readRowNumberOption": false,
+          "readRowNumber": "",
+          "readIntervalOption": false,
+          "readInterval": "ReadFromRowToRow",
+          "readFromRow": "",
+          "readToRow": "",
+          "readNumberOfRows": "",
+          "numColumnsToRead": "",
+          "deleteRowNumber": "",
+          "findText": "",
+          "replaceWith": "",
+          "pluginId": "ExcelFileTask",
+          "supportedOSPlatformList": [
+            "All platforms"
+          ],
+          "readRowType": "ReadLastRow"
+        },
+        "position": {
+          "x": 443,
+          "y": 362
+        }
+      },
+      {
+        "workspaceItemConfig": {
+          "id": "8",
+          "pluginId": "Folder",
+          "name": "Folder 8"
+        },
+        "position": {
+          "x": 13,
+          "y": 424
+        }
+      },
+      {
+        "workspaceItemConfig": {
+          "id": "13",
+          "pluginId": "Folder",
+          "name": "Folder 8 BIS"
+        },
+        "position": {
+          "x": 180,
+          "y": 562
+        }
       }
     ]
   },
   "folderTree": [
     {
-      "children": [],
+      "children": [
+        {
+          "id": "8",
+          "icon": "folder",
+          "label": "Folder 8",
+          "children": []
+        },
+        {
+          "id": "13",
+          "icon": "folder",
+          "label": "Folder 8 BIS",
+          "children": []
+        }
+      ],
       "icon": "folder",
       "id": "0",
       "label": "Root"
     }
   ],
-  "lastId": 4
+  "lastId": 17,
+  "folder_8": {
+    "id": "8",
+    "nodes": [
+      {
+        "workspaceItemConfig": {
+          "atDate": "2026-09-20T08:20:31.297674\u002B02:00",
+          "enabled": false,
+          "everyDaysHoursSecs": false,
+          "everyNumDays": 0,
+          "everyNumHours": 0,
+          "everyNumMinutes": 5,
+          "everyNumSeconds": 10,
+          "everySeconds": true,
+          "id": "9",
+          "log": true,
+          "name": "Every 10 secondos",
+          "onAllDays": true,
+          "onDays": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            0
+          ],
+          "oneTime": false,
+          "onFriday": true,
+          "onMonday": true,
+          "onSaturday": true,
+          "onSunday": true,
+          "onThursday": true,
+          "onTuesday": true,
+          "onWednesday": true,
+          "periodicity": "EverySeconds",
+          "pluginId": "DateTimeEvent",
+          "supportedOSPlatformList": [
+            "All platforms"
+          ]
+        },
+        "position": {
+          "x": -4.490661819750983,
+          "y": 53.052065800118584
+        }
+      },
+      {
+        "workspaceItemConfig": {
+          "addHeaderIfEmpty": false,
+          "columnsDefinition": [
+            {
+              "fieldValue": "{object[1].ExecutionStartDate}",
+              "fieldWidth": null,
+              "headerTitle": null,
+              "id": 1,
+              "isNew": false
+            }
+          ],
+          "delimiterComma": false,
+          "delimiterOther": false,
+          "delimiterOtherChar": "",
+          "delimiterSemicolon": false,
+          "delimiterSpace": false,
+          "delimiterTab": false,
+          "enabled": true,
+          "encloseInDoubleQuotes": false,
+          "filePath": "C:\\Users\\gluca\\OneDrive\\Desktop\\File1.txt",
+          "findText": "",
+          "formatAsDelimitedFile": false,
+          "formatAsFixedLengthColumnsFile": false,
+          "id": "10",
+          "insertAtRow": "",
+          "iterationObject": "",
+          "iterationsCount": 0,
+          "log": true,
+          "name": "Write file",
+          "pluginId": "WriteTextFileTask",
+          "pluginIterationMode": "IterateDefaultRecordset",
+          "replaceWithText": "",
+          "supportedOSPlatformList": [
+            "All platforms"
+          ],
+          "taskType": "AppendRow"
+        },
+        "position": {
+          "x": 296.509338180249,
+          "y": 228.05206580011858
+        }
+      },
+      {
+        "workspaceItemConfig": {
+          "id": "11",
+          "name": "FTP / SFTP task 3",
+          "enabled": false,
+          "log": true,
+          "pluginIterationMode": "IterateDefaultRecordset",
+          "iterationObject": "",
+          "iterationsCount": 0,
+          "protocol": "FTP",
+          "host": "",
+          "port": "",
+          "username": "",
+          "password": "",
+          "command": "Copy",
+          "copyItems": [],
+          "deleteItems": [],
+          "pluginId": "FtpSftpTask",
+          "supportedOSPlatformList": [
+            "All platforms"
+          ],
+          "direction": "LocalToRemote"
+        },
+        "position": {
+          "x": 597.509338180249,
+          "y": 43.052065800118584
+        }
+      },
+      {
+        "workspaceItemConfig": {
+          "id": "12",
+          "name": "Run program task 4",
+          "enabled": false,
+          "log": true,
+          "pluginIterationMode": "IterateDefaultRecordset",
+          "iterationObject": "",
+          "iterationsCount": 0,
+          "programPath": "",
+          "parameters": "",
+          "workingFolder": "",
+          "pluginId": "RunProgramTask",
+          "supportedOSPlatformList": [
+            "All platforms"
+          ]
+        },
+        "position": {
+          "x": 911.509338180249,
+          "y": 231.05206580011858
+        }
+      }
+    ],
+    "edges": [
+      {
+        "workspaceConnectionConfig": {
+          "dontExecuteConditions": [],
+          "enabled": true,
+          "executeConditions": [
+            {
+              "dynamicDataCode": null,
+              "maxValue": null,
+              "minValue": null,
+              "operator": "ObjectExecutes"
+            }
+          ],
+          "source": "9",
+          "target": "10",
+          "waitSeconds": 0
+        }
+      },
+      {
+        "workspaceConnectionConfig": {
+          "source": "10",
+          "target": "11",
+          "enabled": true,
+          "waitSeconds": 0,
+          "executeConditions": [
+            {
+              "dynamicDataCode": null,
+              "operator": "ObjectExecutes",
+              "minValue": null,
+              "maxValue": null
+            }
+          ],
+          "dontExecuteConditions": []
+        }
+      },
+      {
+        "workspaceConnectionConfig": {
+          "source": "11",
+          "target": "12",
+          "enabled": true,
+          "waitSeconds": 0,
+          "executeConditions": [
+            {
+              "dynamicDataCode": null,
+              "operator": "ObjectExecutes",
+              "minValue": null,
+              "maxValue": null
+            }
+          ],
+          "dontExecuteConditions": []
+        }
+      }
+    ]
+  },
+  "folder_13": {
+    "id": "13",
+    "nodes": [
+      {
+        "workspaceItemConfig": {
+          "atDate": "2026-09-20T08:20:31.297674\u002B02:00",
+          "enabled": false,
+          "everyDaysHoursSecs": false,
+          "everyNumDays": 0,
+          "everyNumHours": 0,
+          "everyNumMinutes": 5,
+          "everyNumSeconds": 10,
+          "everySeconds": true,
+          "id": "14",
+          "log": true,
+          "name": "Every 10 secondos",
+          "onAllDays": true,
+          "onDays": [
+            1,
+            2,
+            3,
+            4,
+            5,
+            6,
+            0
+          ],
+          "oneTime": false,
+          "onFriday": true,
+          "onMonday": true,
+          "onSaturday": true,
+          "onSunday": true,
+          "onThursday": true,
+          "onTuesday": true,
+          "onWednesday": true,
+          "periodicity": "EverySeconds",
+          "pluginId": "DateTimeEvent",
+          "supportedOSPlatformList": [
+            "All platforms"
+          ]
+        },
+        "position": {
+          "x": -4.490661819750983,
+          "y": 53.052065800118584
+        }
+      },
+      {
+        "workspaceItemConfig": {
+          "addHeaderIfEmpty": false,
+          "columnsDefinition": [
+            {
+              "fieldValue": "{object[1].ExecutionStartDate}",
+              "fieldWidth": null,
+              "headerTitle": null,
+              "id": 1,
+              "isNew": false
+            }
+          ],
+          "delimiterComma": false,
+          "delimiterOther": false,
+          "delimiterOtherChar": "",
+          "delimiterSemicolon": false,
+          "delimiterSpace": false,
+          "delimiterTab": false,
+          "enabled": true,
+          "encloseInDoubleQuotes": false,
+          "filePath": "C:\\Users\\gluca\\OneDrive\\Desktop\\File1.txt",
+          "findText": "",
+          "formatAsDelimitedFile": false,
+          "formatAsFixedLengthColumnsFile": false,
+          "id": "15",
+          "insertAtRow": "",
+          "iterationObject": "",
+          "iterationsCount": 0,
+          "log": true,
+          "name": "Write file",
+          "pluginId": "WriteTextFileTask",
+          "pluginIterationMode": "IterateDefaultRecordset",
+          "replaceWithText": "",
+          "supportedOSPlatformList": [
+            "All platforms"
+          ],
+          "taskType": "AppendRow"
+        },
+        "position": {
+          "x": 296.509338180249,
+          "y": 228.05206580011858
+        }
+      },
+      {
+        "workspaceItemConfig": {
+          "id": "16",
+          "name": "FTP / SFTP task 3",
+          "enabled": false,
+          "log": true,
+          "pluginIterationMode": "IterateDefaultRecordset",
+          "iterationObject": "",
+          "iterationsCount": 0,
+          "protocol": "FTP",
+          "host": "",
+          "port": "",
+          "username": "",
+          "password": "",
+          "command": "Copy",
+          "copyItems": [],
+          "deleteItems": [],
+          "pluginId": "FtpSftpTask",
+          "supportedOSPlatformList": [
+            "All platforms"
+          ],
+          "direction": "LocalToRemote"
+        },
+        "position": {
+          "x": 597.509338180249,
+          "y": 43.052065800118584
+        }
+      },
+      {
+        "workspaceItemConfig": {
+          "id": "17",
+          "name": "Run program task 4",
+          "enabled": false,
+          "log": true,
+          "pluginIterationMode": "IterateDefaultRecordset",
+          "iterationObject": "",
+          "iterationsCount": 0,
+          "programPath": "",
+          "parameters": "",
+          "workingFolder": "",
+          "pluginId": "RunProgramTask",
+          "supportedOSPlatformList": [
+            "All platforms"
+          ]
+        },
+        "position": {
+          "x": 911.509338180249,
+          "y": 231.05206580011858
+        }
+      }
+    ],
+    "edges": [
+      {
+        "workspaceConnectionConfig": {
+          "dontExecuteConditions": [],
+          "enabled": true,
+          "executeConditions": [
+            {
+              "dynamicDataCode": null,
+              "maxValue": null,
+              "minValue": null,
+              "operator": "ObjectExecutes"
+            }
+          ],
+          "source": "14",
+          "target": "15",
+          "waitSeconds": 0
+        }
+      },
+      {
+        "workspaceConnectionConfig": {
+          "source": "15",
+          "target": "16",
+          "enabled": true,
+          "waitSeconds": 0,
+          "executeConditions": [
+            {
+              "dynamicDataCode": null,
+              "operator": "ObjectExecutes",
+              "minValue": null,
+              "maxValue": null
+            }
+          ],
+          "dontExecuteConditions": []
+        }
+      },
+      {
+        "workspaceConnectionConfig": {
+          "source": "16",
+          "target": "17",
+          "enabled": true,
+          "waitSeconds": 0,
+          "executeConditions": [
+            {
+              "dynamicDataCode": null,
+              "operator": "ObjectExecutes",
+              "minValue": null,
+              "maxValue": null
+            }
+          ],
+          "dontExecuteConditions": []
+        }
+      }
+    ]
+  }
 }
