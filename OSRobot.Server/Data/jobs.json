@@ -241,13 +241,51 @@
       },
       {
         "workspaceItemConfig": {
-          "id": "13",
-          "pluginId": "Folder",
-          "name": "Folder 8 BIS"
+          "id": "18",
+          "name": "Excel file task 7",
+          "enabled": true,
+          "log": true,
+          "pluginIterationMode": "IterateDefaultRecordset",
+          "iterationObject": "",
+          "iterationsCount": 0,
+          "taskType": "AppendRow",
+          "filePath": "",
+          "sheetName": "",
+          "columnsDefinition": [],
+          "addHeaderIfEmpty": false,
+          "insertAtRow": "",
+          "readLastRowOption": true,
+          "readRowNumberOption": false,
+          "readRowNumber": "",
+          "readIntervalOption": false,
+          "readInterval": "ReadFromRowToRow",
+          "readFromRow": "",
+          "readToRow": "",
+          "readNumberOfRows": "",
+          "numColumnsToRead": "",
+          "deleteRowNumber": "",
+          "findText": "",
+          "replaceWith": "",
+          "pluginId": "ExcelFileTask",
+          "supportedOSPlatformList": [
+            "All platforms"
+          ],
+          "readRowType": "ReadLastRow"
         },
         "position": {
-          "x": 180,
-          "y": 562
+          "x": 502,
+          "y": 506
+        }
+      },
+      {
+        "workspaceItemConfig": {
+          "id": "19",
+          "pluginId": "Folder",
+          "name": "Folder 8"
+        },
+        "position": {
+          "x": 72,
+          "y": 568
         }
       }
     ]
@@ -262,9 +300,9 @@
           "children": []
         },
         {
-          "id": "13",
+          "id": "19",
           "icon": "folder",
-          "label": "Folder 8 BIS",
+          "label": "Folder 8",
           "children": []
         }
       ],
@@ -273,7 +311,7 @@
       "label": "Root"
     }
   ],
-  "lastId": 17,
+  "lastId": 23,
   "folder_8": {
     "id": "8",
     "nodes": [
@@ -467,8 +505,8 @@
       }
     ]
   },
-  "folder_13": {
-    "id": "13",
+  "folder_19": {
+    "id": "19",
     "nodes": [
       {
         "workspaceItemConfig": {
@@ -480,7 +518,7 @@
           "everyNumMinutes": 5,
           "everyNumSeconds": 10,
           "everySeconds": true,
-          "id": "14",
+          "id": "20",
           "log": true,
           "name": "Every 10 secondos",
           "onAllDays": true,
@@ -536,7 +574,7 @@
           "findText": "",
           "formatAsDelimitedFile": false,
           "formatAsFixedLengthColumnsFile": false,
-          "id": "15",
+          "id": "21",
           "insertAtRow": "",
           "iterationObject": "",
           "iterationsCount": 0,
@@ -557,7 +595,7 @@
       },
       {
         "workspaceItemConfig": {
-          "id": "16",
+          "id": "22",
           "name": "FTP / SFTP task 3",
           "enabled": false,
           "log": true,
@@ -585,7 +623,7 @@
       },
       {
         "workspaceItemConfig": {
-          "id": "17",
+          "id": "23",
           "name": "Run program task 4",
           "enabled": false,
           "log": true,
@@ -619,15 +657,15 @@
               "operator": "ObjectExecutes"
             }
           ],
-          "source": "14",
-          "target": "15",
+          "source": "20",
+          "target": "21",
           "waitSeconds": 0
         }
       },
       {
         "workspaceConnectionConfig": {
-          "source": "15",
-          "target": "16",
+          "source": "21",
+          "target": "22",
           "enabled": true,
           "waitSeconds": 0,
           "executeConditions": [
@@ -643,8 +681,8 @@
       },
       {
         "workspaceConnectionConfig": {
-          "source": "16",
-          "target": "17",
+          "source": "22",
+          "target": "23",
           "enabled": true,
           "waitSeconds": 0,
           "executeConditions": [

@@ -240,11 +240,13 @@ public class SqlServerBackupTask : MultipleIterationTask
         string connectionString = $"Server={config.Server};User ID={config.Username};Password={config.Password};{config.ConnectionStringOptions}";
 
         bool getUserDatabases = config.DatabasesToBackup == DatabasesToBackupEnum.AllUserDatabases;
-        List<SqlServerDatabaseListItem>? currentDbList = SqlServer.GetDatabaseList(config.Server, config.Username, config.Password, config.ConnectionStringOptions, getUserDatabases);
+        List<SqlServerDatabaseListItem>? currentDbList = SqlServer.GetDatabaseList(config.Server, config.Username, config.Password, config.ConnectionStringOptions, getUserDatabases, _instanceLogger);
         if (currentDbList == null)
         {
-            _instanceLogger?.Error(this, "An error occurred while obtaining database list, cannot continue.");
-            return;
+            // Must throw, not return: returning normally would make the base class record this
+            // iteration as a success (see MultipleIterationTask.RunTaskAsync), so a backup that
+            // never reached the server would look like it worked.
+            throw new ApplicationException("An error occurred while obtaining database list, cannot continue.");
         }
 
         List<string> dbToBackupList = [.. currentDbList.Select(t => t.Name)];

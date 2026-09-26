@@ -165,11 +165,6 @@ public class UserRepository(RobotDBContext context, IOptions<AppSettings> appSet
         return new UserRepositoryResponse<User?>(UserRepositoryResult.Ok, user);
     }
 
-    public Task<UserRepositoryResponse<object?>> Users_Save(User user)
-    {
-        throw new NotImplementedException();
-    }
-
     public async Task<UserRepositoryResponse<object?>> Users_ChangePassword(long userId, string newPassword)
     {
         User? user = await _dbContext.Users.Where(u => u.Id == userId).FirstOrDefaultAsync();

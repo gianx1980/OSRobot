@@ -29,7 +29,6 @@ using OSRobot.Server.Models.DTO.Robot;
 using OSRobot.Server.Configuration;
 using System.Text.Json;
 using OSRobot.Server.Models.DTO.ClientUtils;
-using MySqlX.XDevAPI.Common;
 
 namespace OSRobot.Server.Controllers;
 

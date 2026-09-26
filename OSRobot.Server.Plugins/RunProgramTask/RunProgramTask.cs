@@ -37,11 +37,10 @@ public class RunProgramTask : MultipleIterationTask
         _instanceLogger.Info(this, $"Running program: {config.ProgramPath} Parameters: {config.Parameters} Working folder: {pInfo.WorkingDirectory}");
 
         using Process? newProc = Process.Start(pInfo);
+        // Must throw, not return: returning normally would make the base class record this
+        // iteration as a success, so a program that never launched would look like it ran.
         if (newProc == null)
-        {
-            _instanceLogger.Error(this, "Run program failed: Process.Start returned null.");
-            return;
-        }
+            throw new ApplicationException($"Run program failed: Process.Start returned null for '{config.ProgramPath}'.");
 
         await newProc.WaitForExitAsync(_cancellationToken);
     }

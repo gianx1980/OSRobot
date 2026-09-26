@@ -18,6 +18,7 @@
 ======================================================================================*/
 
 using Microsoft.Data.SqlClient;
+using OSRobot.Server.Core.Logging.Abstract;
 using System.Data;
 using System.Text;
 
@@ -41,7 +42,7 @@ public static class SqlServer
         return connectionString;
     }
 
-    public static bool TestConnection(string server, string? database, string username, string password, string? connectionStringOptions)
+    public static bool TestConnection(string server, string? database, string username, string password, string? connectionStringOptions, IPluginInstanceLogger? logger = null)
     {
         string connectionString = BuildConnectionString(server, database, username, password, connectionStringOptions);
 
@@ -52,16 +53,15 @@ public static class SqlServer
 
             return true;
         }
-        catch (Exception ex) 
+        catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine(ex.Message);
-            // TODO: Log error?
+            logger?.Error($"Connection test against server '{server}' failed", ex);
         }
 
         return false;
     }
 
-    public static List<SqlServerDatabaseListItem>? GetDatabaseList(string server, string username, string password, string? connectionStringOptions, bool onlyUserDatabases = false)
+    public static List<SqlServerDatabaseListItem>? GetDatabaseList(string server, string username, string password, string? connectionStringOptions, bool onlyUserDatabases = false, IPluginInstanceLogger? logger = null)
     {
         string connectionString = BuildConnectionString(server, null, username, password, connectionStringOptions);
 
@@ -86,8 +86,7 @@ public static class SqlServer
         }
         catch (Exception ex)
         {
-            System.Diagnostics.Debug.WriteLine(ex.Message);
-            // TODO: Log error?
+            logger?.Error($"Could not retrieve the database list from server '{server}'", ex);
             databaseList = null;
         }
 
