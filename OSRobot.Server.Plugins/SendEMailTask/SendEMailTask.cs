@@ -17,9 +17,12 @@
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
 
+using MailKit;
+using MailKit.Net.Smtp;
+using MailKit.Security;
+using MimeKit;
 using OSRobot.Server.Core;
-using System.Net;
-using System.Net.Mail;
+using System.Text;
 
 namespace OSRobot.Server.Plugins.SendEMailTask;
 
@@ -29,36 +32,94 @@ public class SendEMailTask : MultipleIterationTask
     {
         SendEMailTaskConfig config = (SendEMailTaskConfig)_iterationTaskConfig;
 
-        using SmtpClient mailClient = new(config.SMTPServer, int.Parse(config.Port));
-        using MailMessage mail = new();
-        mail.Sender = new MailAddress(config.Sender);
-        mail.From = new MailAddress(config.Sender);
+        if (!int.TryParse(config.Port, out int port) || port <= 0 || port > 65535)
+            throw new ApplicationException($"'{config.Port}' is not a valid SMTP port.");
 
-        foreach (string Recipient in config.Recipients)
-        {
-            mail.To.Add(Recipient);
-        }
+        using MimeMessage mail = await BuildMessageAsync(config);
 
-        foreach (string ccRecipient in config.CC)
+        // The transcript is kept in memory and only written to the task log, never to stdout.
+        // RedactSecrets keeps the AUTH exchange (i.e. the password) out of it.
+        using MemoryStream protocolLog = new();
+        using ProtocolLogger protocolLogger = new(protocolLog, true) { RedactSecrets = true };
+        using SmtpClient mailClient = new(protocolLogger);
+
+        try
         {
-            mail.CC.Add(ccRecipient);
+            await mailClient.ConnectAsync(config.SMTPServer, port, ResolveSecurityMode(config), _cancellationToken);
+
+            if (config.Authenticate)
+                await mailClient.AuthenticateAsync(config.Username, config.Password, _cancellationToken);
+
+            await mailClient.SendAsync(mail, _cancellationToken);
+            await mailClient.DisconnectAsync(true, _cancellationToken);
+
+            if (Config.Log)
+                LogProtocolTranscript(protocolLog);
         }
+        catch
+        {
+            // The SMTP transcript is usually the only thing that explains a delivery failure, so
+            // it is logged even when Config.Log is off - it's error detail, not verbose output.
+            LogProtocolTranscript(protocolLog);
+            throw;
+        }
+    }
+
+    private static SecureSocketOptions ResolveSecurityMode(SendEMailTaskConfig config)
+        => config.SecurityMode switch
+        {
+            SendEMailSecurityMode.None => SecureSocketOptions.None,
+            SendEMailSecurityMode.StartTls => SecureSocketOptions.StartTls,
+            SendEMailSecurityMode.StartTlsWhenAvailable => SecureSocketOptions.StartTlsWhenAvailable,
+            SendEMailSecurityMode.SslOnConnect => SecureSocketOptions.SslOnConnect,
+            _ => SecureSocketOptions.Auto
+        };
+
+    private static async Task<MimeMessage> BuildMessageAsync(SendEMailTaskConfig config)
+    {
+        MimeMessage mail = new();
+        mail.From.Add(MailboxAddress.Parse(config.Sender));
+
+        AddAddresses(mail.To, config.Recipients);
+        AddAddresses(mail.Cc, config.CC);
+        AddAddresses(mail.Bcc, config.Bcc);
+
+        if (mail.To.Count == 0 && mail.Cc.Count == 0 && mail.Bcc.Count == 0)
+            throw new ApplicationException("The email has no recipients.");
+
+        mail.Subject = config.Subject;
+
+        BodyBuilder bodyBuilder = new();
+        if (config.IsBodyHtml)
+            bodyBuilder.HtmlBody = config.Message;
+        else
+            bodyBuilder.TextBody = config.Message;
 
         foreach (string fileAttachment in config.Attachments)
         {
-            mail.Attachments.Add(new Attachment(fileAttachment));
+            if (!string.IsNullOrWhiteSpace(fileAttachment))
+                await bodyBuilder.Attachments.AddAsync(fileAttachment);
         }
 
-        mail.Subject = config.Subject;
-        mail.Body = config.Message;
+        mail.Body = bodyBuilder.ToMessageBody();
+        return mail;
+    }
 
-        if (config.Authenticate)
+    private static void AddAddresses(InternetAddressList target, List<string> addresses)
+    {
+        foreach (string address in addresses)
         {
-            mailClient.Credentials = new NetworkCredential(config.Username, config.Password);
+            // A blank entry is a UI artifact or dynamic data that resolved to nothing, not a
+            // failure. If that leaves no recipients at all, BuildMessageAsync throws.
+            if (!string.IsNullOrWhiteSpace(address))
+                target.Add(MailboxAddress.Parse(address));
         }
+    }
 
-        mailClient.EnableSsl = config.UseSSL;
-        mailClient.Port = int.Parse(config.Port);
-        await mailClient.SendMailAsync(mail).WaitAsync(_cancellationToken);
+    private void LogProtocolTranscript(MemoryStream protocolLog)
+    {
+        string transcript = Encoding.UTF8.GetString(protocolLog.ToArray()).Trim();
+        if (transcript.Length > 0)
+            _instanceLogger?.Info(this, $"SMTP transcript:{Environment.NewLine}{transcript}");
     }
 }

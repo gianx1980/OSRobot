@@ -25,6 +25,21 @@ using System.Text.Json.Serialization;
 
 namespace OSRobot.Server.Plugins.SendEMailTask;
 
+/// <summary>How the SMTP connection is secured. Mirrors MailKit's SecureSocketOptions.</summary>
+public enum SendEMailSecurityMode
+{
+    /// <summary>Plain, unencrypted connection.</summary>
+    None,
+    /// <summary>Let the client decide: implicit TLS on port 465, otherwise STARTTLS if offered.</summary>
+    Auto,
+    /// <summary>Require STARTTLS; fail if the server doesn't offer it.</summary>
+    StartTls,
+    /// <summary>Use STARTTLS when the server offers it, otherwise continue unencrypted.</summary>
+    StartTlsWhenAvailable,
+    /// <summary>Implicit TLS from the first byte, as used on port 465 (SMTPS).</summary>
+    SslOnConnect
+}
+
 public class SendEMailTaskConfig : ITaskConfig
 {
     public const int _defaultSMTPPort = 25;
@@ -41,11 +56,17 @@ public class SendEMailTaskConfig : ITaskConfig
     public List<string> CC { get; set; } = [];
 
     [DynamicData]
+    public List<string> Bcc { get; set; } = [];
+
+    [DynamicData]
     public string Subject { get; set; } = string.Empty;
 
     [DynamicData]
     public string Message { get; set; } = string.Empty;
-    
+
+    /// <summary>Send the message body as HTML instead of plain text.</summary>
+    public bool IsBodyHtml { get; set; }
+
     [DynamicData]
     public List<string> Attachments { get; set; } = [];
 
@@ -58,7 +79,10 @@ public class SendEMailTaskConfig : ITaskConfig
 
     [DynamicData]
     public string Port { get; set; } = _defaultSMTPPort.ToString();
-    public bool UseSSL { get; set; }
+
+    /// <summary>How the connection to the SMTP server is secured.</summary>
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public SendEMailSecurityMode SecurityMode { get; set; } = SendEMailSecurityMode.Auto;
 
     public bool Authenticate { get; set; }
 

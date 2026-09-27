@@ -14,6 +14,7 @@
     <PackageReference Include="ClosedXML" Version="0.105.1" />
     <PackageReference Include="ComputerInfo" Version="0.2.0" />
     <PackageReference Include="FluentFTP" Version="54.2.1" />
+    <PackageReference Include="MailKit" Version="4.18.0" />
     <PackageReference Include="Microsoft.Data.SqlClient" Version="7.0.2" />
     <PackageReference Include="Microsoft.Win32.SystemEvents" Version="10.0.12" />
     <PackageReference Include="Newtonsoft.Json" Version="13.0.4" />
