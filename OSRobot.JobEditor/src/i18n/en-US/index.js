@@ -15,6 +15,8 @@ export default {
   addParameter: "Add parameter",
   and: "And",
   allDays: "All days",
+  accountTemporarilyLockedOut:
+    "Your account has been temporarily locked out due to repeated failed login attempts. Please try again later.",
   allDatabases: "All databases",
   allUserDatabases: "All user databases",
   anErrorOccurredDuringTheOperation: "An error occurred during the operation",
@@ -30,6 +32,7 @@ export default {
   backupType: "Backup type",
   basic: "Basic",
   basicConfiguration: "Basic configuration",
+  bcc: "BCC",
   between: "Between",
   body: "Body",
   bulkCopy: "Bulk copy",
@@ -57,6 +60,7 @@ export default {
   columnsSplit: "Columns split",
   columnsDefinition: "Columns definition",
   comma: "Comma",
+  connectionSecurity: "Connection security",
   command: "Command",
   commandConfiguration: "Command configuration",
   commandTimeoutSeconds: "Command timeout (seconds)",
@@ -109,6 +113,7 @@ export default {
   doesntExecute: "doesn't execute",
   dontExecuteConditions: "Don't execute conditions",
   doNotCompressBackup: "Do not compress backup",
+  doYouWantToCutSelection: "Do you want to cut the selected items?",
   doYouWantToDeleteItem: "Do you want to delete the selected item?",
   doYouWantToStartTheTask: "Do you want to start the task?",
   doYouWantToExit: "Do you want to exit?",
@@ -315,7 +320,13 @@ export default {
   save: "Save",
   saturday: "Saturday",
   scale: "Scale",
+  securityAuto: "Automatic (recommended)",
+  securityNone: "None (unencrypted)",
+  securitySslOnConnect: "Implicit TLS / SSL (usually port 465)",
+  securityStartTls: "STARTTLS (required)",
+  securityStartTlsWhenAvailable: "STARTTLS (if available)",
   sender: "Sender",
+  sendAsHtml: "Send body as HTML",
   seconds: "Seconds",
   select: "Select",
   selectAFileToParseToAutodetectConfig:
@@ -413,7 +424,6 @@ export default {
   useDelimiters: "Use delimiters",
   useFixedWidthColumns: "Use fixed width columns",
   useServerDefault: "Use server default",
-  useSSL: "Use SSL",
   value: "Value",
   valueContains: "Value contains",
   valueEqualsTo: "Value equals to",
@@ -431,6 +441,8 @@ export default {
   workspaceTree: "Workspace tree",
   wrongUserNameOrPassword: "Wrong user name or password",
   yes: "Yes",
+  youMustChangeYourPasswordBeforeContinuing:
+    "You must change your password before continuing.",
   yourSessionHasExpiredLoginAgain:
     "Your session has expired, please login again",
 

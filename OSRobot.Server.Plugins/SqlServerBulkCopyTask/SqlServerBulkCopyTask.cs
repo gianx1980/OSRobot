@@ -27,13 +27,13 @@ namespace OSRobot.Server.Plugins.SqlServerBulkCopyTask;
 
 public class SqlServerBulkCopyTask : MultipleIterationTask
 {
-    protected override void RunMultipleIterationTask(int currentIteration)
+    protected override async Task RunMultipleIterationTaskAsync(int currentIteration)
     {
-        SqlServerBulkCopyTaskConfig config = (SqlServerBulkCopyTaskConfig)_iterationTaskConfig;            
+        SqlServerBulkCopyTaskConfig config = (SqlServerBulkCopyTaskConfig)_iterationTaskConfig;
         string connectionString = $"Server={config.Server};Database={config.Database};User ID={config.Username};Password={config.Password};{config.ConnectionStringOptions}";
 
         using SqlConnection cnt = new(connectionString);
-        cnt.Open();
+        await cnt.OpenAsync(_cancellationToken);
 
         using SqlBulkCopy bulkCopy = new(cnt);
         bulkCopy.BulkCopyTimeout = config.CommandTimeout;
@@ -47,7 +47,7 @@ public class SqlServerBulkCopyTask : MultipleIterationTask
         }
 
         _instanceLogger.Info(this, $"About to bulk copy {dtSource.Rows.Count} rows to table {config.DestinationTable}...");
-        bulkCopy.WriteToServer(dtSource);
+        await bulkCopy.WriteToServerAsync(dtSource, _cancellationToken);
         _instanceLogger.Info(this, "Bulk copy successfully completed");
     }
 }

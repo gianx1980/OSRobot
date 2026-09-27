@@ -195,8 +195,8 @@ public class ExcelFileTask : SingleIterationTask
         }
     }
 
-    protected override void RunSingleIterationTask()
-    {           
+    protected override Task RunSingleIterationTaskAsync()
+    {
         ExcelFileTaskConfig config = ((ExcelFileTaskConfig?)_taskConfig) ?? throw new ApplicationException("There is no valid _taskConfig instance");
 
         _actualIterations = 1;
@@ -212,6 +212,8 @@ public class ExcelFileTask : SingleIterationTask
                 ExecTaskTypeReadRow(config);
                 break;
         }
+
+        return Task.CompletedTask;
     }
 
     protected override void PostTaskSucceded(int currentIteration, ExecResult result, DynamicDataSet dDataSet)

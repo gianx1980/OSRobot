@@ -17,7 +17,6 @@
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
 
-using ICSharpCode.SharpZipLib.Core;
 using ICSharpCode.SharpZipLib.Zip;
 using OSRobot.Server.Core;
 
@@ -35,19 +34,19 @@ public class ZipTask : MultipleIterationTask
             return 9;
     }
 
-    private void CompressFolder(string path, ZipOutputStream zipStream, int folderOffset, bool skipEmptyFolder)
+    private async Task CompressFolder(string path, ZipOutputStream zipStream, int folderOffset, bool skipEmptyFolder)
     {
         string[] files = Directory.GetFiles(path);
         foreach (string fileName in files)
         {
-            CompressFile(fileName, zipStream, folderOffset);
+            await CompressFile(fileName, zipStream, folderOffset);
         }
 
         // Recursively call CompressFolder on all folders in path
         string[] folders = Directory.GetDirectories(path);
         foreach (string folder in folders)
         {
-            CompressFolder(folder, zipStream, folderOffset, skipEmptyFolder);
+            await CompressFolder(folder, zipStream, folderOffset, skipEmptyFolder);
         }
 
         if (files.Length == 0 && folders.Length == 0 && !skipEmptyFolder)
@@ -65,7 +64,7 @@ public class ZipTask : MultipleIterationTask
     }
 
 
-    private void CompressFile(string filePathName, ZipOutputStream zipStream, int folderOffset)
+    private async Task CompressFile(string filePathName, ZipOutputStream zipStream, int folderOffset)
     {
         FileInfo fi = new(filePathName);
 
@@ -97,17 +96,17 @@ public class ZipTask : MultipleIterationTask
 
         zipStream.PutNextEntry(newEntry);
 
-        // Zip the file in buffered chunks
-        // the "using" will close the stream even if an exception occurs
-        var buffer = new byte[4096];
+        // Zip the file in buffered chunks. SharpZipLib has no async copy helper, but both
+        // streams are plain BCL Streams, so CopyToAsync gives a genuinely non-blocking copy.
+        // The "using" will close the stream even if an exception occurs.
         using (FileStream fsInput = File.OpenRead(filePathName))
         {
-            StreamUtils.Copy(fsInput, zipStream, buffer);
+            await fsInput.CopyToAsync(zipStream, _cancellationToken);
         }
         zipStream.CloseEntry();
     }
 
-    private void CompressItem(string itemPathName, string zipFileName, bool includeSubFolders, bool storeFullPath, bool skipEmptyFolder, int compressionLevel)
+    private async Task CompressItem(string itemPathName, string zipFileName, bool includeSubFolders, bool storeFullPath, bool skipEmptyFolder, int compressionLevel)
     {
         using FileStream fsOut = File.Create(zipFileName);
         using ZipOutputStream zipStream = new(fsOut);
@@ -126,7 +125,7 @@ public class ZipTask : MultipleIterationTask
         string[] files = Directory.GetFiles(itemFolderName, itemName);
         foreach (string fileName in files)
         {
-            CompressFile(fileName, zipStream, folderOffset);
+            await CompressFile(fileName, zipStream, folderOffset);
         }
 
         if (includeSubFolders)
@@ -134,15 +133,15 @@ public class ZipTask : MultipleIterationTask
             string[] folders = Directory.GetDirectories(itemFolderName, itemName);
             foreach (string folderName in folders)
             {
-                CompressFolder(folderName, zipStream, folderOffset, skipEmptyFolder);
+                await CompressFolder(folderName, zipStream, folderOffset, skipEmptyFolder);
             }
         }
     }
 
-    protected override void RunMultipleIterationTask(int currentIteration)
+    protected override async Task RunMultipleIterationTaskAsync(int currentIteration)
     {
         ZipTaskConfig config = (ZipTaskConfig)_iterationTaskConfig;
-        
+
         if (File.Exists(config.Destination))
         {
             if (config.IfArchiveExists == IfArchiveExistsType.CreateWithUniqueNames)
@@ -159,7 +158,7 @@ public class ZipTask : MultipleIterationTask
         }
 
         _instanceLogger.Info(this, $"Compressing {config.Source} to {config.Destination}...");
-        CompressItem(config.Source, config.Destination, config.IncludeFilesInSubFolders,
+        await CompressItem(config.Source, config.Destination, config.IncludeFilesInSubFolders,
                         config.StoreFullPath, config.SkipEmptyFolders, ToNumericCompressionLevel(config.CompressionLevel));
     }
 }

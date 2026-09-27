@@ -31,6 +31,10 @@ public abstract class BaseTask : ITask
     protected DynamicDataSet _lastDynamicDataSet = [];
 
     protected int? _subInstanceIndex;
+    // Set by RunAsync() before RunTaskAsync() is invoked. Stored as a field - like _dataChain,
+    // _subInstanceIndex, etc. above - rather than threaded through every abstract method
+    // signature, so plugin task classes can just reference it directly in their async I/O calls.
+    protected CancellationToken _cancellationToken;
     #pragma warning disable CS8618
     protected IPluginInstanceLogger _instanceLogger;
     protected InstanceExecResult _instanceExecResult;
@@ -56,19 +60,21 @@ public abstract class BaseTask : ITask
         DestroyTask();
     }
 
-    public InstanceExecResult Run(DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, int? subInstanceIndex, IPluginInstanceLogger instanceLogger)
+    public async Task<InstanceExecResult> RunAsync(DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, int? subInstanceIndex,
+                                                     IPluginInstanceLogger instanceLogger, CancellationToken cancellationToken)
     {
         _dataChain = dataChain;
         _lastDynamicDataSet = lastDynamicDataSet;
         _subInstanceIndex = subInstanceIndex;
         _instanceLogger = instanceLogger;
+        _cancellationToken = cancellationToken;
 
         try
         {
             if (Config.Log)
                 instanceLogger.TaskStarted(this);
 
-            RunTask(dataChain, lastDynamicDataSet, subInstanceIndex, instanceLogger);
+            await RunTaskAsync(dataChain, lastDynamicDataSet, subInstanceIndex, instanceLogger);
 
             if (Config.Log)
                 instanceLogger.TaskCompleted(this);
@@ -104,5 +110,5 @@ public abstract class BaseTask : ITask
 
     }
 
-    protected abstract void RunTask(DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, int? subInstanceIndex, IPluginInstanceLogger instanceLogger);
+    protected abstract Task RunTaskAsync(DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, int? subInstanceIndex, IPluginInstanceLogger instanceLogger);
 }

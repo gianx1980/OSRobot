@@ -31,7 +31,7 @@ public sealed class TestFileSystemTask
 {
 
     [TestMethod]
-    public void TestCopy()
+    public async Task TestCopy()
     {
         // ---------
         // Arrange
@@ -98,7 +98,7 @@ public sealed class TestFileSystemTask
         // Act
         // ---------
         taskCopy.Init();
-        ExecResult execResult = taskCopy.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        ExecResult execResult = (await taskCopy.RunAsync(dynDataChain, dynDataSet, 0, logger, CancellationToken.None)).ExecResults[0];
         taskCopy.Destroy();
 
         // ---------
@@ -110,7 +110,7 @@ public sealed class TestFileSystemTask
     }
 
     [TestMethod]
-    public void TestDelete()
+    public async Task TestDelete()
     {
         // ---------
         // Arrange
@@ -171,7 +171,7 @@ public sealed class TestFileSystemTask
         // Act
         // ---------
         taskDelete.Init();
-        ExecResult execResult = taskDelete.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        ExecResult execResult = (await taskDelete.RunAsync(dynDataChain, dynDataSet, 0, logger, CancellationToken.None)).ExecResults[0];
         taskDelete.Destroy();
 
         // ---------
@@ -184,7 +184,7 @@ public sealed class TestFileSystemTask
 
 
     [TestMethod]
-    public void TestExistence()
+    public async Task TestExistence()
     {
         // ---------
         // Arrange
@@ -229,7 +229,7 @@ public sealed class TestFileSystemTask
         // Act
         // ---------
         taskCheckExistence.Init();
-        ExecResult execResult = taskCheckExistence.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        ExecResult execResult = (await taskCheckExistence.RunAsync(dynDataChain, dynDataSet, 0, logger, CancellationToken.None)).ExecResults[0];
         taskCheckExistence.Destroy();
         bool fileExists = execResult.Data["FilePathExists"] != null ? (Convert.ToInt32(execResult.Data["FilePathExists"]) == 1) : false;
 
@@ -241,7 +241,7 @@ public sealed class TestFileSystemTask
     }
 
     [TestMethod]
-    public void TestRename()
+    public async Task TestRename()
     {
         // ---------
         // Arrange
@@ -288,7 +288,7 @@ public sealed class TestFileSystemTask
         // Act
         // ---------
         taskRename.Init();
-        ExecResult execResult = taskRename.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        ExecResult execResult = (await taskRename.RunAsync(dynDataChain, dynDataSet, 0, logger, CancellationToken.None)).ExecResults[0];
         taskRename.Destroy();
 
         // ---------
@@ -299,7 +299,7 @@ public sealed class TestFileSystemTask
     }
 
     [TestMethod]
-    public void TestList()
+    public async Task TestList()
     {
         // ---------
         // Arrange
@@ -348,7 +348,7 @@ public sealed class TestFileSystemTask
         // Act
         // ---------
         taskList.Init();
-        ExecResult execResult = taskList.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        ExecResult execResult = (await taskList.RunAsync(dynDataChain, dynDataSet, 0, logger, CancellationToken.None)).ExecResults[0];
         taskList.Destroy();
 
         // ---------

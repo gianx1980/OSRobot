@@ -103,7 +103,7 @@ import { ref } from "vue";
 import { useQuasar, useDialogPluginComponent } from "quasar";
 import { useI18n } from "vue-i18n";
 import { useAppStore } from "src/stores/appStore.js";
-import { Account } from "src/infrastructure/server/Account.js";
+import { Account, User } from "src/infrastructure/server/Account.js";
 
 const _$q = useQuasar();
 
@@ -146,7 +146,19 @@ async function _formSubmit() {
     confirmPassword: _model.value.confirmPassword,
   });
 
-  if (result.responseCode === 0) {
+  if (result.responseCode === Account.Ok) {
+    // The server issues a fresh token/refreshToken on a successful change; keep the stored
+    // user in sync rather than continuing to use the (still valid, but now superseded) old one.
+    if (result.responseObject) {
+      const updatedUser = new User(
+        _user.username,
+        result.responseObject.token,
+        result.responseObject.refreshToken,
+        false
+      );
+      _appStore.setLoggedUser(updatedUser);
+    }
+
     _$q.notify({
       color: "green",
       message: _$t("passwordChanged"),
@@ -162,6 +174,10 @@ async function _formSubmit() {
 
       case -10:
         message = _$t("theCurrentPasswordIsIncorrect");
+        break;
+
+      case Account.AccountLockedOut:
+        message = _$t("accountTemporarilyLockedOut");
         break;
 
       default:

@@ -20,9 +20,9 @@ export default class Utility {
         message ??
         ((e instanceof ServiceException &&
           e.responseCode === ServiceBase.NotAuthorized) ||
-          e instanceof UnauthorizedException)
+        e instanceof UnauthorizedException
           ? $t("sessionExpired")
-          : $t("anErrorOccurredDuringTheOperation"),
+          : $t("anErrorOccurredDuringTheOperation")),
     };
 
     Utility.showDialog($q, config);

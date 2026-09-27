@@ -27,7 +27,8 @@ export const useAppStore = defineStore("appStore", () => {
         _loggedUser = new User(
           tempUser._username,
           tempUser._token,
-          tempUser._refreshToken
+          tempUser._refreshToken,
+          tempUser._mustChangePassword
         );
       }
 

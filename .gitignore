@@ -398,3 +398,8 @@ FodyWeavers.xsd
 
 # JetBrains Rider
 *.sln.iml
+
+# Runtime SQLite user database - created and seeded from Resources/InitDB.txt on first start.
+# Never commit it: it contains real credential hashes.
+OSRobot.Server/Data/config.db
+OSRobot.Server/Data/config.db-*

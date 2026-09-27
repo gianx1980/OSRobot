@@ -45,7 +45,7 @@ public static partial class DynamicDataParser
 {
     private const string _codePlaceholder = "[CODE]";
     private readonly static Regex _regExFieldValue = DynamicDataRegex();
-    private readonly static Regex _regExEnvVarValue = DynamicDataRegex();
+    private readonly static Regex _regExEnvVarValue = EnvironmentRegex();
 
     public static List<DynamicDataInfo> GetDynamicDataInfo(string input)
     {
@@ -107,6 +107,9 @@ public static partial class DynamicDataParser
 
     public static string ParseCSharpCode(string input, DynamicDataChain dynamicDataChain, int iterationNumber, int? subInstanceIndex)
     {
+        if (!Core.ScriptingEnabled)
+            throw new ApplicationException("C# scripting ([CODE] expressions) is disabled by AppSettings:JobEngineConfig:ScriptingEnabled. See SECURITY.md.");
+
         string code = input[_codePlaceholder.Length..];
 
         ScriptGlobals globals = new()
@@ -122,7 +125,7 @@ public static partial class DynamicDataParser
                         .WithReferences(thisAssembly)
                         .WithImports("OSRobot.Server.Core.DynamicData");
 
-        return CSharpScript.EvaluateAsync<string>(code, options, globals).Result;
+        return CSharpScript.EvaluateAsync<string>(code, options, globals).GetAwaiter().GetResult();
     }
 
     public static int GetRowIndex(string rowIndex, int iterationNumber, int? subInstanceIndex)

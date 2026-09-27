@@ -20,14 +20,14 @@
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging.Abstract;
+using OSRobot.Server.Plugins.Infrastructure.Network;
 using System.Text;
-using System.Text.RegularExpressions;
 
 namespace OSRobot.Server.Plugins.FtpSftpTask;
 
-public partial class FtpSftpTask : MultipleIterationTask
+public class FtpSftpTask : MultipleIterationTask
 {
-    private void BuildRemotePath(FtpSftpClient fileTransferClient, string remotePath, bool skipLastSegment)
+    private void BuildRemotePath(IFileTransferClient fileTransferClient, string remotePath, bool skipLastSegment)
     {
         List<string> pathItems = FtpSftpTaskCommon.SplitRemotePath(remotePath);
 
@@ -51,39 +51,15 @@ public partial class FtpSftpTask : MultipleIterationTask
         }
     }
 
-    private void BuildLocalPath(FtpSftpClient fileTransferClient, string localPath, bool skipLastSegment)
+    private static void BuildLocalPath(string localPath, bool skipLastSegment)
     {
-        List<string> pathItems = FtpSftpTaskCommon.SplitLocalPath(localPath);
+        string? directory = skipLastSegment ? Path.GetDirectoryName(localPath) : localPath;
 
-        if (pathItems.Count > 0)
-        {
-            if (skipLastSegment)
-                pathItems.RemoveAt(pathItems.Count - 1);
-
-            StringBuilder fullPath = new();
-            for (int i = 0; i < pathItems.Count; i++)
-            {
-                string item = pathItems[i];
-                if (!string.IsNullOrEmpty(item))
-                {
-                    if (BuildLocalPathRegex().Match(item).Success)
-                    {
-                        fullPath.Append($"{Path.DirectorySeparatorChar}{item}");
-                    }
-                    else
-                    {
-                        // TODO: Correct here to use RemoteDirectoryExists & RemoteCreateDirectory?
-                        fullPath.Append($"{Path.DirectorySeparatorChar}{item}");
-                        string fullPathString = fullPath.ToString();
-                        if (!fileTransferClient.RemoteDirectoryExists(fullPathString))
-                            fileTransferClient.RemoteCreateDirectory(fullPathString);
-                    }
-                }
-            }
-        }
+        if (!string.IsNullOrEmpty(directory))
+            Directory.CreateDirectory(directory);
     }
 
-    private void UploadFile(FtpSftpClient fileTransferClient, string localPath, string remotePath, bool overwriteFileIfExists, bool createDirectoryTree)
+    private void UploadFile(IFileTransferClient fileTransferClient, string localPath, string remotePath, bool overwriteFileIfExists, bool createDirectoryTree)
     {
         if (overwriteFileIfExists || !fileTransferClient.RemoteFileExists(remotePath))
         {
@@ -94,7 +70,7 @@ public partial class FtpSftpTask : MultipleIterationTask
         }
     }
 
-    private void UploadDirectory(FtpSftpClient fileTransferClient, string localPath, string remotePath, bool overwriteFileIfExists, bool recursivelyCopyDirectories)
+    private void UploadDirectory(IFileTransferClient fileTransferClient, string localPath, string remotePath, bool overwriteFileIfExists, bool recursivelyCopyDirectories)
     {
         List<FtpSftpFileInfo> fileList = fileTransferClient.LocalListing(localPath);
         BuildRemotePath(fileTransferClient, remotePath, false);
@@ -113,36 +89,43 @@ public partial class FtpSftpTask : MultipleIterationTask
         }
     }
 
-    private void DownloadFile(FtpSftpClient fileTransferClient, string localPath, string remotePath, bool overwriteFileIfExists, bool createDirectoryTree)
+    private void DownloadFile(IFileTransferClient fileTransferClient, string localPath, string remotePath, bool overwriteFileIfExists, bool createDirectoryTree)
     {
         if (overwriteFileIfExists || !fileTransferClient.LocalFileExists(localPath))
         {
             if (createDirectoryTree)
-                BuildLocalPath(fileTransferClient, localPath, true);
+                BuildLocalPath(localPath, true);
             fileTransferClient.Download(localPath, remotePath);
         }
     }
 
-    private void DownloadDirectory(FtpSftpClient fileTransferClient, string localPath, string remotePath, bool overwriteFileIfExists, bool recursivelyCopyDirectories)
+    private void DownloadDirectory(IFileTransferClient fileTransferClient, string localPath, string remotePath, bool overwriteFileIfExists, bool recursivelyCopyDirectories)
     {
-        List<FtpSftpFileInfo> fileList = fileTransferClient.LocalListing(remotePath);
-        BuildLocalPath(fileTransferClient, remotePath, false);
+        List<FtpSftpFileInfo> fileList = fileTransferClient.RemoteListing(remotePath);
+        BuildLocalPath(localPath, false);
 
         foreach (FtpSftpFileInfo fInfo in fileList)
         {
+            // SFTP listings include the "." and ".." entries.
+            if (fInfo.FileName is "." or "..")
+                continue;
+
+            string itemLocalPath = Path.Combine(localPath, fInfo.FileName);
+            string itemRemotePath = FtpSftpTaskCommon.CombineRemotePath(remotePath, fInfo.FileName);
+
             if (!fInfo.IsDirectory)
             {
-                DownloadFile(fileTransferClient, localPath, remotePath, overwriteFileIfExists, false);
+                DownloadFile(fileTransferClient, itemLocalPath, itemRemotePath, overwriteFileIfExists, false);
             }
             else
             {
                 if (recursivelyCopyDirectories)
-                    DownloadDirectory(fileTransferClient, localPath, remotePath, overwriteFileIfExists, recursivelyCopyDirectories);
+                    DownloadDirectory(fileTransferClient, itemLocalPath, itemRemotePath, overwriteFileIfExists, recursivelyCopyDirectories);
             }
         }
     }
 
-    private void ManageCopyItem(FtpSftpClient fileTransferClient, FtpSftpCopyItem copyItem, IPluginInstanceLogger logger)
+    private void ManageCopyItem(IFileTransferClient fileTransferClient, FtpSftpCopyItem copyItem, IPluginInstanceLogger logger)
     {
         if (copyItem.LocalToRemote)
         {
@@ -159,7 +142,7 @@ public partial class FtpSftpTask : MultipleIterationTask
         }
         else
         {
-            if (fileTransferClient.RemoteIsDirectory(copyItem.LocalPath))
+            if (fileTransferClient.RemoteIsDirectory(copyItem.RemotePath))
             {
                 logger.Info($"Copying directory {copyItem.RemotePath} to {copyItem.LocalPath}...");
                 DownloadDirectory(fileTransferClient, copyItem.LocalPath, copyItem.RemotePath, copyItem.OverwriteFileIfExists, copyItem.RecursivelyCopyDirectories);
@@ -172,7 +155,7 @@ public partial class FtpSftpTask : MultipleIterationTask
         }
     }
 
-    private void ManageDeleteItem(FtpSftpClient fileTransferClient, FtpSftpDeleteItem deleteItem, IPluginInstanceLogger logger)
+    private void ManageDeleteItem(IFileTransferClient fileTransferClient, FtpSftpDeleteItem deleteItem, IPluginInstanceLogger logger)
     {
         if (fileTransferClient.RemoteDirectoryExists(deleteItem.RemotePath) 
             || fileTransferClient.RemoteFileExists(deleteItem.RemotePath))
@@ -190,11 +173,11 @@ public partial class FtpSftpTask : MultipleIterationTask
         }
     }
 
-    protected override void RunMultipleIterationTask(int currentIteration)
+    protected override Task RunMultipleIterationTaskAsync(int currentIteration)
     {
         FtpSftpTaskConfig config = (FtpSftpTaskConfig)_iterationTaskConfig;
 
-        using FtpSftpClient fileTransferClient = new();
+        using IFileTransferClient fileTransferClient = PluginServices.CreateFileTransferClient();
         _instanceLogger?.Info($"Connecting to host: {config.Host} Port: {config.Port} Username: {config.Username}");
         fileTransferClient.Connect(config.Protocol, config.Host, int.Parse(config.Port), config.Username, config.Password);
         _instanceLogger?.Info("Connection established");
@@ -226,9 +209,7 @@ public partial class FtpSftpTask : MultipleIterationTask
 
             _instanceLogger?.Info("Delete files completed");
         }
-    }
 
-    // Use Invariant Culture ("")
-    [GeneratedRegex(@"[A-Z]:", RegexOptions.IgnoreCase, "")]
-    private static partial Regex BuildLocalPathRegex();
+        return Task.CompletedTask;
+    }
 }

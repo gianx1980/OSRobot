@@ -31,7 +31,7 @@ namespace OSRobot.Tests.TestPlugins;
 public class TestSqlServerBulkCopyTask
 {
     [TestMethod]
-    public void TestBulkCopyTable()
+    public async Task TestBulkCopyTable()
     {
         // ---------
         // Arrange
@@ -103,12 +103,12 @@ public class TestSqlServerBulkCopyTask
         // Act & Assert
         // --------------
         task.Init();
-        ExecResult execResultInit = taskInit.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        ExecResult execResultInit = (await taskInit.RunAsync(dynDataChain, dynDataSet, 0, logger, CancellationToken.None)).ExecResults[0];
         task.Destroy();
         Assert.IsTrue(execResultInit.Result, "Task initialization failed.");
 
         task.Init();
-        ExecResult execResult = task.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        ExecResult execResult = (await task.RunAsync(dynDataChain, dynDataSet, 0, logger, CancellationToken.None)).ExecResults[0];
         task.Destroy();
 
         Assert.IsTrue(execResult.Result, "Task failed.");

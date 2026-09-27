@@ -24,5 +24,6 @@ public enum UserRepositoryResult
     WrongCredentials,
     InvalidRefreshToken,
     RefreshTokenOk,
-    InvalidUser
+    InvalidUser,
+    AccountLockedOut
 }

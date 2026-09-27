@@ -24,7 +24,7 @@ namespace OSRobot.Server.Plugins.WriteBinaryFileTask;
 
 public class WriteBinaryFileTask : SingleIterationTask
 {
-    protected override void RunSingleIterationTask()
+    protected override async Task RunSingleIterationTaskAsync()
     {
         for (int i = 0; i < _iterationsCount; i++)
         {
@@ -41,7 +41,7 @@ public class WriteBinaryFileTask : SingleIterationTask
             if (fileContent == null)
                 return;
 
-            File.WriteAllBytes(config.FilePath, fileContent);
+            await File.WriteAllBytesAsync(config.FilePath, fileContent, _cancellationToken);
         }
     }
 }

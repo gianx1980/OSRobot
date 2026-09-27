@@ -84,7 +84,7 @@ async function _login() {
     );
 
     if (
-      resultLogin.data.responseCode === 0 &&
+      resultLogin.data.responseCode === Account.Ok &&
       resultLogin.data.responseObject !== null
     ) {
       // Login OK
@@ -93,16 +93,35 @@ async function _login() {
       const serverConfig = await config.getConfig();
       _appStore.setServerConfig(serverConfig.data.responseObject);
 
-      // Redirect to home page
+      // Redirect to home page - or, if the account still carries the default/forced-reset
+      // password, to the mandatory change-password page instead. The router guard also
+      // enforces this on every navigation, but redirecting straight there avoids a pointless
+      // bounce through the home page first.
       _appStore.setLoggedUser(resultLogin.data.responseObject);
       _appStore.setConnected(true);
-      _router.push("/");
+
+      if (resultLogin.data.responseObject.mustChangePassword) {
+        _router.push("/change-password");
+      } else {
+        _router.push("/");
+      }
     } else {
       _formIsSubmitting.value = false;
-      if (resultLogin.data.responseCode === Account.WrongCredentials) {
-        Utility.showErrorDialog(_$q, _$t, _$t("wrongUserNameOrPassword"));
-      } else {
-        Utility.showErrorDialog(_$q, _$t);
+      switch (resultLogin.data.responseCode) {
+        case Account.WrongCredentials:
+          Utility.showErrorDialog(_$q, _$t, null, _$t("wrongUserNameOrPassword"));
+          break;
+        case Account.AccountLockedOut:
+          Utility.showErrorDialog(
+            _$q,
+            _$t,
+            null,
+            _$t("accountTemporarilyLockedOut")
+          );
+          break;
+        default:
+          Utility.showErrorDialog(_$q, _$t);
+          break;
       }
     }
   } catch (e) {

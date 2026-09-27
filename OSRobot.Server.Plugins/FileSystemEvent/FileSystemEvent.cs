@@ -120,8 +120,9 @@ public class FileSystemEvent : IEvent
         }
         catch (Exception ex)
         {
-            if (Config.Log)
-                Logger.EventError(this, ex);
+            // Errors are always logged, regardless of Config.Log: an event has no ExecResult to
+            // report failure through, so without this the event would fail silently forever.
+            Logger.EventError(this, ex);
         }
     }
 }

@@ -29,7 +29,7 @@ namespace OSRobot.Tests.TestPlugins;
 public sealed class TestReadTextFileTask
 {
     [TestMethod]
-    public void TestReadTextFile_AllRows()
+    public async Task TestReadTextFile_AllRows()
     {
         // ---------
         // Arrange
@@ -83,7 +83,7 @@ public sealed class TestReadTextFileTask
             dynDataChain.TryAdd(2, dynDataSet);
 
             taskRead.Init();
-            ExecResult execResult = taskRead.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+            ExecResult execResult = (await taskRead.RunAsync(dynDataChain, dynDataSet, 0, logger, CancellationToken.None)).ExecResults[0];
 
             DataTable dt = (DataTable)execResult.Data["DefaultRecordset"];
 
@@ -118,7 +118,7 @@ public sealed class TestReadTextFileTask
             dynDataChain.TryAdd(2, dynDataSet);
 
             taskRead.Init();
-            ExecResult er = taskRead.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+            ExecResult er = (await taskRead.RunAsync(dynDataChain, dynDataSet, 0, logger, CancellationToken.None)).ExecResults[0];
             taskRead.Destroy();
 
             DataTable dt = (DataTable)er.Data["DefaultRecordset"];
@@ -153,7 +153,7 @@ public sealed class TestReadTextFileTask
             dynDataChain.TryAdd(2, dynDataSet);
 
             taskRead.Init();
-            ExecResult er = taskRead.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+            ExecResult er = (await taskRead.RunAsync(dynDataChain, dynDataSet, 0, logger, CancellationToken.None)).ExecResults[0];
             taskRead.Destroy();
 
             DataTable dt = (DataTable)er.Data["DefaultRecordset"];

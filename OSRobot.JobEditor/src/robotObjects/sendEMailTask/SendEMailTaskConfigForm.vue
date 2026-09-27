@@ -174,6 +174,85 @@
           </div>
         </div>
         <div class="row">
+          <div class="col">
+            <q-card class="q-mt-sm q-mb-lg">
+              <q-card-section>
+                <div class="text-subtitle1">
+                  {{ _$t("bcc") }}
+                </div>
+              </q-card-section>
+              <q-card-section>
+                <div class="row">
+                  <div class="col">
+                    <q-table
+                      :columns="_BccColumnsDef"
+                      :rows="_BccList"
+                      :visible-columns="_BccColumnVisibility"
+                      :no-data-label="_$t('thereAreNoItemsToShow')"
+                      row-key="id"
+                      dense
+                    >
+                      <template v-slot:body-cell-actions="props">
+                        <q-td :props="props">
+                          <q-btn
+                            square
+                            class="q-ml-xs"
+                            size="xs"
+                            icon="mode_edit"
+                            color="primary"
+                          >
+                            <q-menu>
+                              <q-list style="min-width: 100px">
+                                <q-item clickable v-close-popup>
+                                  <q-item-section
+                                    @click="_BccEditItemClick(props.row)"
+                                    >{{ _$t("edit") }}</q-item-section
+                                  >
+                                </q-item>
+                                <q-item clickable v-close-popup>
+                                  <q-item-section
+                                    @click="_BccDeleteItemClick(props.row)"
+                                    >{{ _$t("delete") }}</q-item-section
+                                  >
+                                </q-item>
+                                <q-separator />
+                                <q-item clickable v-close-popup>
+                                  <q-item-section
+                                    @click="_BccItemMoveUpClick(props.row)"
+                                    >{{ _$t("moveUp") }}</q-item-section
+                                  >
+                                </q-item>
+                                <q-item clickable v-close-popup>
+                                  <q-item-section
+                                    @click="_BccItemMoveDownClick(props.row)"
+                                    >{{ _$t("moveDown") }}</q-item-section
+                                  >
+                                </q-item>
+                              </q-list>
+                            </q-menu>
+                          </q-btn>
+                        </q-td>
+                      </template>
+                    </q-table>
+                  </div>
+                </div>
+                <div class="row">
+                  <div class="col">
+                    <q-btn
+                      color="primary"
+                      icon="add"
+                      :label="_$t('add')"
+                      class="q-mt-sm"
+                      size="md"
+                      @click="_BccAddItemClick"
+                    />
+                  </div>
+                </div>
+              </q-card-section>
+            </q-card>
+          </div>
+        </div>
+        <div class="row">
           <div class="col-10">
             <q-input
               filled
@@ -211,6 +290,17 @@
               v-model="_propsRef.modelValue"
               :folderItems="_propsRef.containingFolderItems"
               modelValueKey="message"
+            />
+          </div>
+        </div>
+        <div class="row q-mb-sm">
+          <div class="col">
+            <q-toggle
+              class="q-ml-sm"
+              v-model="_propsRef.modelValue.isBodyHtml"
+              :label="_$t('sendAsHtml')"
+              left-label
+              dense
             />
           </div>
         </div>
@@ -341,19 +431,21 @@
               :rules="[
                 (val) => val === 0 || !!val || _$t('thisFieldIsMandatory'),
                 (val) =>
-                  (val >= 0 && val <= 9999) ||
-                  _$t('mustBeAValueBetweenXAndY', ['0', '65535']),
+                  (val >= 1 && val <= 65535) ||
+                  _$t('mustBeAValueBetweenXAndY', ['1', '65535']),
               ]"
             />
           </div>
         </div>
         <div class="row q-mb-sm">
           <div class="col">
-            <q-toggle
-              class="q-ml-sm"
-              v-model="_propsRef.modelValue.useSSL"
-              :label="_$t('useSSL')"
-              left-label
+            <q-select
+              filled
+              v-model="_propsRef.modelValue.securityMode"
+              :options="_securityModeOptions"
+              :label="_$t('connectionSecurity')"
+              emit-value
+              map-options
               dense
             />
           </div>
@@ -509,6 +601,55 @@
       </q-card>
     </div>
   </q-dialog>
+  <q-dialog v-model="_BccDialogVisibility" persistent>
+    <div
+      class="q-pa-md q-gutter-sm"
+      style="width: 650px; max-width: 80vw; height: 650px"
+    >
+      <q-card style="width: 600px" class="q-px-sm q-pb-md">
+        <q-card-section>
+          <div class="text-h6">{{ _BccDialogTitle }}</div>
+        </q-card-section>
+
+        <q-card-section>
+          <q-form class="q-gutter-md" @submit="_BccDialogFormSubmit">
+            <div class="row">
+              <div class="col-11">
+                <q-input
+                  filled
+                  v-model="_BccDialogFormData.bcc"
+                  :label="_$t('email')"
+                  dense
+                  lazy-rules
+                  :rules="[(val) => !!val || _$t('thisFieldIsMandatory')]"
+                />
+              </div>
+              <div class="col-1">
+                <BtnDynamicDataBrowser
+                  class="q-ml-sm"
+                  v-model="_BccDialogFormData"
+                  :folderItems="_propsRef.containingFolderItems"
+                  :pluginId="_propsRef.modelValue.id"
+                  modelValueKey="bcc"
+                />
+              </div>
+            </div>
+            <div class="column items-end">
+              <div class="col">
+                <q-btn
+                  flat
+                  :label="_$t('cancel')"
+                  color="primary"
+                  v-close-popup
+                />
+                <q-btn flat type="submit" :label="_$t('ok')" color="primary" />
+              </div>
+            </div>
+          </q-form>
+        </q-card-section>
+      </q-card>
+    </div>
+  </q-dialog>
   <q-dialog v-model="_attachmentDialogVisibility" persistent>
     <div
       class="q-pa-md q-gutter-sm"
@@ -586,7 +727,27 @@ const _$t = _i18n.t;
 const _ctlUsername = ref(null);
 const _ctlPassword = ref(null);
 
-onMounted(async () => {});
+const _securityModeOptions = [
+  { label: _$t("securityAuto"), value: "Auto" },
+  { label: _$t("securityStartTls"), value: "StartTls" },
+  {
+    label: _$t("securityStartTlsWhenAvailable"),
+    value: "StartTlsWhenAvailable",
+  },
+  { label: _$t("securitySslOnConnect"), value: "SslOnConnect" },
+  { label: _$t("securityNone"), value: "None" },
+];
+
+onMounted(async () => {
+  // A task saved before securityMode existed has no value for it, which would render the select
+  // blank. Fall back to the same default a new task gets.
+  if (
+    _propsRef.value.modelValue.securityMode === null ||
+    _propsRef.value.modelValue.securityMode === undefined
+  ) {
+    _propsRef.value.modelValue.securityMode = "Auto";
+  }
+});
 
 const _recipientColumnsDef = [
   {
@@ -777,7 +938,7 @@ function _CCDeleteItemClick(row) {
         _propsRef.value.modelValue._tempCC.splice(index, 1);
 
         _propsRef.value.modelValue.cc = _propsRef.value.modelValue._tempCC.map(
-          (x) => x.recipient
+          (x) => x.cc
         );
       }
     });
@@ -825,6 +986,119 @@ function _CCDialogFormSubmit() {
   );
 
   _CCDialogVisibility.value = false;
+}
+
+// BCC Management
+const _BccColumnsDef = [
+  {
+    name: "id",
+    field: "id",
+  },
+  {
+    name: "bcc",
+    label: _$t("email"),
+    align: "left",
+    field: "bcc",
+  },
+  {
+    name: "actions",
+    align: "center",
+    field: "actions",
+  },
+];
+
+const _BccColumnVisibility = ref(["bcc", "actions"]);
+
+if (!_propsRef.value.modelValue.hasOwnProperty("_tempBcc"))
+  _propsRef.value.modelValue._tempBcc = [];
+
+const _BccList = ref(_propsRef.value.modelValue._tempBcc);
+
+function _BccAddItemClick() {
+  const list = _propsRef.value.modelValue._tempBcc;
+  const idList = list.map((v) => v.id);
+  const maxId = (idList.length === 0 ? 0 : Math.max(...idList)) + 1;
+
+  _BccDialogFormData.value = {
+    id: maxId,
+    bcc: "",
+    isNew: true,
+  };
+
+  _BccDialogTitle.value = _$t("addEmail");
+  _BccDialogVisibility.value = true;
+}
+
+function _BccEditItemClick(row) {
+  _BccDialogFormData.value = Object.assign({}, row);
+  _BccDialogTitle.value = _$t("editEmail");
+  _BccDialogVisibility.value = true;
+}
+
+function _BccDeleteItemClick(row) {
+  const index = _propsRef.value.modelValue._tempBcc.findIndex(
+    (i) => i.id === row.id
+  );
+
+  _$q
+    .dialog({
+      title: _$t("osRobot"),
+      message: _$t("doYouWantToDeleteItem"),
+      cancel: true,
+      persistent: true,
+    })
+    .onOk(() => {
+      if (index >= 0) {
+        _propsRef.value.modelValue._tempBcc.splice(index, 1);
+
+        _propsRef.value.modelValue.bcc =
+          _propsRef.value.modelValue._tempBcc.map((x) => x.bcc);
+      }
+    });
+}
+
+function _BccItemMoveUpClick(row) {
+  const list = _propsRef.value.modelValue._tempBcc;
+  const itemIndex = list.findIndex((r) => r.id == row.id);
+
+  if (itemIndex !== -1 && itemIndex > 0) {
+    const item = list.splice(itemIndex, 1)[0];
+    list.splice(itemIndex - 1, 0, item);
+  }
+}
+
+function _BccItemMoveDownClick(row) {
+  const list = _propsRef.value.modelValue._tempBcc;
+  const itemIndex = list.findIndex((r) => r.id == row.id);
+
+  if (itemIndex !== -1 && itemIndex < list.length - 1) {
+    const item = list.splice(itemIndex, 1)[0];
+    list.splice(itemIndex + 1, 0, item);
+  }
+}
+
+// Dialog management
+const _BccDialogVisibility = ref(false);
+const _BccDialogFormData = ref({});
+const _BccDialogTitle = ref(_$t("addEmail"));
+
+function _BccDialogFormSubmit() {
+  if (_BccDialogFormData.value.isNew) {
+    _BccDialogFormData.value.isNew = false;
+    _propsRef.value.modelValue._tempBcc.push(_BccDialogFormData.value);
+  } else {
+    const index = _propsRef.value.modelValue._tempBcc.findIndex(
+      (i) => i.id === _BccDialogFormData.value.id
+    );
+
+    _propsRef.value.modelValue._tempBcc[index] = _BccDialogFormData.value;
+  }
+
+  _propsRef.value.modelValue.bcc = _propsRef.value.modelValue._tempBcc.map(
+    (x) => x.bcc
+  );
+
+  _BccDialogVisibility.value = false;
 }
 
 // Attachments Management

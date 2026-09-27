@@ -1,20 +1,70 @@
 {
-    "folder_0": {
-        "edges": [
-
-        ],
-        "id": "0",
-        "nodes": [
-        ]
-    },
-    "folderTree": [
-        {
-            "children": [
-            ],
-            "icon": "folder",
-            "id": "0",
-            "label": "Root"
+  "folder_0": {
+    "edges": [],
+    "id": "0",
+    "nodes": [
+      {
+        "workspaceItemConfig": {
+          "id": "25",
+          "name": "Send e-mail",
+          "enabled": true,
+          "log": true,
+          "recipients": [
+            "glucadb@gmail.com"
+          ],
+          "cc": [],
+          "bcc": [
+            "glucadb@hotmail.it"
+          ],
+          "subject": "TEST EMAIL",
+          "message": "\u003Ch1\u003EGood morning!\u003C/h1\u003E\nThis is a test e-mail.\n\nHave a good day!",
+          "isBodyHtml": true,
+          "attachments": [],
+          "sender": "noreply@mycrohnlog.com",
+          "smtpServer": "smtps.aruba.it",
+          "port": "465",
+          "securityMode": "Auto",
+          "authenticate": true,
+          "username": "noreply@mycrohnlog.com",
+          "password": "1980@Tarzan123!",
+          "pluginIterationMode": "IterateDefaultRecordset",
+          "iterationObject": "",
+          "iterationsCount": 0,
+          "pluginId": "SendEMailTask",
+          "supportedOSPlatformList": [
+            "All platforms"
+          ],
+          "_tempRecipients": [
+            {
+              "id": 1,
+              "recipient": "glucadb@gmail.com",
+              "isNew": false
+            }
+          ],
+          "_tempCC": [],
+          "_tempBcc": [
+            {
+              "id": 1,
+              "bcc": "glucadb@hotmail.it",
+              "isNew": false
+            }
+          ],
+          "_tempAttachments": []
+        },
+        "position": {
+          "x": 69,
+          "y": 87
         }
-    ],
-    "lastId": 0
+      }
+    ]
+  },
+  "folderTree": [
+    {
+      "children": [],
+      "icon": "folder",
+      "id": "0",
+      "label": "Root"
+    }
+  ],
+  "lastId": 25
 }

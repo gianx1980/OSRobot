@@ -17,7 +17,6 @@
     along with OSRobot.  If not, see <http://www.gnu.org/licenses/>.
 ======================================================================================*/
 
-using ICSharpCode.SharpZipLib.Core;
 using ICSharpCode.SharpZipLib.Zip;
 using OSRobot.Server.Core;
 
@@ -25,7 +24,7 @@ namespace OSRobot.Server.Plugins.UnzipTask;
 
 public class UnzipTask : MultipleIterationTask
 {
-    private bool UncompressArchive(string zipFileName, string outputFolder, IfDestFileExistsType ifDestFileExists)
+    private async Task<bool> UncompressArchive(string zipFileName, string outputFolder, IfDestFileExistsType ifDestFileExists)
     {
         using FileStream fs = File.OpenRead(zipFileName);
         using ZipFile zipFileToExtract = new(fs);
@@ -39,7 +38,6 @@ public class UnzipTask : MultipleIterationTask
 
             string EntryFileName = zipItem.Name;
 
-            byte[] buffer = new byte[4096];
             using Stream ZipStream = zipFileToExtract.GetInputStream(zipItem);
             string fullZipToPath = Path.Combine(outputFolder, EntryFileName);
             string directoryName = Path.GetDirectoryName(fullZipToPath) ?? string.Empty;
@@ -58,19 +56,21 @@ public class UnzipTask : MultipleIterationTask
                     fullZipToPath = Common.GetUniqueFileName(fullZipToPath);
             }
 
+            // SharpZipLib has no async copy helper, but both streams are plain BCL Streams,
+            // so CopyToAsync gives a genuinely non-blocking bulk copy here.
             using FileStream streamWriter = File.Create(fullZipToPath);
-            StreamUtils.Copy(ZipStream, streamWriter, buffer);
+            await ZipStream.CopyToAsync(streamWriter, _cancellationToken);
         }
 
         return true;
     }
 
-    protected override void RunMultipleIterationTask(int currentIteration)
+    protected override async Task RunMultipleIterationTaskAsync(int currentIteration)
     {
         UnzipTaskConfig config = (UnzipTaskConfig)_iterationTaskConfig;
-        
+
         _instanceLogger.Info(this, $"Uncompressing archive {config.Source} to {config.Destination}...");
-        bool completed = UncompressArchive(config.Source, config.Destination, config.IfDestFileExists);
+        bool completed = await UncompressArchive(config.Source, config.Destination, config.IfDestFileExists);
 
         if (!completed)
             throw new ApplicationException("One or more files with the same name found in destination folder.");

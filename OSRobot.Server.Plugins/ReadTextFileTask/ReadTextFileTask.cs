@@ -333,7 +333,7 @@ public class ReadTextFileTask : MultipleIterationTask
     }
 
 
-    protected override void RunMultipleIterationTask(int currentIteration)
+    protected override Task RunMultipleIterationTaskAsync(int currentIteration)
     {
         // For this kind of objects consider only one iteration
         ReadTextFileTaskConfig config = (ReadTextFileTaskConfig)_iterationTaskConfig;
@@ -368,6 +368,8 @@ public class ReadTextFileTask : MultipleIterationTask
             ExecTaskTypeReadRowNumber(config, fileParser);
         else
             ExecTaskTypeReadInterval(config, fileParser);
+
+        return Task.CompletedTask;
     }
 
     private void PostIteration(int currentIteration, ExecResult result, DynamicDataSet dDataSet)

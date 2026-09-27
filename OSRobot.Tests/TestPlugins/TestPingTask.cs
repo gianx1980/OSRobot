@@ -28,7 +28,7 @@ namespace OSRobot.Tests.TestPlugins;
 public sealed class TestPingTask
 {
     [TestMethod]
-    public void TestLocalAddress()
+    public async Task TestLocalAddress()
     {
         // ---------
         // Arrange
@@ -59,7 +59,7 @@ public sealed class TestPingTask
         // Act
         // ---------
         task.Init();
-        InstanceExecResult result = task.Run(dynDataChain, dynDataSet, 0, logger);
+        InstanceExecResult result = await task.RunAsync(dynDataChain, dynDataSet, 0, logger, CancellationToken.None);
         task.Destroy();
 
         // ---------
@@ -74,7 +74,7 @@ public sealed class TestPingTask
     }
 
     [TestMethod]
-    public void TestNonExistentAddress()
+    public async Task TestNonExistentAddress()
     {
         // ---------
         // Arrange
@@ -105,7 +105,7 @@ public sealed class TestPingTask
         // Act
         // ---------
         task.Init();
-        InstanceExecResult result = task.Run(dynDataChain, dynDataSet, 0, logger);
+        InstanceExecResult result = await task.RunAsync(dynDataChain, dynDataSet, 0, logger, CancellationToken.None);
         task.Destroy();
 
         // ---------

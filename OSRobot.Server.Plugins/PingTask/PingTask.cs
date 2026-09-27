@@ -27,20 +27,20 @@ public class PingTask : MultipleIterationTask
 {
     private float _thresholdSuccessRate;
 
-    protected override void RunMultipleIterationTask(int currentIteration)
+    protected override async Task RunMultipleIterationTaskAsync(int currentIteration)
     {
         PingTaskConfig config = (PingTaskConfig)_iterationTaskConfig;
 
         _thresholdSuccessRate = 0;
         int attemptSuccessCount = 0;
-        Ping ping = new();
+        using Ping ping = new();
 
         for (int i = 1; i <= config.Attempts; i++)
         {
             try
             {
                 _instanceLogger?.Info(this, $"Pinging host {config.Host} (Attempt: {i})...");
-                PingReply reply = ping.Send(config.Host, config.Timeout);
+                PingReply reply = await ping.SendPingAsync(config.Host, config.Timeout).WaitAsync(_cancellationToken);
                 _instanceLogger?.Info(this, $"Status: {reply.Status}");
 
                 if (reply.Status == IPStatus.Success)

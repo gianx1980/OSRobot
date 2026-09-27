@@ -25,8 +25,11 @@ public enum ResponseCode : int
     ConfirmPasswordMismatch = -2,
     CannotReloadWhileRunningTasks = -3,
     ResponseWrongCredentials = -10,
+    AccountLockedOut = -11,
+    MustChangePassword = -12,
     ErrorLoadingJobs = -100,
     ErrorSavingJobs = -101,
+    InvalidJobsConfiguration = -102,
     CannotStartTask = -200,
     ResponseGenericError = int.MinValue
 }

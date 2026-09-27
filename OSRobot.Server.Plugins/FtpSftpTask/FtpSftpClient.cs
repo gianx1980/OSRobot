@@ -24,7 +24,7 @@ using System.Net;
 
 namespace OSRobot.Server.Plugins.FtpSftpTask;
 
-public class FtpSftpClient : IDisposable
+public class FtpSftpClient : IFileTransferClient
 {
     private bool _disposed;
     private FtpClient? _ftpClient;
@@ -72,6 +72,7 @@ public class FtpSftpClient : IDisposable
             FtpRemoteExists existOption = overwrite ? FtpRemoteExists.Overwrite : FtpRemoteExists.Skip;
             _ftpClient?.UploadFile(localFile, remoteFile, existOption);
         }
+        else
         {
             using FileStream fStream = new(localFile, FileMode.Open);
             _sftpClient?.UploadFile(fStream, remoteFile, overwrite);
@@ -90,7 +91,7 @@ public class FtpSftpClient : IDisposable
         else
         {
             using FileStream fStream = new(localFile, FileMode.Create);
-            _sftpClient?.DownloadFile(localFile, fStream);
+            _sftpClient?.DownloadFile(remoteFile, fStream);
         }
     }
 
@@ -157,7 +158,7 @@ public class FtpSftpClient : IDisposable
 
     public void RemoteFileDelete(string remoteFile)
     {
-        if (_ftpClient != null && _sftpClient != null)
+        if (_ftpClient == null && _sftpClient == null)
             throw new ApplicationException("Method \"Connect\" not called.");
 
         if (_protocol == ProtocolEnum.FTP)
@@ -193,7 +194,7 @@ public class FtpSftpClient : IDisposable
 
     public void RemoteDirectoryDelete(string remoteDirectory)
     {
-        if (_ftpClient != null && _sftpClient != null)
+        if (_ftpClient == null && _sftpClient == null)
             throw new ApplicationException("Method \"Connect\" not called.");
 
         if (_ftpClient != null)

@@ -119,8 +119,10 @@ public class DateTimeEvent : IEvent
         }
         catch (Exception ex)
         {
-            if (Config.Log)
-                logger.EventError(this, ex);
+            // Errors are always logged, regardless of Config.Log: an event has no ExecResult to
+            // report failure through, so without this the event would fail silently forever
+            // (here that includes the recurring timer never being re-armed).
+            logger.EventError(this, ex);
         }
     }
 
@@ -145,8 +147,10 @@ public class DateTimeEvent : IEvent
         }
         catch (Exception ex)
         {
-            if (Config.Log)
-                logger.EventError(this, ex);
+            // Errors are always logged, regardless of Config.Log: an event has no ExecResult to
+            // report failure through, so without this the event would fail silently forever
+            // (here that includes the recurring timer never being re-armed).
+            logger.EventError(this, ex);
         }
     }
 }

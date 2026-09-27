@@ -29,7 +29,7 @@ namespace OSRobot.Tests.TestPlugins;
 public class TestReadBinaryFileTask
 {
     [TestMethod]
-    public void TestRead()
+    public async Task TestRead()
     {
         // ---------
         // Arrange
@@ -87,7 +87,7 @@ public class TestReadBinaryFileTask
         // Act
         // ---------
         taskRead.Init();
-        ExecResult execResult = taskRead.Run(dynDataChain, dynDataSet, 0, logger).ExecResults[0];
+        ExecResult execResult = (await taskRead.RunAsync(dynDataChain, dynDataSet, 0, logger, CancellationToken.None)).ExecResults[0];
 
         DataTable dt = (DataTable)execResult.Data["DefaultRecordset"];
 
