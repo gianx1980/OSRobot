@@ -1,0 +1,9 @@
+# Revisions to skip when running git blame: bulk, mechanical, no behavioural change.
+#
+# Enable locally with:
+#   git config blame.ignoreRevsFile .git-blame-ignore-revs
+# GitHub and GitLab honour this file automatically.
+#
+# Add the SHA of the licence-header migration commit below once it is committed
+# (replaced the 18-line GPL boilerplate with SPDX identifiers across ~292 files):
+# <sha>

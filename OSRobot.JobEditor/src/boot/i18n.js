@@ -1,3 +1,6 @@
+// SPDX-FileCopyrightText: 2025 Gianluca Di Bucci (gianx1980) <https://www.os-robot.com>
+// SPDX-License-Identifier: GPL-3.0-or-later
+
 import { boot } from 'quasar/wrappers'
 import { createI18n } from 'vue-i18n'
 import messages from 'src/i18n'

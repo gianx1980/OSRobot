@@ -1,3 +1,6 @@
+<!-- SPDX-FileCopyrightText: 2025 Gianluca Di Bucci (gianx1980) <https://www.os-robot.com> -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 <template>
   <q-dialog ref="dialogRef" @hide="onDialogHide">
     <q-card class="q-dialog-plugin" style="width: 400px; max-width: 400px">

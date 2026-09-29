@@ -1,3 +1,6 @@
+<!-- SPDX-FileCopyrightText: 2025 Gianluca Di Bucci (gianx1980) <https://www.os-robot.com> -->
+<!-- SPDX-License-Identifier: GPL-3.0-or-later -->
+
 <template>
   <div class="fullscreen bg-blue text-white text-center q-pa-md flex flex-center">
     <div>
