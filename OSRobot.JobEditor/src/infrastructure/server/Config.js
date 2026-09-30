@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 Gianluca Di Bucci (gianx1980) <https://www.os-robot.com>
+// SPDX-FileCopyrightText: Gianluca Di Bucci (gianx1980) <https://www.os-robot.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import ServiceBase from "src/infrastructure/server/ServiceBase.js";
@@ -13,7 +13,8 @@ export class ServerConfig {
     staticFilesUrl,
     heartBeatInterval,
     notificationServerSentEventsEnabled,
-    notificationPollingInterval
+    notificationPollingInterval,
+    serverVersion
   ) {
     this._requestNewTokenIfMinutesLeft = requestNewTokenIfMinutesLeft;
     this._appTitle = appTitle;
@@ -22,6 +23,7 @@ export class ServerConfig {
     this._notificationServerSentEventsEnabled =
       notificationServerSentEventsEnabled;
     this._notificationPollingInterval = notificationPollingInterval;
+    this._serverVersion = serverVersion;
   }
 
   get requestNewTokenIfMinutesLeft() {
@@ -65,6 +67,13 @@ export class ServerConfig {
   set notificationPollingInterval(value) {
     this._notificationPollingInterval = value;
   }
+
+  get serverVersion() {
+    return this._serverVersion;
+  }
+  set serverVersion(value) {
+    this._serverVersion = value;
+  }
 }
 
 export class Config extends ServiceBase {
@@ -84,7 +93,8 @@ export class Config extends ServiceBase {
               item.staticFilesUrl,
               item.heartBeatInterval,
               item.notificationServerSentEventsEnabled,
-              item.notificationPollingInterval
+              item.notificationPollingInterval,
+              item.serverVersion
             )
           : null
       );

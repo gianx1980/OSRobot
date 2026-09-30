@@ -1,4 +1,4 @@
-<!-- SPDX-FileCopyrightText: 2025 Gianluca Di Bucci (gianx1980) <https://www.os-robot.com> -->
+<!-- SPDX-FileCopyrightText: Gianluca Di Bucci (gianx1980) <https://www.os-robot.com> -->
 <!-- SPDX-License-Identifier: GPL-3.0-or-later -->
 
 <template>
@@ -44,6 +44,10 @@
               >
                 <q-item-section avatar><q-icon name="key" /></q-item-section>
                 <q-item-section>{{ _$t("changePassword") }}</q-item-section>
+              </q-item>
+              <q-item clickable v-close-popup @click="_showAboutDialog">
+                <q-item-section avatar><q-icon name="info" /></q-item-section>
+                <q-item-section>{{ _$t("about") }}</q-item-section>
               </q-item>
               <q-separator />
               <q-item clickable v-close-popup @click="_exitClick">
@@ -252,6 +256,7 @@ import Robot from "src/infrastructure/server/Robot.js";
 import Workspace from "src/infrastructure/server/Workspace.js";
 import RobotObjectUtility from "src/infrastructure/workspace/RobotObjectUtility.js";
 import ChangePasswordDialog from "src/components/ChangePasswordDialog.vue";
+import AboutDialog from "src/components/AboutDialog.vue";
 
 const _configForms = {
   EmptyConfigForm,
@@ -795,7 +800,10 @@ function _isEditableTarget(el) {
   if (!el || !el.tagName) return false;
   const tag = el.tagName;
   return (
-    tag === "INPUT" || tag === "TEXTAREA" || tag === "SELECT" || el.isContentEditable
+    tag === "INPUT" ||
+    tag === "TEXTAREA" ||
+    tag === "SELECT" ||
+    el.isContentEditable
   );
 }
 
@@ -815,7 +823,9 @@ function _snapshotFolderSubtree(folderId) {
           : null,
     })),
     edges: folderData.edges.map((storedEdge) => ({
-      workspaceConnectionConfig: _deepCopy(storedEdge.workspaceConnectionConfig),
+      workspaceConnectionConfig: _deepCopy(
+        storedEdge.workspaceConnectionConfig
+      ),
     })),
   };
 }
@@ -959,7 +969,10 @@ function _pasteClipboard() {
   _pasteCount += 1;
   const offset = _PASTE_OFFSET * _pasteCount;
   const idMap = new Map();
-  const currentTreeNode = _findTreeNode(_rootFolder.value, _selectedFolder.value);
+  const currentTreeNode = _findTreeNode(
+    _rootFolder.value,
+    _selectedFolder.value
+  );
 
   const newFlowNodes = _clipboard.items.map((item) => {
     const newId = _getId();
@@ -989,7 +1002,9 @@ function _pasteClipboard() {
     }
 
     const pluginInfo =
-      newConfig.pluginId === "Folder" ? null : _getPluginInfo(newConfig.pluginId);
+      newConfig.pluginId === "Folder"
+        ? null
+        : _getPluginInfo(newConfig.pluginId);
     return _createFlowElement(newConfig, position.x, position.y, pluginInfo);
   });
 
@@ -1034,7 +1049,10 @@ function _onKeyDown(ev) {
       if (_copySelection()) ev.preventDefault();
       break;
     case "x":
-      if (getSelectedNodes.value.length > 0 || getSelectedEdges.value.length > 0) {
+      if (
+        getSelectedNodes.value.length > 0 ||
+        getSelectedEdges.value.length > 0
+      ) {
         _cutSelection();
         ev.preventDefault();
       }
@@ -1097,6 +1115,10 @@ function _showChangePasswordDialog() {
     .onOk((ev) => {});
 }
 
+function _showAboutDialog() {
+  _$q.dialog({ component: AboutDialog });
+}
+
 function _exitClick() {
   _$q
     .dialog({
@@ -1121,12 +1143,14 @@ watch(_selectedFolder, async (selectedValueCurrent, selectedValuePrev) => {
 
   if (selectedValueCurrent !== null) {
     // Load the status of the new selected folder
-    _selectedFolderNodes.value = _workspaceJobs[
-      `folder_${selectedValueCurrent}`
-    ].nodes.map(_nodeFromSaved);
-    _selectedFolderEdges.value = _workspaceJobs[
-      `folder_${selectedValueCurrent}`
-    ].edges.map(_edgeFromSaved);
+    _selectedFolderNodes.value =
+      _workspaceJobs[`folder_${selectedValueCurrent}`].nodes.map(
+        _nodeFromSaved
+      );
+    _selectedFolderEdges.value =
+      _workspaceJobs[`folder_${selectedValueCurrent}`].edges.map(
+        _edgeFromSaved
+      );
   }
 
   _rightDrawerOpen.value = false;

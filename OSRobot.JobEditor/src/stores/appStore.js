@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 Gianluca Di Bucci (gianx1980) <https://www.os-robot.com>
+// SPDX-FileCopyrightText: Gianluca Di Bucci (gianx1980) <https://www.os-robot.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { defineStore } from "pinia";
@@ -71,7 +71,8 @@ export const useAppStore = defineStore("appStore", () => {
           tempConfig._staticFilesUrl,
           tempConfig._heartBeatInterval,
           tempConfig._notificationServerSentEventsEnabled,
-          tempConfig._notificationPollingInterval
+          tempConfig._notificationPollingInterval,
+          tempConfig._serverVersion
         );
       }
 

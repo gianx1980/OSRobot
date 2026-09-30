@@ -1,4 +1,4 @@
-// SPDX-FileCopyrightText: 2025 Gianluca Di Bucci (gianx1980) <https://www.os-robot.com>
+// SPDX-FileCopyrightText: Gianluca Di Bucci (gianx1980) <https://www.os-robot.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 export default {
@@ -10,6 +10,9 @@ export default {
   addColumn: "Add column",
   addDontExecuteCondition: "Add don't execute condition",
   addDiskCheck: "Add disk check",
+  about: "About",
+  aboutDescription:
+    "Free, open-source software for monitoring, integration and automation tasks on your servers or PC.",
   addEmail: "Add email",
   addExecuteCondition: "Add execute condition",
   addFolderCheck: "Add folder check",
@@ -42,6 +45,7 @@ export default {
   browseDynamicData: "Browse dynamic data",
   browseFolder: "Browse folder",
   browseFiles: "Browse files",
+  copyright: "Copyright",
   csharp: "C#",
   cancel: "Cancel",
   cannotReloadServersConfigThereAreRunningJobs:
@@ -174,6 +178,7 @@ export default {
   general: "General",
   genericError: "Generic error",
   get: "Get",
+  gplV3: "GNU General Public License v3.0 or later",
   greaterThan: "Greater than",
   gigabytesGb: "Gigabytes (Gb)",
   grouping: "Grouping",
@@ -223,6 +228,8 @@ export default {
   login: "Login",
   logout: "Logout",
   low: "Low",
+  noWarrantyDisclaimer:
+    "This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",
   theJobsHaveBeenSuccessfullySaved: "The jobs have been successfully saved",
   name: "Name",
   maxValue: "Max value",
@@ -356,6 +363,7 @@ export default {
   skipEmptyFolders: "Skip empty folders",
   skipFirstLine: "Skip first line",
   storeFullPath: "Store full path",
+  sourceCode: "Source code on GitHub",
   source: "Source",
   sourceAndDestination: "Source & destination",
   sourceArchive: "Source archive",
@@ -460,4 +468,6 @@ export default {
   dateTime: "Datetime",
   bit: "Bit",
   varbinary: "Varbinary",
+  version: "Version",
+  license: "License",
 };

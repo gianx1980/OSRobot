@@ -1,0 +1,9 @@
+<Project>
+
+  <!-- Shared by every project in the solution: bump the release version here only. -->
+  <PropertyGroup>
+    <VersionPrefix>1.1.0</VersionPrefix>
+    <Version>$(VersionPrefix)</Version>
+  </PropertyGroup>
+
+</Project>
