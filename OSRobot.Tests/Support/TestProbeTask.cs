@@ -79,7 +79,7 @@ public class TestProbeTaskPlugin : IPlugin
     public string Id => "TestProbeTask";
     public string Title => "Test probe task";
     public EnumPluginType PluginType => EnumPluginType.Task;
-    public List<DynamicDataSample> SampleDynamicData => [];
+    public List<DynamicDataSample> SampleDynamicData => [.. CommonDynamicData.BuildStandardDynamicDataSamples("Probe"), new DynamicDataSample("Value", "Value", "hello")];
     public IPluginInstance GetInstance() => new TestProbeTask();
     public IPluginInstanceConfig GetPluginDefaultConfig() => new TestProbeTaskConfig();
     public EnumOSPlatform SupportedOSPlatforms => EnumOSPlatform.All;

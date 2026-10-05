@@ -5,6 +5,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Extensions.Options;
 using OSRobot.Server.Core;
+using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Controllers.Base;
 using OSRobot.Server.Core.Logging.Abstract;
 using OSRobot.Server.Core.Persistence;
@@ -82,7 +83,7 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
     [HttpPost]
     [Route("WorkspaceJobs")]
     [Authorize]
-    public ActionResult<ResponseModel> WorkspaceJobs([FromBody] JsonElement requestBody)
+    public ActionResult<ResponseModel<List<DynamicDataIssue>>> WorkspaceJobs([FromBody] JsonElement requestBody)
     {
         if (requestBody.ValueKind != JsonValueKind.Object)
         {
@@ -97,10 +98,15 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
         // valid Folder tree (an unknown plugin id, a connection pointing at a nonexistent
         // object, a malformed plugin config, ...) nothing gets written - a bad save can no
         // longer corrupt the live workspace or silently break the next engine reload.
+        List<DynamicDataIssue> dynamicDataIssues;
         try
         {
             using JsonDocument jsonDoc = JsonDocument.Parse(workspaceJobs);
-            _ = new JsonDeserialization(jsonDoc).Deserialize();
+            Folder rootFolder = (Folder?)new JsonDeserialization(jsonDoc).Deserialize() ?? throw new ApplicationException("Deserialization returned null");
+
+            // Broken dynamic data references don't block the save (a job may be saved while
+            // still being built): they are returned to the editor as warnings.
+            dynamicDataIssues = DynamicDataValidator.Validate(rootFolder);
         }
         catch (Exception ex)
         {
@@ -132,7 +138,7 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
 
             _auditLogger.Info($"User '{AppUser?.Username}' saved the job configuration ({workspaceJobs.Length} bytes).");
 
-            ResponseModel response = new(ResponseCode.ResponseOk, null);
+            ResponseModel<List<DynamicDataIssue>> response = new(ResponseCode.ResponseOk, null, dynamicDataIssues);
             return Ok(response);
         }
         catch (Exception ex)

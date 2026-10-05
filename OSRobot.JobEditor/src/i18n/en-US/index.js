@@ -231,6 +231,9 @@ export default {
   noWarrantyDisclaimer:
     "This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",
   theJobsHaveBeenSuccessfullySaved: "The jobs have been successfully saved",
+  theJobsHaveBeenSavedWithWarnings: "The jobs have been saved, with warnings",
+  dynamicDataReferencesWillFailAtRuntime:
+    "These dynamic data references will fail when the job runs:",
   name: "Name",
   maxValue: "Max value",
   medium: "Medium",

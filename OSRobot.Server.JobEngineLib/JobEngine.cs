@@ -109,7 +109,12 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
                 result = false;
             }
             else
+            {
                 _rootFolder = folder;
+
+                foreach (DynamicDataIssue issue in DynamicDataValidator.Validate(folder))
+                    _log.Warn($"Dynamic data reference problem: {issue}");
+            }
         }
         catch (Exception ex)
         {

@@ -74,12 +74,19 @@ public sealed class JobGraph
         return this;
     }
 
+    /// <summary>Adds an object of any plugin, given its workspaceItemConfig (which must include pluginId and id).</summary>
+    public JobGraph Node(object workspaceItemConfig)
+    {
+        _nodes.Add(new { workspaceItemConfig });
+        return this;
+    }
+
     /// <summary>Connects two objects. With no conditions given, the target runs when the source succeeds.</summary>
     public JobGraph Connect(int source, int target, int? waitSeconds = null, bool enabled = true,
-                            string[]? executeOperators = null, string[]? dontExecuteOperators = null)
+                            string[]? executeOperators = null, string[]? dontExecuteOperators = null, string dynamicDataCode = "")
     {
-        static object[] Conditions(string[] operators) =>
-            [.. operators.Select(o => new { dynamicDataCode = string.Empty, @operator = o, minValue = string.Empty, maxValue = string.Empty })];
+        object[] Conditions(string[] operators) =>
+            [.. operators.Select(o => new { dynamicDataCode, @operator = o, minValue = string.Empty, maxValue = string.Empty })];
 
         _edges.Add(new
         {

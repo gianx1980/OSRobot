@@ -63,7 +63,7 @@ public class TestTriggerEventPlugin : IPlugin
     public string Id => "TestTriggerEvent";
     public string Title => "Test trigger event";
     public EnumPluginType PluginType => EnumPluginType.Event;
-    public List<DynamicDataSample> SampleDynamicData => [];
+    public List<DynamicDataSample> SampleDynamicData => CommonDynamicData.BuildStandardDynamicDataSamples("Trigger");
     public IPluginInstance GetInstance() => new TestTriggerEvent();
     public IPluginInstanceConfig GetPluginDefaultConfig() => new TestTriggerEventConfig();
     public EnumOSPlatform SupportedOSPlatforms => EnumOSPlatform.All;

@@ -528,11 +528,27 @@ async function _saveClick(ev) {
     const workspace = new Workspace(_user.token, _user.refreshToken);
     let r = await workspace.save(_workspaceJobs);
 
-    _$q.notify({
-      color: "green",
-      message: _$t("theJobsHaveBeenSuccessfullySaved"),
-      position: "top",
-    });
+    // The server saves the jobs anyway, but reports the dynamic data references
+    // that would fail at runtime (missing object, object not upstream, unknown field).
+    const issues = r.responseObject ?? [];
+    if (issues.length > 0) {
+      const lines = issues.map(
+        (i) =>
+          `• ${i.objectId}:${i.objectName} - ${i.location}\n   ${i.reference}: ${i.message}`
+      );
+
+      _$q.dialog({
+        title: _$t("theJobsHaveBeenSavedWithWarnings"),
+        message: `${_$t("dynamicDataReferencesWillFailAtRuntime")}\n\n${lines.join("\n")}`,
+        style: "white-space: pre-line; max-width: 900px; width: 90vw;",
+      });
+    } else {
+      _$q.notify({
+        color: "green",
+        message: _$t("theJobsHaveBeenSuccessfullySaved"),
+        position: "top",
+      });
+    }
   } catch (e) {
     _$q.notify({
       color: "red",
