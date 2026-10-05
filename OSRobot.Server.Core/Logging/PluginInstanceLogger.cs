@@ -92,7 +92,7 @@ public class PluginInstanceLogger : IPluginInstanceLogger
         Error(task, "Task error", ex);
     }
 
-    public void TaskIterarionError(ITask task, int iterationIndex, Exception ex)
+    public void TaskIterationError(ITask task, int iterationIndex, Exception ex)
     {
         Error(task, $"Task error (iterationIndex: {iterationIndex})", ex);
     }

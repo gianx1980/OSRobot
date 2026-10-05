@@ -23,7 +23,7 @@ public abstract class BaseTask : ITask
     protected IPluginInstanceLogger _instanceLogger;
     protected InstanceExecResult _instanceExecResult;
     #pragma warning restore CS8618
-    
+
     protected List<ExecResult> _execResults = [];
 
     public IFolder? ParentFolder { get; set; }
@@ -53,25 +53,85 @@ public abstract class BaseTask : ITask
         _instanceLogger = instanceLogger;
         _cancellationToken = cancellationToken;
 
+        // Error handling contract, shared by SingleIterationTask and MultipleIterationTask:
+        // - Plugin code signals a failure by throwing.
+        // - Every failure becomes exactly one failed ExecResult for that iteration, so
+        //   connections with a "failed" condition can react to it, and is always logged
+        //   (Config.Log only controls the informational messages).
+        // - Cancellation is not a failure: when _cancellationToken is cancelled the
+        //   OperationCanceledException propagates out of RunAsync, no result is recorded
+        //   and nothing downstream gets dispatched.
+        DateTime executionStartDateTime = DateTime.Now;
+
+        if (Config.Log)
+            instanceLogger.TaskStarted(this);
+
         try
         {
-            if (Config.Log)
-                instanceLogger.TaskStarted(this);
-
             await RunTaskAsync(dataChain, lastDynamicDataSet, subInstanceIndex, instanceLogger);
-
-            if (Config.Log)
-                instanceLogger.TaskCompleted(this);
         }
-        catch (Exception ex)
+        catch (Exception ex) when (!IsCancellation(ex))
         {
-            if (Config.Log)
-                instanceLogger.TaskError(this, ex);
+            // Safety net: the iteration base classes already turn failures into results,
+            // so this is only reached by a bug in them or in a custom RunTaskAsync.
+            RecordFailure(0, executionStartDateTime, ex);
         }
+
+        if (Config.Log)
+            instanceLogger.TaskCompleted(this);
 
         _instanceExecResult = new InstanceExecResult(_execResults);
 
         return _instanceExecResult;
+    }
+
+    protected bool IsCancellation(Exception ex)
+    {
+        return ex is OperationCanceledException && _cancellationToken.IsCancellationRequested;
+    }
+
+    private protected virtual void LogFailure(int currentIteration, Exception ex)
+    {
+        _instanceLogger.TaskError(this, ex);
+    }
+
+    // Records a successful iteration. If the PostTaskSucceded hook throws, the iteration is
+    // recorded as failed instead, so it never ends up with two results.
+    private protected void RecordSuccess(int currentIteration, DateTime executionStartDateTime)
+    {
+        DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, true, 0, executionStartDateTime, DateTime.Now, _iterationsCount);
+        ExecResult result = new(true, dDataSet);
+
+        try
+        {
+            PostTaskSucceded(currentIteration, result, dDataSet);
+        }
+        catch (Exception ex) when (!IsCancellation(ex))
+        {
+            RecordFailure(currentIteration, executionStartDateTime, ex);
+            return;
+        }
+
+        _execResults.Add(result);
+    }
+
+    private protected void RecordFailure(int currentIteration, DateTime executionStartDateTime, Exception ex)
+    {
+        LogFailure(currentIteration, ex);
+
+        DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, false, -1, executionStartDateTime, DateTime.Now, _iterationsCount);
+        ExecResult result = new(false, dDataSet);
+
+        try
+        {
+            PostTaskFailed(currentIteration, result, dDataSet);
+        }
+        catch (Exception hookEx) when (!IsCancellation(hookEx))
+        {
+            _instanceLogger.Error(this, $"PostTaskFailed error (iterationIndex: {currentIteration})", hookEx);
+        }
+
+        _execResults.Add(result);
     }
 
     protected virtual void InitTask()
