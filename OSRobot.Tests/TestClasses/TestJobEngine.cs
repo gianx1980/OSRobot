@@ -177,6 +177,44 @@ public sealed class TestJobEngine
     }
 
     [TestMethod]
+    [DataRow(false, 2, 2, DisplayName = "MaxConcurrentTasks = 2")]
+    [DataRow(true, 8, 1, DisplayName = "SerialExecution overrides MaxConcurrentTasks")]
+    public void Concurrent_tasks_are_bounded_across_runs(bool serialExecution, int maxConcurrentTasks, int expectedMaxOverlap)
+    {
+        // Six independent runs of a slow task, all triggered at once: the queue must hold the
+        // excess back, without losing any of them.
+        const int runs = 6;
+        JobGraph graph = new JobGraph()
+            .Task(2, "A", delayMs: 300)
+            .Connect(JobGraph.EventId, 2);
+        using EngineHarness h = new(graph, serialExecution: serialExecution, maxConcurrentTasks: maxConcurrentTasks);
+
+        for (int i = 0; i < runs; i++)
+            Assert.IsTrue(h.Fire());
+
+        Assert.IsTrue(EngineHarness.WaitFor(() => ProbeLog.Entries.Count(e => e.Label == "A") == runs, Timeout),
+                      "Every triggered run should eventually execute.");
+
+        // Highest number of executions in progress at the same instant (sampled at each start).
+        List<ProbeEntry> entries = ProbeLog.Entries;
+        int maxOverlap = entries.Max(e => entries.Count(o => o.Start <= e.Start && o.End > e.Start));
+        Assert.AreEqual(expectedMaxOverlap, maxOverlap);
+    }
+
+    [TestMethod]
+    public void An_event_publishing_from_Init_is_not_ignored()
+    {
+        // Regression: OSRobotServiceStartEvent publishes from inside Init(), which used to happen
+        // before the engine started accepting events, so it was silently dropped.
+        JobGraph graph = new JobGraph(eventFiresOnInit: true)
+            .Task(2, "A")
+            .Connect(JobGraph.EventId, 2);
+        using EngineHarness h = new(graph);
+
+        Assert.IsTrue(EngineHarness.WaitFor(() => Ran("A"), Timeout), "The task connected to the event should run.");
+    }
+
+    [TestMethod]
     public void Stop_cancels_a_pending_connection_wait_instead_of_sleeping_it_out()
     {
         JobGraph graph = new JobGraph()

@@ -3,6 +3,7 @@
 
 using OSRobot.Server.Core;
 using OSRobot.Server.Plugins.DiskSpaceEvent;
+using OSRobot.Tests.Support;
 
 namespace OSRobot.Tests.TestPlugins;
 
@@ -44,7 +45,7 @@ public sealed class TestDiskSpaceEvent
 
 
     [TestMethod]
-    public void TestSpaceLessThan()
+    public async Task TestSpaceLessThan()
     {
         // ---------
         // Arrange
@@ -78,43 +79,34 @@ public sealed class TestDiskSpaceEvent
 
         DiskSpaceEvent eventObj = new()
         {
-            ParentFolder = folder
+            ParentFolder = folder,
+            Config = config
         };
 
-        object objSync = new();
-        ManualResetEvent mre = new(false);
-        bool eventTriggered = false;
-        eventObj.EventTriggered += (sender, e) =>
+        RecordingEventSink sink = new();
+
+        try
         {
-            lock (objSync)
-            {
-                eventTriggered = true;
-            }
+            // ---------
+            // Act
+            // ---------
+            eventObj.Init(sink);
 
-            mre.Set();
-        };
-        eventObj.Config = config;
+            DateTime? triggeredAt = await sink.WaitForOccurrenceAsync(1, new TimeSpan(0, 0, checkIntervalEverySeconds + toleranceSec));
 
-        // ---------
-        // Act
-        // ---------
-        eventObj.Init();
-
-        mre.WaitOne(new TimeSpan(0, 0, checkIntervalEverySeconds + toleranceSec));
-
-        // ---------
-        // Assert
-        // ---------
-        lock (objSync)
-        {
-            Assert.IsTrue(eventTriggered);
+            // ---------
+            // Assert
+            // ---------
+            Assert.IsNotNull(triggeredAt, "The event did not occur.");
         }
-
-        eventObj.Destroy();
+        finally
+        {
+            eventObj.Destroy();
+        }
     }
 
     [TestMethod]
-    public void TestSpaceGreaterThan()
+    public async Task TestSpaceGreaterThan()
     {
         // ---------
         // Arrange
@@ -148,38 +140,29 @@ public sealed class TestDiskSpaceEvent
 
         DiskSpaceEvent eventObj = new()
         {
-            ParentFolder = folder
+            ParentFolder = folder,
+            Config = config
         };
 
-        object objSync = new();
-        ManualResetEvent mre = new(false);
-        bool eventTriggered = false;
-        eventObj.EventTriggered += (sender, e) =>
+        RecordingEventSink sink = new();
+
+        try
         {
-            lock (objSync)
-            {
-                eventTriggered = true;
-            }
+            // ---------
+            // Act
+            // ---------
+            eventObj.Init(sink);
 
-            mre.Set();
-        };
-        eventObj.Config = config;
+            DateTime? triggeredAt = await sink.WaitForOccurrenceAsync(1, new TimeSpan(0, 0, checkIntervalEverySeconds + toleranceSec));
 
-        // ---------
-        // Act
-        // ---------
-        eventObj.Init();
-
-        mre.WaitOne(new TimeSpan(0, 0, checkIntervalEverySeconds + toleranceSec));
-
-        // ---------
-        // Assert
-        // ---------
-        lock (objSync)
-        {
-            Assert.IsTrue(eventTriggered);
+            // ---------
+            // Assert
+            // ---------
+            Assert.IsNotNull(triggeredAt, "The event did not occur.");
         }
-
-        eventObj.Destroy();
+        finally
+        {
+            eventObj.Destroy();
+        }
     }
 }

@@ -5,7 +5,6 @@ using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging;
 using OSRobot.Server.Core.Logging.Abstract;
-using System.ComponentModel;
 using System.Runtime.InteropServices;
 
 namespace OSRobot.Server.Plugins.OSRobotServiceStartEvent;
@@ -22,23 +21,7 @@ public partial class OSRobotServiceStartEvent : IEvent
 
     public List<PluginInstanceConnection> Connections { get; set; } = [];
 
-    [field: NonSerialized]
-    public event EventTriggeredDelegate? EventTriggered;
-
-    protected virtual void OnEventTriggered(EventTriggeredEventArgs e)
-    {
-        EventTriggeredDelegate? handler = EventTriggered;
-        if (handler != null)
-        {
-            foreach (EventTriggeredDelegate singleCast in handler.GetInvocationList().Cast<EventTriggeredDelegate>())
-            {
-                if ((singleCast.Target is ISynchronizeInvoke syncInvoke) && (syncInvoke.InvokeRequired))
-                    syncInvoke.Invoke(singleCast, [this, e]);
-                else
-                    singleCast(this, e);
-            }
-        }
-    }
+    private IEventSink? _sink;
 
     private int GetSystemStartedForMinutes()
     {
@@ -62,8 +45,10 @@ public partial class OSRobotServiceStartEvent : IEvent
         return (int)minutesUptime;
     }
 
-    public void Init()
+    public void Init(IEventSink sink)
     {
+        _sink = sink;
+
         IPluginInstanceLogger logger = PluginInstanceLogger.GetLogger(this);
 
         try
@@ -84,7 +69,7 @@ public partial class OSRobotServiceStartEvent : IEvent
                     logger.EventTriggering(this);
                 }
 
-                OnEventTriggered(new EventTriggeredEventArgs(dDataSet, logger));
+                _sink?.Publish(this, dDataSet, logger);
             }
         }
         catch (Exception ex)

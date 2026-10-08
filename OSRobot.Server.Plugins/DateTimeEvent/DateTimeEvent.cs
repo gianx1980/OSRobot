@@ -16,30 +16,16 @@ public class DateTimeEvent : IEvent
 
     public List<PluginInstanceConnection> Connections { get; set; } = [];
 
-    public event EventTriggeredDelegate? EventTriggered;
+    private IEventSink? _sink;
 
     private readonly System.Timers.Timer _oneTimeTimer = new();
 
     private readonly System.Timers.Timer _recurringTimer = new();
 
-    protected virtual void OnEventTriggered(EventTriggeredEventArgs e)
+    public void Init(IEventSink sink)
     {
-        EventTriggeredDelegate? handler = EventTriggered;
-        if (handler != null)
-        {
-            foreach (EventTriggeredDelegate singleCast in handler.GetInvocationList().Cast<EventTriggeredDelegate>())
-            {
-                if ((singleCast.Target is ISynchronizeInvoke syncInvoke) && (syncInvoke.InvokeRequired))
-                    syncInvoke.Invoke(singleCast, [this, e]);
-                else
-                    singleCast(this, e);
-            }
-        }
-    }
+        _sink = sink;
 
-
-    public void Init()
-    {
         _oneTimeTimer.Enabled = false;
         _oneTimeTimer.AutoReset = false;
         _oneTimeTimer.Elapsed += OnTimeTimer_Elapsed;
@@ -96,7 +82,7 @@ public class DateTimeEvent : IEvent
 
             if (Config.Log)
                 logger.EventTriggering(this);
-            OnEventTriggered(new EventTriggeredEventArgs(dDataSet, logger));
+            _sink?.Publish(this, dDataSet, logger);
 
             DateTimeEventConfig config = (DateTimeEventConfig)Config;
             if (!config.OneTime)
@@ -127,7 +113,7 @@ public class DateTimeEvent : IEvent
             {
                 if (Config.Log)
                     logger.EventTriggering(this);
-                OnEventTriggered(new EventTriggeredEventArgs(dDataSet, logger));
+                _sink?.Publish(this, dDataSet, logger);
             }
         }
         catch (Exception ex)

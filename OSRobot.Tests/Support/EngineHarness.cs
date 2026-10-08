@@ -33,6 +33,7 @@ public sealed class TestEngineConfig : IJobEngineConfig
     public string LogPath { get; set; } = string.Empty;
     public string DataPath { get; set; } = string.Empty;
     public bool SerialExecution { get; set; }
+    public int MaxConcurrentTasks { get; set; } = 8;
     public int CleanUpLogsOlderThanHours { get; set; }
     public int CleanUpLogsIntervalHours { get; set; }
     public int StopDrainTimeoutSeconds { get; set; } = 5;
@@ -48,9 +49,10 @@ public sealed class JobGraph
     private readonly List<object> _nodes = [];
     private readonly List<object> _edges = [];
 
-    public JobGraph()
+    /// <param name="eventFiresOnInit">The event publishes once from inside Init(), like OSRobotServiceStartEvent.</param>
+    public JobGraph(bool eventFiresOnInit = false)
     {
-        _nodes.Add(new { workspaceItemConfig = new { pluginId = "TestTriggerEvent", id = EventId, name = "Trigger" } });
+        _nodes.Add(new { workspaceItemConfig = new { pluginId = "TestTriggerEvent", id = EventId, name = "Trigger", fireOnInit = eventFiresOnInit } });
     }
 
     /// <summary>Adds a probe task. Its label is what shows up in the ProbeLog.</summary>
@@ -129,7 +131,7 @@ public sealed class EngineHarness : IDisposable
     public CapturingAppLogger Log { get; } = new();
     public TestEngineConfig Config { get; }
 
-    public EngineHarness(JobGraph graph, bool serialExecution = false, int stopDrainTimeoutSeconds = 5)
+    public EngineHarness(JobGraph graph, bool serialExecution = false, int stopDrainTimeoutSeconds = 5, int maxConcurrentTasks = 8)
     {
         _root = Path.Combine(Path.GetTempPath(), "OSRobotEngineTests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(Path.Combine(_root, "Data"));
@@ -141,6 +143,7 @@ public sealed class EngineHarness : IDisposable
             DataPath = Path.Combine(_root, "Data"),
             LogPath = Path.Combine(_root, "Logs"),
             SerialExecution = serialExecution,
+            MaxConcurrentTasks = maxConcurrentTasks,
             StopDrainTimeoutSeconds = stopDrainTimeoutSeconds
         };
 

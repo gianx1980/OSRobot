@@ -6,7 +6,10 @@ using OSRobot.Server.Core.Persistence;
 
 namespace OSRobot.Tests.TestClasses;
 
+// Not parallelizable: this stress test saturates the thread pool on purpose, which delays the
+// timer callbacks the event plugin tests depend on by several seconds when they run alongside it.
 [TestClass]
+[DoNotParallelize]
 public sealed class TestCloneObjectsConcurrency
 {
     private const int ClonesPerPlugin = 200;

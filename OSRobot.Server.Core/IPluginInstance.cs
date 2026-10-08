@@ -4,8 +4,7 @@
 namespace OSRobot.Server.Core;
 
 public interface IPluginInstance : IPluginInstanceBase
-{  
-    void Init();
+{
     List<PluginInstanceConnection> Connections { get; set; }
     void Destroy();
 }

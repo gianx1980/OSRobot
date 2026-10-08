@@ -3,14 +3,20 @@
 
 using OSRobot.Server.Core;
 using OSRobot.Server.Plugins.DateTimeEvent;
+using OSRobot.Tests.Support;
 
 namespace OSRobot.Tests.TestPlugins;
 
 [TestClass]
 public sealed class TestDateTimeEvent
 {
+    // How much longer than expected (plus tolerance) to keep waiting for an occurrence. A late
+    // occurrence then fails the timing assertion with its actual time, instead of looking like
+    // one that never happened.
+    private const int LateOccurrenceMarginSec = 10;
+
     [TestMethod]
-    public void TestAtTime()
+    public async Task TestAtTime()
     {
         // ---------
         // Arrange
@@ -33,40 +39,32 @@ public sealed class TestDateTimeEvent
             Config = config
         };
 
-        object objSync = new();
-        ManualResetEvent mre = new(false);
-        bool eventTriggered = false;
-        eventObj.EventTriggered += (sender, e) =>
+        RecordingEventSink sink = new();
+
+        try
         {
-            lock (objSync)
-            {
-                eventTriggered = true;
-            }
+            // ---------
+            // Act
+            // ---------
+            DateTime start = DateTime.Now;
+            eventObj.Init(sink);
 
-            mre.Set();
-        };
-        eventObj.Config = config;
+            DateTime? triggeredAt = await sink.WaitForOccurrenceAsync(1, new TimeSpan(0, withinMinutes, toleranceSec + LateOccurrenceMarginSec));
 
-        // ---------
-        // Act
-        // ---------
-        eventObj.Init();
-
-        mre.WaitOne(new TimeSpan(0, withinMinutes, toleranceSec));
-
-        // ---------
-        // Assert
-        // ---------
-        lock (objSync)
-        {
-            Assert.IsTrue(eventTriggered && (Math.Abs(DateTime.Now.Subtract(config.AtDate).TotalSeconds) <= toleranceSec), "The event did not occur at the expected time.");
+            // ---------
+            // Assert
+            // ---------
+            Assert.IsNotNull(triggeredAt, "The event did not occur.");
+            Assert.IsLessThanOrEqualTo(toleranceSec, Math.Abs(triggeredAt.Value.Subtract(config.AtDate).TotalSeconds), $"The event did not occur at the expected time. Occurrences: {sink.Describe(start)}.");
         }
-
-        eventObj.Destroy();
+        finally
+        {
+            eventObj.Destroy();
+        }
     }
 
     [TestMethod]
-    public void TestEverySecond()
+    public async Task TestEverySecond()
     {
         // ---------
         // Arrange
@@ -91,48 +89,33 @@ public sealed class TestDateTimeEvent
             Config = config
         };
 
-        object objSync = new();
-        ManualResetEvent mre = new(false);
-        bool eventTriggered = false;
-        int repeatCount = 0;
-        DateTime expectedLastTrigger = DateTime.Now.AddSeconds(everyNumSeconds * repeatNumber);
-        eventObj.EventTriggered += (sender, e) =>
+        RecordingEventSink sink = new();
+
+        try
         {
-            repeatCount++;
+            // ---------
+            // Act
+            // ---------
+            DateTime start = DateTime.Now;
+            DateTime expectedLastTrigger = start.AddSeconds(everyNumSeconds * repeatNumber);
+            eventObj.Init(sink);
 
-            if (repeatCount == repeatNumber)
-            {
-                lock (objSync)
-                {
-                    eventTriggered = true;
-                }
+            DateTime? lastTriggeredAt = await sink.WaitForOccurrenceAsync(repeatNumber, new TimeSpan(0, 0, (everyNumSeconds * repeatNumber) + toleranceSec + LateOccurrenceMarginSec));
 
-                mre.Set();
-                return;
-            }
-        };
-        eventObj.Config = config;
-
-        // ---------
-        // Act
-        // ---------
-        eventObj.Init();
-
-        mre.WaitOne(new TimeSpan(0, 0, (everyNumSeconds * repeatNumber) + toleranceSec));
-
-        // ---------
-        // Assert
-        // ---------
-        lock (objSync)
-        {
-            Assert.IsTrue(eventTriggered && (Math.Abs(DateTime.Now.Subtract(expectedLastTrigger).TotalSeconds) <= toleranceSec), "The event did not occur at the expected time.");
+            // ---------
+            // Assert
+            // ---------
+            Assert.IsNotNull(lastTriggeredAt, $"The event occurred {sink.Count} time(s) instead of {repeatNumber}, at: {sink.Describe(start)}.");
+            Assert.IsLessThanOrEqualTo(toleranceSec, Math.Abs(lastTriggeredAt.Value.Subtract(expectedLastTrigger).TotalSeconds), $"The event did not occur at the expected time. Occurrences: {sink.Describe(start)}.");
         }
-
-        eventObj.Destroy();
+        finally
+        {
+            eventObj.Destroy();
+        }
     }
 
     [TestMethod]
-    public void TestEveryMinute()
+    public async Task TestEveryMinute()
     {
         // ---------
         // Arrange
@@ -155,51 +138,37 @@ public sealed class TestDateTimeEvent
 
         DateTimeEvent eventObj = new()
         {
-            ParentFolder = folder
+            ParentFolder = folder,
+            Config = config
         };
 
-        object objSync = new();
-        ManualResetEvent mre = new(false);
-        bool eventTriggeredInTime = false;
-        int repeatCount = 0;
-        DateTime expectedLastTrigger = DateTime.Now.AddMinutes(everyNumMinutes * repeatNumber);
-        eventObj.EventTriggered += (sender, e) =>
+        RecordingEventSink sink = new();
+
+        try
         {
-            repeatCount++;
+            // ---------
+            // Act
+            // ---------
+            DateTime start = DateTime.Now;
+            DateTime expectedLastTrigger = start.AddMinutes(everyNumMinutes * repeatNumber);
+            eventObj.Init(sink);
 
-            if (repeatCount == repeatNumber)
-            {
-                lock (objSync)
-                {
-                    eventTriggeredInTime = true;
-                }
+            DateTime? lastTriggeredAt = await sink.WaitForOccurrenceAsync(repeatNumber, new TimeSpan(0, 0, (everyNumMinutes * 60 * repeatNumber) + toleranceSec + LateOccurrenceMarginSec));
 
-                mre.Set();
-                return;
-            }
-        };
-        eventObj.Config = config;
-
-        // ---------
-        // Act
-        // ---------
-        eventObj.Init();
-
-        mre.WaitOne(new TimeSpan(0, 0, (everyNumMinutes * 60 * repeatNumber) + toleranceSec));
-
-        // ---------
-        // Assert
-        // ---------
-        lock (objSync)
-        {
-            Assert.IsTrue(eventTriggeredInTime && (Math.Abs(DateTime.Now.Subtract(expectedLastTrigger).TotalSeconds) <= toleranceSec), "The event did not occur at the expected time.");
+            // ---------
+            // Assert
+            // ---------
+            Assert.IsNotNull(lastTriggeredAt, $"The event occurred {sink.Count} time(s) instead of {repeatNumber}, at: {sink.Describe(start)}.");
+            Assert.IsLessThanOrEqualTo(toleranceSec, Math.Abs(lastTriggeredAt.Value.Subtract(expectedLastTrigger).TotalSeconds), $"The event did not occur at the expected time. Occurrences: {sink.Describe(start)}.");
         }
-
-        eventObj.Destroy();
+        finally
+        {
+            eventObj.Destroy();
+        }
     }
 
     [TestMethod]
-    public void TestEverySecondOnDaysTrue()
+    public async Task TestEverySecondOnDaysTrue()
     {
         // ---------
         // Arrange
@@ -222,51 +191,37 @@ public sealed class TestDateTimeEvent
 
         DateTimeEvent eventObj = new()
         {
-            ParentFolder = folder
+            ParentFolder = folder,
+            Config = config
         };
 
-        object objSync = new();
-        ManualResetEvent mre = new(false);
-        bool eventTriggered = false;
-        int repeatCount = 0;
-        DateTime expectedLastTrigger = DateTime.Now.AddSeconds(everyNumSeconds * repeatNumber);
-        eventObj.EventTriggered += (sender, e) =>
+        RecordingEventSink sink = new();
+
+        try
         {
-            repeatCount++;
+            // ---------
+            // Act
+            // ---------
+            DateTime start = DateTime.Now;
+            DateTime expectedLastTrigger = start.AddSeconds(everyNumSeconds * repeatNumber);
+            eventObj.Init(sink);
 
-            if (repeatCount == repeatNumber)
-            {
-                lock (objSync)
-                {
-                    eventTriggered = true;
-                }
+            DateTime? lastTriggeredAt = await sink.WaitForOccurrenceAsync(repeatNumber, new TimeSpan(0, 0, (everyNumSeconds * repeatNumber) + toleranceSec + LateOccurrenceMarginSec));
 
-                mre.Set();
-                return;
-            }
-        };
-        eventObj.Config = config;
-
-        // ---------
-        // Act
-        // ---------
-        eventObj.Init();
-
-        mre.WaitOne(new TimeSpan(0, 0, (everyNumSeconds * repeatNumber) + toleranceSec));
-
-        // ---------
-        // Assert
-        // ---------
-        lock (objSync)
-        {
-            Assert.IsTrue(eventTriggered && (Math.Abs(DateTime.Now.Subtract(expectedLastTrigger).TotalSeconds) <= toleranceSec), "The event did not occur at the expected time.");
+            // ---------
+            // Assert
+            // ---------
+            Assert.IsNotNull(lastTriggeredAt, $"The event did not occur. Occurrences: {sink.Describe(start)}.");
+            Assert.IsLessThanOrEqualTo(toleranceSec, Math.Abs(lastTriggeredAt.Value.Subtract(expectedLastTrigger).TotalSeconds), $"The event did not occur at the expected time. Occurrences: {sink.Describe(start)}.");
         }
-
-        eventObj.Destroy();
+        finally
+        {
+            eventObj.Destroy();
+        }
     }
 
     [TestMethod]
-    public void TestEverySecondOnAllDays()
+    public async Task TestEverySecondOnAllDays()
     {
         // ---------
         // Arrange
@@ -289,51 +244,37 @@ public sealed class TestDateTimeEvent
 
         DateTimeEvent eventObj = new()
         {
-            ParentFolder = folder
+            ParentFolder = folder,
+            Config = config
         };
 
-        object objSync = new();
-        ManualResetEvent mre = new(false);
-        bool eventTriggered = false;
-        int repeatCount = 0;
-        DateTime expectedLastTrigger = DateTime.Now.AddSeconds(everyNumSeconds * repeatNumber);
-        eventObj.EventTriggered += (sender, e) =>
+        RecordingEventSink sink = new();
+
+        try
         {
-            repeatCount++;
+            // ---------
+            // Act
+            // ---------
+            DateTime start = DateTime.Now;
+            DateTime expectedLastTrigger = start.AddSeconds(everyNumSeconds * repeatNumber);
+            eventObj.Init(sink);
 
-            if (repeatCount == repeatNumber)
-            {
-                lock (objSync)
-                {
-                    eventTriggered = true;
-                }
+            DateTime? lastTriggeredAt = await sink.WaitForOccurrenceAsync(repeatNumber, new TimeSpan(0, 0, (everyNumSeconds * repeatNumber) + toleranceSec + LateOccurrenceMarginSec));
 
-                mre.Set();
-                return;
-            }
-        };
-        eventObj.Config = config;
-
-        // ---------
-        // Act
-        // ---------
-        eventObj.Init();
-
-        mre.WaitOne(new TimeSpan(0, 0, (everyNumSeconds * repeatNumber) + toleranceSec));
-
-        // ---------
-        // Assert
-        // ---------
-        lock (objSync)
-        {
-            Assert.IsTrue(eventTriggered && (Math.Abs(DateTime.Now.Subtract(expectedLastTrigger).TotalSeconds) <= toleranceSec), "The event did not occur at the expected time.");
+            // ---------
+            // Assert
+            // ---------
+            Assert.IsNotNull(lastTriggeredAt, $"The event did not occur. Occurrences: {sink.Describe(start)}.");
+            Assert.IsLessThanOrEqualTo(toleranceSec, Math.Abs(lastTriggeredAt.Value.Subtract(expectedLastTrigger).TotalSeconds), $"The event did not occur at the expected time. Occurrences: {sink.Describe(start)}.");
         }
-
-        eventObj.Destroy();
+        finally
+        {
+            eventObj.Destroy();
+        }
     }
 
     [TestMethod]
-    public void TestEverySecondOnDaysFalse()
+    public async Task TestEverySecondOnDaysFalse()
     {
         // ---------
         // Arrange
@@ -364,46 +305,29 @@ public sealed class TestDateTimeEvent
 
         DateTimeEvent eventObj = new()
         {
-            ParentFolder = folder
+            ParentFolder = folder,
+            Config = config
         };
 
-        object objSync = new();
-        ManualResetEvent mre = new(false);
-        bool eventTriggered = false;
-        int repeatCount = 0;
-        DateTime expectedLastTrigger = DateTime.Now.AddSeconds(everyNumSeconds * repeatNumber);
-        eventObj.EventTriggered += (sender, e) =>
+        RecordingEventSink sink = new();
+
+        try
         {
-            repeatCount++;
+            // ---------
+            // Act
+            // ---------
+            eventObj.Init(sink);
 
-            if (repeatCount == repeatNumber)
-            {
-                lock (objSync)
-                {
-                    eventTriggered = true;
-                }
+            DateTime? triggeredAt = await sink.WaitForOccurrenceAsync(repeatNumber, new TimeSpan(0, 0, (everyNumSeconds * repeatNumber) + toleranceSec));
 
-                mre.Set();
-                return;
-            }
-        };
-        eventObj.Config = config;
-
-        // ---------
-        // Act
-        // ---------
-        eventObj.Init();
-
-        mre.WaitOne(new TimeSpan(0, 0, (everyNumSeconds * repeatNumber) + toleranceSec));
-
-        // ---------
-        // Assert
-        // ---------
-        lock (objSync)
-        {
-            Assert.IsFalse(eventTriggered, "The event did not occur at the expected time.");
+            // ---------
+            // Assert
+            // ---------
+            Assert.IsNull(triggeredAt, "The event must not occur on a day it is not configured for.");
         }
-
-        eventObj.Destroy();
+        finally
+        {
+            eventObj.Destroy();
+        }
     }
 }

@@ -8,7 +8,6 @@ using OSRobot.Server.Core.Logging.Abstract;
 using OSRobot.Server.Plugins.DateTimeEvent;
 using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 
 namespace OSRobot.Server.Plugins.FileSystemEvent;
@@ -21,27 +20,14 @@ public class FileSystemEvent : IEvent
 
     public List<PluginInstanceConnection> Connections { get; set; } = [];
 
-    public event EventTriggeredDelegate? EventTriggered;
-
-    protected virtual void OnEventTriggered(EventTriggeredEventArgs e)
-    {
-        EventTriggeredDelegate? handler = EventTriggered;
-        if (handler != null)
-        {
-            foreach (EventTriggeredDelegate singleCast in handler.GetInvocationList().Cast<EventTriggeredDelegate>())
-            {
-                if ((singleCast.Target is ISynchronizeInvoke syncInvoke) && (syncInvoke.InvokeRequired))
-                    syncInvoke.Invoke(singleCast, [this, e]);
-                else
-                    singleCast(this, e);
-            }
-        }
-    }
+    private IEventSink? _sink;
 
     private readonly List<FileSystemWatcher> _fileSystemWatchers = [];
 
-    public void Init()
+    public void Init(IEventSink sink)
     {
+        _sink = sink;
+
         FileSystemEventConfig config = (FileSystemEventConfig)Config;
         foreach (FolderToMonitor folder in config.FoldersToMonitor)
         {
@@ -100,7 +86,7 @@ public class FileSystemEvent : IEvent
                 Logger.EventTriggering(this);
             }
                 
-            OnEventTriggered(new EventTriggeredEventArgs(dDataSet, Logger));
+            _sink?.Publish(this, dDataSet, Logger);
         }
         catch (Exception ex)
         {

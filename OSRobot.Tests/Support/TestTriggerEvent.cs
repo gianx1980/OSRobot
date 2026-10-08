@@ -13,6 +13,9 @@ public class TestTriggerEventConfig : IEventConfig
     public string Name { get; set; } = string.Empty;
     public bool Enabled { get; set; } = true;
     public bool Log { get; set; } = true;
+
+    /// <summary>Publish once from inside Init(), as OSRobotServiceStartEvent does.</summary>
+    public bool FireOnInit { get; set; }
 }
 
 /// <summary>An event a test fires by hand with <see cref="Fire"/>, instead of waiting for a timer or file change.</summary>
@@ -21,17 +24,21 @@ public class TestTriggerEvent : IEvent
     private static readonly object _gate = new();
     private static readonly Dictionary<int, TestTriggerEvent> _live = [];
 
+    private IEventSink? _sink;
+
     public IFolder? ParentFolder { get; set; }
     public IPluginInstanceConfig Config { get; set; } = new TestTriggerEventConfig();
     public List<PluginInstanceConnection> Connections { get; set; } = [];
 
-    [field: NonSerialized]
-    public event EventTriggeredDelegate? EventTriggered;
-
-    public void Init()
+    public void Init(IEventSink sink)
     {
+        _sink = sink;
+
         lock (_gate)
             _live[Config.Id] = this;
+
+        if (((TestTriggerEventConfig)Config).FireOnInit)
+            Publish();
     }
 
     public void Destroy()
@@ -41,20 +48,24 @@ public class TestTriggerEvent : IEvent
                 _live.Remove(Config.Id);
     }
 
-    /// <summary>Raises the event with the given id, as the engine's event source would. Returns false if it isn't live.</summary>
+    private bool Publish()
+    {
+        DateTime now = DateTime.Now;
+        DynamicDataSet dataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, true, 0, now, now, 1);
+        return _sink?.Publish(this, dataSet, PluginInstanceLogger.GetLogger(this)) ?? false;
+    }
+
+    /// <summary>
+    /// Publishes the event with the given id, as the event source would. Returns false if it isn't live
+    /// or the engine ignored it.
+    /// </summary>
     public static bool Fire(int eventId)
     {
         TestTriggerEvent? target;
         lock (_gate)
             _live.TryGetValue(eventId, out target);
 
-        if (target == null)
-            return false;
-
-        DateTime now = DateTime.Now;
-        DynamicDataSet dataSet = CommonDynamicData.BuildStandardDynamicDataSet(target, true, 0, now, now, 1);
-        target.EventTriggered?.Invoke(target, new EventTriggeredEventArgs(dataSet, PluginInstanceLogger.GetLogger(target)));
-        return true;
+        return target?.Publish() ?? false;
     }
 }
 

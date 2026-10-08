@@ -9,6 +9,7 @@ static class Constants
     internal const string DefaultLibPath = @"Lib\";
     internal const string DefaultDataPath = @"Data\";
     internal const bool DefaultSerialExecution = false;
+    internal const int DefaultMaxConcurrentTasks = 16;
     internal const int CleanUpLogsOlderThanHours = 0;
     internal const int CleanUpLogsIntervalHours = 0;
     internal const int HttpListenerPort = 44300;
