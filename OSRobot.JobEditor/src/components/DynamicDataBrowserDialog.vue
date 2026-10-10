@@ -10,6 +10,7 @@
       <q-card-section>
         <q-table
           style="height: 230px; table-layout: fixed"
+          class="sticky-header-table"
           :columns="_objectTableColumnsDef"
           :rows="_propsRef.containingFolderItems"
           selection="single"
@@ -18,6 +19,8 @@
           :no-data-label="_$t('thereAreNoObjectsToShow')"
           row-key="id"
           dense
+          :pagination="_allRowsPagination"
+          hide-pagination
           @selection="_objectTableRowSelection"
           @row-click="_objectTableRowClick"
         ></q-table>
@@ -29,6 +32,7 @@
       <q-card-section>
         <q-table
           style="height: 230px; table-layout: fixed"
+          class="sticky-header-table"
           :columns="_dynDataTableColumnsDef"
           :rows="_dynDataSamplesList"
           selection="single"
@@ -37,6 +41,8 @@
           :no-data-label="_$t('thereIsNoDynamicDataToShow')"
           row-key="internalName"
           dense
+          :pagination="_allRowsPagination"
+          hide-pagination
           @row-click="_dynDataTableRowClick"
         ></q-table>
       </q-card-section>
@@ -78,6 +84,9 @@ const _router = useRouter();
 // recordsetsOnly: list only the fields that hold a recordset (e.g. to pick a recordset to iterate)
 const _props = defineProps(["containingFolderItems", "recordsetsOnly"]);
 const _propsRef = ref(_props);
+
+// Both lists show all their rows and scroll within their fixed height, instead of paging 5 rows at a time.
+const _allRowsPagination = { rowsPerPage: 0 };
 
 const _objectSelected = ref([]);
 

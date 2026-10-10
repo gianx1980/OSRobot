@@ -44,11 +44,11 @@ public static class CommonDynamicData
     /// Recordset with one row per iteration, each row holding that iteration's dynamic data. Present only
     /// in the data a task passes through a connection set to <see cref="EnumConnectionRunMode.OnceWithAllResults"/>.
     /// </summary>
-    public const string Results = "Results";
+    public const string IterationResults = "IterationResults";
 
     /// <summary>
     /// The dynamic data an object outputs, as shown by the editor and checked by DynamicDataValidator:
-    /// what its plugin declares, plus the collected <see cref="Results"/> recordset for tasks.
+    /// what its plugin declares, plus the collected <see cref="IterationResults"/> recordset for tasks.
     /// </summary>
     public static List<DynamicDataSample> GetOutputSamples(IPlugin plugin)
     {
@@ -56,7 +56,7 @@ public static class CommonDynamicData
         List<DynamicDataSample> samples = [.. plugin.SampleDynamicData];
 
         if (plugin.PluginType == EnumPluginType.Task)
-            samples.Add(new DynamicDataSample(Results, Resource.TxtDynDataResults, Resource.TxtDynDataFieldXOfRecordsetsRow, true));
+            samples.Add(new DynamicDataSample(IterationResults, Resource.TxtDynDataIterationResults, Resource.TxtDynDataFieldXOfRecordsetsRow, true));
 
         return samples;
     }
@@ -67,7 +67,7 @@ public static class CommonDynamicData
     /// - a recordset field (e.g. the default recordset) holds the rows of all the iterations, in order;
     /// - any other field holds the last iteration's value, so any reference to the task's fields still resolves;
     /// - the execution fields (result, start/end dates) describe the whole execution;
-    /// - <see cref="Results"/> holds each iteration's data, in order.
+    /// - <see cref="IterationResults"/> holds each iteration's data, in order.
     /// </summary>
     /// <exception cref="ApplicationException">A column has different types in different iterations' recordsets.</exception>
     public static ExecResult BuildCollectedResult(IPluginInstance source, List<ExecResult> execResults, EnumCollectedResultRule rule)
@@ -107,7 +107,7 @@ public static class CommonDynamicData
                 collected[field] = UnionRecordsets(field, recordsets);
         }
 
-        collected[Results] = execResults.Select(r => new Dictionary<string, object>(r.Data)).ToList();
+        collected[IterationResults] = execResults.Select(r => new Dictionary<string, object>(r.Data)).ToList();
 
         return new ExecResult(succeeded, collected);
     }

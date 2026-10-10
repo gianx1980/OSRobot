@@ -52,8 +52,8 @@ public sealed class TestCollectedResult
         CollectionAssert.AreEqual(new[] { "a", "b", "c" }, union.Rows.Cast<DataRow>().Select(r => (string)r["Name"]).ToArray());
         Assert.AreEqual("v2", collected.Data["Value"]);
 
-        // Results keeps each iteration's own recordset, untouched.
-        List<Dictionary<string, object>> results = (List<Dictionary<string, object>>)collected.Data[CommonDynamicData.Results];
+        // IterationResults keeps each iteration's own recordset, untouched.
+        List<Dictionary<string, object>> results = (List<Dictionary<string, object>>)collected.Data[CommonDynamicData.IterationResults];
         Assert.AreSame(first, results[0][Recordset]);
         Assert.AreSame(second, results[1][Recordset]);
     }
@@ -115,7 +115,7 @@ public sealed class TestCollectedResult
             EnumCollectedResultRule.AllSucceeded);
 
         Assert.HasCount(2, ((DataTable)collected.Data[Recordset]).Rows);
-        Assert.HasCount(3, (List<Dictionary<string, object>>)collected.Data[CommonDynamicData.Results]);
+        Assert.HasCount(3, (List<Dictionary<string, object>>)collected.Data[CommonDynamicData.IterationResults]);
         Assert.IsFalse(collected.Result, "With a failed iteration, 'all succeeded' is not satisfied.");
     }
 

@@ -111,7 +111,7 @@
           "enabled": true,
           "log": true,
           "pluginIterationMode": "IterateObjectRecordset",
-          "iterationObject": "{object[2].Results}",
+          "iterationObject": "{object[2].IterationResults}",
           "iterationsCount": 0,
           "filePath": "D:\\_Appoggio\\PingResult.txt",
           "taskType": "AppendRow",
@@ -119,7 +119,7 @@
             {
               "id": 1,
               "headerTitle": null,
-              "fieldValue": "{object[2].Results[\u0027ThresholdSuccessRate\u0027]}",
+              "fieldValue": "{object[1].DefaultRecordset[\u0027Column1\u0027]}: {object[2].IterationResults[\u0027ThresholdSuccessRate\u0027]}",
               "fieldWidth": null,
               "isNew": false
             }
@@ -143,8 +143,8 @@
           ]
         },
         "position": {
-          "x": 752,
-          "y": 195
+          "x": 771,
+          "y": 142
         }
       }
     ]

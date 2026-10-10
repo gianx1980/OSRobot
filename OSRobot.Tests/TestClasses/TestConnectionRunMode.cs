@@ -39,7 +39,7 @@ public sealed class TestConnectionRunMode
     {
         JobGraph graph = new JobGraph()
             .IteratingTask(2, "A", iterations: 3)
-            .Task(3, "B", value: "{object[2].Results[0]['Iteration']},{object[2].Results[2]['Iteration']}|{object[2].Iteration}|{object[2].NumberOfIterations}")
+            .Task(3, "B", value: "{object[2].IterationResults[0]['Iteration']},{object[2].IterationResults[2]['Iteration']}|{object[2].Iteration}|{object[2].NumberOfIterations}")
             .Connect(JobGraph.EventId, 2)
             .Connect(2, 3, runMode: "OnceWithAllResults");
         using EngineHarness h = new(graph);
@@ -50,7 +50,7 @@ public sealed class TestConnectionRunMode
         Thread.Sleep(300);
         Assert.HasCount(1, Runs("B"), "B must run once for the whole execution, not once per iteration.");
 
-        // Results holds every iteration; the other fields hold the last iteration's values.
+        // IterationResults holds every iteration; the other fields hold the last iteration's values.
         Assert.AreEqual("0,2|2|3", Runs("B")[0].Value);
         Assert.IsEmpty(h.Log.Errors, string.Join("\n", h.Log.Errors));
     }
@@ -121,10 +121,10 @@ public sealed class TestConnectionRunMode
     [TestMethod]
     public void An_iteration_object_without_braces_fails_the_task_instead_of_running_it_once()
     {
-        // Regression: "object[2].Results" (no braces) silently ran B once, on the first row only.
+        // Regression: "object[2].IterationResults" (no braces) silently ran B once, on the first row only.
         JobGraph graph = new JobGraph()
             .IteratingTask(2, "A", iterations: 3)
-            .IteratingTask(3, "B", iterationMode: "IterateObjectRecordset", iterationObject: "object[2].Results")
+            .IteratingTask(3, "B", iterationMode: "IterateObjectRecordset", iterationObject: "object[2].IterationResults")
             .Task(4, "OnBFailure")
             .Connect(JobGraph.EventId, 2)
             .Connect(2, 3, runMode: "OnceWithAllResults")
@@ -139,11 +139,11 @@ public sealed class TestConnectionRunMode
     [TestMethod]
     public void The_next_task_can_iterate_over_the_collected_results()
     {
-        // Collect, then iterate: B runs once, and iterates over A's Results itself.
+        // Collect, then iterate: B runs once, and iterates over A's IterationResults itself.
         JobGraph graph = new JobGraph()
             .IteratingTask(2, "A", iterations: 3)
-            .IteratingTask(3, "B", iterationMode: "IterateObjectRecordset", iterationObject: "{object[2].Results}",
-                           value: "{object[2].Results[{iterationIndex}]['Iteration']}")
+            .IteratingTask(3, "B", iterationMode: "IterateObjectRecordset", iterationObject: "{object[2].IterationResults}",
+                           value: "{object[2].IterationResults[{iterationIndex}]['Iteration']}")
             .Connect(JobGraph.EventId, 2)
             .Connect(2, 3, runMode: "OnceWithAllResults");
         using EngineHarness h = new(graph);

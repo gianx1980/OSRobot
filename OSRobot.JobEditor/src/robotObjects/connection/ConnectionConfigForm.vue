@@ -8,7 +8,7 @@
         <div class="text-h6">{{ _$t("general") }}</div>
       </q-card-section>
       <q-card-section>
-        <div class="row q-mb-sm">
+        <div class="row q-mb-lg">
           <div class="col">
             <q-input
               filled
@@ -19,7 +19,7 @@
             />
           </div>
         </div>
-        <div class="row q-mb-sm" v-if="_sourceIsTask">
+        <div class="row q-mb-lg" v-if="_sourceIsTask">
           <div class="col">
             <q-select
               v-model="_propsRef.modelValue.runMode"
@@ -32,7 +32,7 @@
           </div>
         </div>
         <div
-          class="row q-mb-sm"
+          class="row q-mb-lg"
           v-if="
             _sourceIsTask &&
             _propsRef.modelValue.runMode === 'OnceWithAllResults'

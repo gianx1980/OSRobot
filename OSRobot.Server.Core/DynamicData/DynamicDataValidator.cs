@@ -87,8 +87,8 @@ public static class DynamicDataValidator
                         || condition.Operator == EnumExecutionConditionOperator.ObjectDoesNotExecute)
                         continue;
 
-                    string? message = condition.DynamicDataCode == CommonDynamicData.Results
-                        ? $"The {CommonDynamicData.Results} recordset holds all the iterations' data: it can't be compared to a value in a condition."
+                    string? message = condition.DynamicDataCode == CommonDynamicData.IterationResults
+                        ? $"The {CommonDynamicData.IterationResults} recordset holds all the iterations' data: it can't be compared to a value in a condition."
                         : CheckField(instance, condition.DynamicDataCode ?? string.Empty, outputsByType);
                     if (message != null)
                         issues.Add(new DynamicDataIssue(instance.Config.Id, instance.Config.Name, $"Connection to {connection.ConnectTo?.Config.Id}",
@@ -113,8 +113,8 @@ public static class DynamicDataValidator
         if (message != null)
             return message;
 
-        if (info.FieldName == CommonDynamicData.Results && !CollectsResultsTowards(referenced, referencingId, upstream))
-            return $"Object {info.ObjectID} ({referenced.Config.Name}) passes on '{CommonDynamicData.Results}' only through a connection that runs once with all results, " +
+        if (info.FieldName == CommonDynamicData.IterationResults && !CollectsResultsTowards(referenced, referencingId, upstream))
+            return $"Object {info.ObjectID} ({referenced.Config.Name}) passes on '{CommonDynamicData.IterationResults}' only through a connection that runs once with all results, " +
                    "and none of its connections leading here is set that way.";
 
         return null;

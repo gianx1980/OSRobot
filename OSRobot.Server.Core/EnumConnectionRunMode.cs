@@ -10,7 +10,7 @@ public enum EnumConnectionRunMode
     ForEachResult,
 
     /// <summary>
-    /// Once, after all the iterations, with every result collected in the source's "Results" recordset.
+    /// Once, after all the iterations, with every result collected in the source's "IterationResults" recordset.
     /// The conditions are evaluated once, against the collected result.
     /// </summary>
     OnceWithAllResults

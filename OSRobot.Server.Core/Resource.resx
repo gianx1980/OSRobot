@@ -225,8 +225,8 @@
   <data name="TxtDynDataObjectName" xml:space="preserve">
     <value>Object name</value>
   </data>
-  <data name="TxtDynDataResults" xml:space="preserve">
-    <value>Results of all iterations (only after a connection that runs once with all results)</value>
+  <data name="TxtDynDataIterationResults" xml:space="preserve">
+    <value>Results of each iteration</value>
   </data>
   <data name="TxtFieldCannotBeEmpty" xml:space="preserve">
     <value>This field cannot be empty</value>

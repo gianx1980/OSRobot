@@ -141,13 +141,13 @@ public sealed class TestDynamicDataValidator
     }
 
     [TestMethod]
-    public void Results_is_valid_after_a_connection_that_runs_once_with_all_results()
+    public void IterationResults_is_valid_after_a_connection_that_runs_once_with_all_results()
     {
         // Directly after the collecting connection, and further downstream.
         JobGraph graph = new JobGraph()
             .IteratingTask(2, "A", iterations: 3)
-            .Task(3, "B", value: "{object[2].Results[0]['Value']}")
-            .Task(4, "C", value: "{object[2].Results[1]['Value']}")
+            .Task(3, "B", value: "{object[2].IterationResults[0]['Value']}")
+            .Task(4, "C", value: "{object[2].IterationResults[1]['Value']}")
             .Connect(JobGraph.EventId, 2)
             .Connect(2, 3, runMode: "OnceWithAllResults")
             .Connect(3, 4);
@@ -156,11 +156,11 @@ public sealed class TestDynamicDataValidator
     }
 
     [TestMethod]
-    public void Results_is_reported_after_a_connection_that_runs_once_per_result()
+    public void IterationResults_is_reported_after_a_connection_that_runs_once_per_result()
     {
         JobGraph graph = new JobGraph()
             .IteratingTask(2, "A", iterations: 3)
-            .Task(3, "B", value: "{object[2].Results[0]['Value']}")
+            .Task(3, "B", value: "{object[2].IterationResults[0]['Value']}")
             .Connect(JobGraph.EventId, 2)
             .Connect(2, 3);
 
@@ -170,13 +170,13 @@ public sealed class TestDynamicDataValidator
     }
 
     [TestMethod]
-    public void A_connection_condition_on_Results_is_reported()
+    public void A_connection_condition_on_IterationResults_is_reported()
     {
         JobGraph graph = new JobGraph()
             .IteratingTask(2, "A", iterations: 3)
             .Task(3, "B")
             .Connect(JobGraph.EventId, 2)
-            .Connect(2, 3, runMode: "OnceWithAllResults", executeOperators: ["ValueContains"], dynamicDataCode: "Results");
+            .Connect(2, 3, runMode: "OnceWithAllResults", executeOperators: ["ValueContains"], dynamicDataCode: "IterationResults");
 
         DynamicDataIssue issue = Single(Validate(graph));
         Assert.AreEqual("Connection to 3", issue.Location);

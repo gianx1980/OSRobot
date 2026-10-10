@@ -1,1 +1,19 @@
 // app global css in SCSS form
+
+// For a QTable with a fixed height: the header stays visible while the rows scroll under it.
+// The header cells need an opaque background, or the rows would show through them.
+.sticky-header-table {
+  thead tr th {
+    position: sticky;
+    z-index: 1;
+  }
+
+  thead tr:first-child th {
+    top: 0;
+    background-color: #fff;
+  }
+}
+
+.body--dark .sticky-header-table thead tr:first-child th {
+  background-color: $dark;
+}

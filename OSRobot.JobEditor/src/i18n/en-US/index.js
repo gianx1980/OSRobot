@@ -210,7 +210,7 @@ export default {
   iterateAsManyTimesAsDefaultRecordset:
     "Iterate as many times as the records contained in the default recordset of the previous task, or 1 if no default recordset exists",
   iterateAsManyTimesAsThisRecordset:
-    "Iterate as many times as the records contained here (write in the format 'ObjectID.FieldName')",
+    "Iterate as many times as the records contained here (write in the format '{object[id].FieldName}')",
   iterateThisExactNumberOfTimes: "Iterate this exact number of times",
   iterationsNumber: "Iterations number",
   jsonPathToData: "JSON Path to data",
@@ -338,7 +338,7 @@ export default {
   runForEachResult: "Once for each result (each iteration)",
   runOnceWithAllResults: "Once, after all iterations, with all the results",
   runOnceWithAllResultsHint:
-    "Recordsets, such as the default recordset, hold the rows of all the iterations; the other fields hold the last iteration's values. The data of each iteration is in this object's Results recordset.",
+    "Recordsets, such as the default recordset, hold the rows of all the iterations; the other fields hold the last iteration's values. The data of each iteration is in this object's IterationResults recordset.",
   save: "Save",
   saturday: "Saturday",
   scale: "Scale",

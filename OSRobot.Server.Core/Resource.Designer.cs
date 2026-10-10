@@ -385,11 +385,11 @@ namespace OSRobot.Server.Core {
         }
         
         /// <summary>
-        ///   Looks up a localized string similar to Results of all iterations (only after a connection that runs once with all results).
+        ///   Looks up a localized string similar to Results of each iteration.
         /// </summary>
-        internal static string TxtDynDataResults {
+        internal static string TxtDynDataIterationResults {
             get {
-                return ResourceManager.GetString("TxtDynDataResults", resourceCulture);
+                return ResourceManager.GetString("TxtDynDataIterationResults", resourceCulture);
             }
         }
         
