@@ -19,6 +19,37 @@
             />
           </div>
         </div>
+        <div class="row q-mb-sm" v-if="_sourceIsTask">
+          <div class="col">
+            <q-select
+              v-model="_propsRef.modelValue.runMode"
+              :options="_runModes"
+              :label="_$t('runNextObject')"
+              dense
+              map-options
+              emit-value
+            />
+          </div>
+        </div>
+        <div
+          class="row q-mb-sm"
+          v-if="
+            _sourceIsTask &&
+            _propsRef.modelValue.runMode === 'OnceWithAllResults'
+          "
+        >
+          <div class="col">
+            <q-select
+              v-model="_propsRef.modelValue.collectedResultRule"
+              :options="_collectedResultRules"
+              :label="_$t('collectedResultIsSuccessfulWhen')"
+              :hint="_$t('runOnceWithAllResultsHint')"
+              dense
+              map-options
+              emit-value
+            />
+          </div>
+        </div>
         <div class="row">
           <div class="col">
             <q-toggle
@@ -46,7 +77,7 @@
   </div>
 </template>
 <script setup>
-import { ref, onMounted } from "vue";
+import { ref, computed, onMounted } from "vue";
 import { useI18n } from "vue-i18n";
 import { useQuasar } from "quasar";
 import { useAppStore } from "src/stores/appStore.js";
@@ -64,4 +95,28 @@ const _appStore = useAppStore();
 const _user = _appStore.getLoggedUser();
 
 const _formData = ref(_props);
+
+// Connections saved before these settings existed don't have them: show the server's defaults.
+if (!_propsRef.value.modelValue.runMode)
+  _propsRef.value.modelValue.runMode = "ForEachResult";
+if (!_propsRef.value.modelValue.collectedResultRule)
+  _propsRef.value.modelValue.collectedResultRule = "AllSucceeded";
+
+// An event always produces exactly one result, so how to run on several results only matters for tasks.
+const _sourceIsTask = computed(() => {
+  const source = _propsRef.value.containingFolderItems?.find(
+    (t) => String(t.id) === String(_propsRef.value.modelValue.source)
+  );
+  return source?.type === "task";
+});
+
+const _runModes = [
+  { label: _$t("runForEachResult"), value: "ForEachResult" },
+  { label: _$t("runOnceWithAllResults"), value: "OnceWithAllResults" },
+];
+
+const _collectedResultRules = [
+  { label: _$t("allIterationsSucceeded"), value: "AllSucceeded" },
+  { label: _$t("anyIterationSucceeded"), value: "AnySucceeded" },
+];
 </script>

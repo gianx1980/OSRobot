@@ -237,19 +237,30 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
             // must not stop the sibling connections from being dispatched.
             try
             {
+                // Run the target once for the whole execution instead of once per iteration. An event
+                // always has exactly one result, so the setting only matters for tasks. With no results
+                // (zero iterations) there is nothing to collect: the target doesn't run, as per result.
+                if (!isEvent && connection.RunMode == EnumConnectionRunMode.OnceWithAllResults)
+                {
+                    if (execResults.Count == 0)
+                        continue;
+
+                    ExecResult collected = CommonDynamicData.BuildCollectedResult(source, execResults, connection.CollectedResultRule);
+                    if (connection.EvaluateExecConditions(collected))
+                        Schedule(CreateWorkItem(run, target, dataChain, source, collected, subInstanceIndex: null, logger), connection.WaitSeconds);
+
+                    continue;
+                }
+
                 for (int i = 0; i < execResults.Count; i++)
                 {
                     ExecResult execResult = execResults[i];
                     if (!connection.EvaluateExecConditions(execResult))
                         continue;
 
-                    // Each target gets its own copy of the chain, extended with the result it runs for.
-                    DynamicDataChain dataChainCopy = dataChain.Clone();
-                    dataChainCopy.TryAdd(source.Config.Id, execResult.Data);
-
                     // Events have no iterations: a task started by an event has no sub-instance index.
                     int? subInstanceIndex = isEvent ? null : i;
-                    Schedule(new TaskWorkItem(run, target, dataChainCopy, execResult.Data, subInstanceIndex, logger), connection.WaitSeconds);
+                    Schedule(CreateWorkItem(run, target, dataChain, source, execResult, subInstanceIndex, logger), connection.WaitSeconds);
                 }
             }
             catch (Exception ex)
@@ -257,6 +268,16 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
                 logger.Error(source, $"Error dispatching connection to object {target.Config.Id}", ex);
             }
         }
+    }
+
+    private static TaskWorkItem CreateWorkItem(JobRun run, ITask target, DynamicDataChain dataChain, IPluginInstance source,
+                                               ExecResult execResult, int? subInstanceIndex, IPluginInstanceLogger logger)
+    {
+        // Each target gets its own copy of the chain, extended with the result it runs for.
+        DynamicDataChain dataChainCopy = dataChain.Clone();
+        dataChainCopy.TryAdd(source.Config.Id, execResult.Data);
+
+        return new TaskWorkItem(run, target, dataChainCopy, execResult.Data, subInstanceIndex, logger);
     }
 
     /// <summary>Queues a task of the run, after waitSeconds if given. The wait holds a timer, not a worker.</summary>

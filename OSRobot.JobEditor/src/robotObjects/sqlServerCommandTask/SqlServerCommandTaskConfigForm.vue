@@ -169,7 +169,10 @@
         </div>
       </q-card-section>
     </q-card>
-    <PluginIterationConfigForm v-model="_propsRef.modelValue" />
+    <PluginIterationConfigForm
+      v-model="_propsRef.modelValue"
+      :containingFolderItems="_propsRef.containingFolderItems"
+    />
   </div>
   <q-dialog v-model="_parameterDialogVisibility" persistent>
     <div

@@ -29,6 +29,7 @@ public class DynamicDataIssue(int objectId, string objectName, string location, 
 /// - N runs before X, i.e. X can be reached from N through connections (at runtime only
 ///   the objects along the executed path are in the dynamic data chain);
 /// - N outputs Field (as declared by its plugin's SampleDynamicData; names are case-sensitive).
+/// A task iterating over an object recordset must name it with such a reference, to a recordset field.
 /// [CODE] expressions are not checked, as that would require running them.
 /// </summary>
 public static class DynamicDataValidator
@@ -45,7 +46,8 @@ public static class DynamicDataValidator
             instancesById.TryAdd(instance.Config.Id, instance);
 
         Dictionary<int, List<int>> predecessors = BuildPredecessors(instances);
-        Dictionary<Type, HashSet<string>> outputsByType = BuildOutputsByType();
+        Dictionary<Type, HashSet<string>> outputsByType = BuildOutputsByType(recordsetsOnly: false);
+        Dictionary<Type, HashSet<string>> recordsetsByType = BuildOutputsByType(recordsetsOnly: true);
 
         List<DynamicDataIssue> issues = [];
 
@@ -55,12 +57,21 @@ public static class DynamicDataValidator
 
             foreach ((string location, string value) in GetConfigStrings(instance.Config))
             {
-                if (value.StartsWith(_codePlaceholder))
-                    continue;
+                List<DynamicDataInfo> references = value.StartsWith(_codePlaceholder) ? [] : DynamicDataParser.GetDynamicDataInfo(value);
 
-                foreach (DynamicDataInfo info in DynamicDataParser.GetDynamicDataInfo(value))
+                // The iteration object is resolved as a plain reference: [CODE] is not evaluated there, and text
+                // without braces is not a reference at all.
+                bool isIterationObject = location == nameof(ITaskConfig.IterationObject);
+                if (isIterationObject && references.Count == 0)
+                    issues.Add(new DynamicDataIssue(instance.Config.Id, instance.Config.Name, location, value,
+                                                    "The iteration object must be a dynamic data reference such as {object[N].FieldName}, e.g. {object[2].DefaultRecordset}."));
+
+                foreach (DynamicDataInfo info in references)
                 {
-                    string? message = CheckReference(info, instancesById, upstream, outputsByType);
+                    string? message = CheckReference(info, instance.Config.Id, instancesById, upstream, outputsByType);
+                    if (message == null && isIterationObject && !IsRecordset(instancesById[info.ObjectID], info.FieldName, recordsetsByType))
+                        message = $"Field '{info.FieldName}' of object {info.ObjectID} ({instancesById[info.ObjectID].Config.Name}) is not a recordset, so it can't be iterated.";
+
                     if (message != null)
                         issues.Add(new DynamicDataIssue(instance.Config.Id, instance.Config.Name, location, info.DynamicData, message));
                 }
@@ -76,7 +87,9 @@ public static class DynamicDataValidator
                         || condition.Operator == EnumExecutionConditionOperator.ObjectDoesNotExecute)
                         continue;
 
-                    string? message = CheckField(instance, condition.DynamicDataCode ?? string.Empty, outputsByType);
+                    string? message = condition.DynamicDataCode == CommonDynamicData.Results
+                        ? $"The {CommonDynamicData.Results} recordset holds all the iterations' data: it can't be compared to a value in a condition."
+                        : CheckField(instance, condition.DynamicDataCode ?? string.Empty, outputsByType);
                     if (message != null)
                         issues.Add(new DynamicDataIssue(instance.Config.Id, instance.Config.Name, $"Connection to {connection.ConnectTo?.Config.Id}",
                                                         condition.DynamicDataCode ?? string.Empty, message));
@@ -87,7 +100,7 @@ public static class DynamicDataValidator
         return issues;
     }
 
-    private static string? CheckReference(DynamicDataInfo info, Dictionary<int, IPluginInstance> instancesById, HashSet<int> upstream,
+    private static string? CheckReference(DynamicDataInfo info, int referencingId, Dictionary<int, IPluginInstance> instancesById, HashSet<int> upstream,
                                           Dictionary<Type, HashSet<string>> outputsByType)
     {
         if (!instancesById.TryGetValue(info.ObjectID, out IPluginInstance? referenced))
@@ -96,7 +109,24 @@ public static class DynamicDataValidator
         if (!upstream.Contains(info.ObjectID))
             return $"Object {info.ObjectID} ({referenced.Config.Name}) does not run before this object, so its data is not available here. Connect it upstream of this object.";
 
-        return CheckField(referenced, info.FieldName, outputsByType);
+        string? message = CheckField(referenced, info.FieldName, outputsByType);
+        if (message != null)
+            return message;
+
+        if (info.FieldName == CommonDynamicData.Results && !CollectsResultsTowards(referenced, referencingId, upstream))
+            return $"Object {info.ObjectID} ({referenced.Config.Name}) passes on '{CommonDynamicData.Results}' only through a connection that runs once with all results, " +
+                   "and none of its connections leading here is set that way.";
+
+        return null;
+    }
+
+    // Whether the referenced object has a "once with all results" connection on a path to the referencing object:
+    // directly to it, or to an object upstream of it.
+    private static bool CollectsResultsTowards(IPluginInstance referenced, int referencingId, HashSet<int> upstream)
+    {
+        return referenced.Connections.Any(c => c.RunMode == EnumConnectionRunMode.OnceWithAllResults
+                                               && c.ConnectTo != null
+                                               && (c.ConnectTo.Config.Id == referencingId || upstream.Contains(c.ConnectTo.Config.Id)));
     }
 
     private static string? CheckField(IPluginInstance instance, string fieldName, Dictionary<Type, HashSet<string>> outputsByType)
@@ -173,13 +203,20 @@ public static class DynamicDataValidator
         return upstream;
     }
 
-    private static Dictionary<Type, HashSet<string>> BuildOutputsByType()
+    private static bool IsRecordset(IPluginInstance instance, string fieldName, Dictionary<Type, HashSet<string>> recordsetsByType)
+    {
+        // An unknown plugin type declares nothing to check against.
+        return !recordsetsByType.TryGetValue(instance.GetType(), out HashSet<string>? recordsets) || recordsets.Contains(fieldName);
+    }
+
+    private static Dictionary<Type, HashSet<string>> BuildOutputsByType(bool recordsetsOnly)
     {
         Dictionary<Type, HashSet<string>> outputsByType = [];
 
         foreach (IPlugin plugin in PluginRegistry.GetPlugins())
         {
-            HashSet<string> outputs = new(plugin.SampleDynamicData.Select(s => s.InternalName), StringComparer.Ordinal);
+            HashSet<string> outputs = new(CommonDynamicData.GetOutputSamples(plugin).Where(s => !recordsetsOnly || s.IsRecordset).Select(s => s.InternalName),
+                                          StringComparer.Ordinal);
             outputsByType.TryAdd(plugin.GetInstance().GetType(), outputs);
         }
 

@@ -1,6 +1,7 @@
 ﻿// SPDX-FileCopyrightText: Gianluca Di Bucci (gianx1980) <https://www.os-robot.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+using System.Data;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging.Abstract;
 
@@ -38,6 +39,11 @@ public abstract class MultipleIterationTask : BaseTask
             _cancellationToken.ThrowIfCancellationRequested();
 
             DateTime executionStartDateTime = DateTime.Now;
+
+            // Each iteration publishes its own default recordset: plugins fill this field in place, so
+            // sharing it would make every iteration's result point to one table holding all the rows
+            // (or fail, for plugins that add their columns at each iteration).
+            _defaultRecordset = new DataTable();
 
             // Setup (config cloning, dynamic data parsing) is part of the iteration: a bad value
             // in one row fails that iteration only, the following ones still run.

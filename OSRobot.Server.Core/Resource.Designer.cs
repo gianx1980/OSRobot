@@ -385,6 +385,15 @@ namespace OSRobot.Server.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Results of all iterations (only after a connection that runs once with all results).
+        /// </summary>
+        internal static string TxtDynDataResults {
+            get {
+                return ResourceManager.GetString("TxtDynDataResults", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized string similar to This field cannot be empty.
         /// </summary>
         internal static string TxtFieldCannotBeEmpty {

@@ -3,6 +3,7 @@
 
 using System;
 using System.Collections.Generic;
+using System.Text.Json.Serialization;
 
 namespace OSRobot.Server.Core;
 
@@ -28,6 +29,13 @@ public class PluginInstanceConnection
 
     public bool Enabled { get; set; }
     public int? WaitSeconds { get; set; }
+
+    // Absent in jobs saved before these settings existed: the defaults keep the previous behavior.
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public EnumConnectionRunMode RunMode { get; set; } = EnumConnectionRunMode.ForEachResult;
+
+    [JsonConverter(typeof(JsonStringEnumConverter))]
+    public EnumCollectedResultRule CollectedResultRule { get; set; } = EnumCollectedResultRule.AllSucceeded;
     public List<ExecutionCondition> ExecuteConditions { get; set; } = [];
     public List<ExecutionCondition> DontExecuteConditions { get; set; } = [];
 

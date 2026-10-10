@@ -139,4 +139,89 @@ public sealed class TestDynamicDataValidator
         Assert.AreEqual("Connection to 4", issue.Location);
         Assert.AreEqual("Missing", issue.Reference);
     }
+
+    [TestMethod]
+    public void Results_is_valid_after_a_connection_that_runs_once_with_all_results()
+    {
+        // Directly after the collecting connection, and further downstream.
+        JobGraph graph = new JobGraph()
+            .IteratingTask(2, "A", iterations: 3)
+            .Task(3, "B", value: "{object[2].Results[0]['Value']}")
+            .Task(4, "C", value: "{object[2].Results[1]['Value']}")
+            .Connect(JobGraph.EventId, 2)
+            .Connect(2, 3, runMode: "OnceWithAllResults")
+            .Connect(3, 4);
+
+        Assert.AreEqual(0, Validate(graph).Count, string.Join(Environment.NewLine, Validate(graph)));
+    }
+
+    [TestMethod]
+    public void Results_is_reported_after_a_connection_that_runs_once_per_result()
+    {
+        JobGraph graph = new JobGraph()
+            .IteratingTask(2, "A", iterations: 3)
+            .Task(3, "B", value: "{object[2].Results[0]['Value']}")
+            .Connect(JobGraph.EventId, 2)
+            .Connect(2, 3);
+
+        DynamicDataIssue issue = Single(Validate(graph));
+        Assert.AreEqual(3, issue.ObjectId);
+        StringAssert.Contains(issue.Message, "runs once with all results");
+    }
+
+    [TestMethod]
+    public void A_connection_condition_on_Results_is_reported()
+    {
+        JobGraph graph = new JobGraph()
+            .IteratingTask(2, "A", iterations: 3)
+            .Task(3, "B")
+            .Connect(JobGraph.EventId, 2)
+            .Connect(2, 3, runMode: "OnceWithAllResults", executeOperators: ["ValueContains"], dynamicDataCode: "Results");
+
+        DynamicDataIssue issue = Single(Validate(graph));
+        Assert.AreEqual("Connection to 3", issue.Location);
+        StringAssert.Contains(issue.Message, "can't be compared");
+    }
+
+    [TestMethod]
+    public void An_iteration_object_that_is_a_recordset_reference_produces_no_issues()
+    {
+        JobGraph graph = new JobGraph()
+            .IteratingTask(2, "A", rowsPerIteration: 2)
+            .IteratingTask(3, "B", iterationMode: "IterateObjectRecordset", iterationObject: "{object[2].DefaultRecordset}")
+            .Connect(JobGraph.EventId, 2)
+            .Connect(2, 3);
+
+        Assert.AreEqual(0, Validate(graph).Count, string.Join(Environment.NewLine, Validate(graph)));
+    }
+
+    [TestMethod]
+    [DataRow("object[2].DefaultRecordset", DisplayName = "Missing braces")]
+    [DataRow("", DisplayName = "Empty")]
+    [DataRow("[CODE]return \"{object[2].DefaultRecordset}\";", DisplayName = "Code expression")]
+    public void An_iteration_object_that_is_not_a_plain_reference_is_reported(string iterationObject)
+    {
+        JobGraph graph = new JobGraph()
+            .IteratingTask(2, "A", rowsPerIteration: 2)
+            .IteratingTask(3, "B", iterationMode: "IterateObjectRecordset", iterationObject: iterationObject)
+            .Connect(JobGraph.EventId, 2)
+            .Connect(2, 3);
+
+        DynamicDataIssue issue = Single(Validate(graph));
+        Assert.AreEqual(3, issue.ObjectId);
+        Assert.AreEqual("IterationObject", issue.Location);
+        StringAssert.Contains(issue.Message, "must be a dynamic data reference");
+    }
+
+    [TestMethod]
+    public void An_iteration_object_that_is_not_a_recordset_is_reported()
+    {
+        JobGraph graph = new JobGraph()
+            .IteratingTask(2, "A")
+            .IteratingTask(3, "B", iterationMode: "IterateObjectRecordset", iterationObject: "{object[2].Value}")
+            .Connect(JobGraph.EventId, 2)
+            .Connect(2, 3);
+
+        StringAssert.Contains(Single(Validate(graph)).Message, "is not a recordset");
+    }
 }

@@ -76,6 +76,29 @@ public sealed class JobGraph
         return this;
     }
 
+    /// <summary>Adds an iterating task: each iteration shows up in the ProbeLog as "label#iterationIndex".</summary>
+    public JobGraph IteratingTask(int id, string label, int iterations = 1, string value = "", int failOnIteration = -1,
+                                  string iterationMode = "IterateExactNumber", string iterationObject = "", int rowsPerIteration = 0)
+    {
+        _nodes.Add(new
+        {
+            workspaceItemConfig = new
+            {
+                pluginId = "TestIteratingTask",
+                id,
+                name = label,
+                label,
+                value,
+                failOnIteration,
+                rowsPerIteration,
+                pluginIterationMode = iterationMode,
+                iterationObject,
+                iterationsCount = iterations
+            }
+        });
+        return this;
+    }
+
     /// <summary>Adds an object of any plugin, given its workspaceItemConfig (which must include pluginId and id).</summary>
     public JobGraph Node(object workspaceItemConfig)
     {
@@ -83,25 +106,33 @@ public sealed class JobGraph
         return this;
     }
 
-    /// <summary>Connects two objects. With no conditions given, the target runs when the source succeeds.</summary>
+    /// <summary>
+    /// Connects two objects. With no conditions given, the target runs when the source succeeds. runMode and
+    /// collectedResultRule are left out of the JSON when not given, like in jobs saved before they existed.
+    /// </summary>
     public JobGraph Connect(int source, int target, int? waitSeconds = null, bool enabled = true,
-                            string[]? executeOperators = null, string[]? dontExecuteOperators = null, string dynamicDataCode = "")
+                            string[]? executeOperators = null, string[]? dontExecuteOperators = null, string dynamicDataCode = "",
+                            string? runMode = null, string? collectedResultRule = null)
     {
         object[] Conditions(string[] operators) =>
             [.. operators.Select(o => new { dynamicDataCode, @operator = o, minValue = string.Empty, maxValue = string.Empty })];
 
-        _edges.Add(new
+        Dictionary<string, object?> connection = new()
         {
-            workspaceConnectionConfig = new
-            {
-                source,
-                target,
-                enabled,
-                waitSeconds,
-                executeConditions = Conditions(executeOperators ?? ["ObjectExecutes"]),
-                dontExecuteConditions = Conditions(dontExecuteOperators ?? [])
-            }
-        });
+            ["source"] = source,
+            ["target"] = target,
+            ["enabled"] = enabled,
+            ["waitSeconds"] = waitSeconds,
+            ["executeConditions"] = Conditions(executeOperators ?? ["ObjectExecutes"]),
+            ["dontExecuteConditions"] = Conditions(dontExecuteOperators ?? [])
+        };
+
+        if (runMode != null)
+            connection["runMode"] = runMode;
+        if (collectedResultRule != null)
+            connection["collectedResultRule"] = collectedResultRule;
+
+        _edges.Add(new { workspaceConnectionConfig = connection });
         return this;
     }
 

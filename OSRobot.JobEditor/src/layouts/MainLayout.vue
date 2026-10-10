@@ -1185,6 +1185,8 @@ onConnect((params) => {
     target: targetInt,
     enabled: true,
     waitSeconds: 0,
+    runMode: "ForEachResult",
+    collectedResultRule: "AllSucceeded",
     executeConditions: [
       {
         dynamicDataCode: null,

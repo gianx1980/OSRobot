@@ -75,7 +75,8 @@ const _user = _appStore.getLoggedUser();
 
 const _router = useRouter();
 
-const _props = defineProps(["containingFolderItems"]);
+// recordsetsOnly: list only the fields that hold a recordset (e.g. to pick a recordset to iterate)
+const _props = defineProps(["containingFolderItems", "recordsetsOnly"]);
 const _propsRef = ref(_props);
 
 const _objectSelected = ref([]);
@@ -142,7 +143,9 @@ async function _loadDynDataSamplesTable(row) {
     const robot = new Robot(_user.token, _user.refreshToken);
     const dynDataSamplesResponse = await robot.getDynDataSamples(row.pluginId);
 
-    _dynDataSamplesList.value = dynDataSamplesResponse.responseObject;
+    _dynDataSamplesList.value = _propsRef.value.recordsetsOnly
+      ? dynDataSamplesResponse.responseObject.filter((t) => t.isRecordset)
+      : dynDataSamplesResponse.responseObject;
   } catch (e) {
     Utility.manageException(_$q, _$t, e, _router);
   }

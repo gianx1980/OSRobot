@@ -49,7 +49,7 @@ public class RobotController(IJobEngine jobEngine, IOptions<AppSettings> appSett
             return BadRequest(errorResp);
         }
 
-        List<PluginDynDataSampleListItem> dynDataSamplesList = [.. plugin.SampleDynamicData.Select(t => new PluginDynDataSampleListItem(t.Description, t.Example, t.InternalName))];
+        List<PluginDynDataSampleListItem> dynDataSamplesList = [.. CommonDynamicData.GetOutputSamples(plugin).Select(t => new PluginDynDataSampleListItem(t.Description, t.Example, t.InternalName, t.IsRecordset))];
 
         ResponseModel<List<PluginDynDataSampleListItem>> response = new(ResponseCode.ResponseOk, null, dynDataSamplesList);
         return Ok(response);

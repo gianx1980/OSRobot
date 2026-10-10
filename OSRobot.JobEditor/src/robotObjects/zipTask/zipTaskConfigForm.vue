@@ -130,7 +130,10 @@
         </div>
       </q-card-section>
     </q-card>
-    <PluginIterationConfigForm v-model="_propsRef.modelValue" />
+    <PluginIterationConfigForm
+      v-model="_propsRef.modelValue"
+      :containingFolderItems="_propsRef.containingFolderItems"
+    />
   </div>
 </template>
 <script setup>
