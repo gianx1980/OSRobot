@@ -56,6 +56,9 @@ RobotObjectUtility.getPluginIcon = function (objectId) {
     case "SqlServerCommandTask":
       return "touch_app";
 
+    case "SqlServerFileLoaderTask":
+      return "upload_file";
+
     case "SystemEventsEvent":
       return "event_repeat";
 

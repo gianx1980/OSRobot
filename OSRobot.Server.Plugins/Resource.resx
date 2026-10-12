@@ -468,6 +468,18 @@
   <data name="TxtSqlServerCommandTask" xml:space="preserve">
     <value>Sql Server command task</value>
   </data>
+  <data name="TxtSqlServerFileLoaderTask" xml:space="preserve">
+    <value>Sql Server auto loader</value>
+  </data>
+  <data name="TxtDynDataRowsLoaded" xml:space="preserve">
+    <value>Rows loaded</value>
+  </data>
+  <data name="TxtDynDataLoadedTableName" xml:space="preserve">
+    <value>Table name</value>
+  </data>
+  <data name="TxtDynDataTableCreated" xml:space="preserve">
+    <value>Table created</value>
+  </data>
   <data name="TxtSqlTypeBit" xml:space="preserve">
     <value>Bit</value>
   </data>

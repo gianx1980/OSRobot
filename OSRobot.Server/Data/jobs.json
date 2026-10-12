@@ -38,6 +38,25 @@
           ],
           "dontExecuteConditions": []
         }
+      },
+      {
+        "workspaceConnectionConfig": {
+          "source": "5",
+          "target": "4",
+          "enabled": true,
+          "waitSeconds": "3",
+          "runMode": "ForEachResult",
+          "collectedResultRule": "AllSucceeded",
+          "executeConditions": [
+            {
+              "dynamicDataCode": null,
+              "operator": "ObjectExecutes",
+              "minValue": null,
+              "maxValue": null
+            }
+          ],
+          "dontExecuteConditions": []
+        }
       }
     ],
     "id": "0",
@@ -146,6 +165,63 @@
           "x": 771,
           "y": 142
         }
+      },
+      {
+        "workspaceItemConfig": {
+          "id": "4",
+          "name": "File loader",
+          "enabled": true,
+          "log": true,
+          "pluginIterationMode": "IterateDefaultRecordset",
+          "iterationObject": "",
+          "iterationsCount": 0,
+          "filePath": "{object[5].FullPathName}",
+          "sheetName": "",
+          "tableName": "{object[5].FileNameWithoutExtension}_{object[5].ExecutionStartDateUnderscore}",
+          "firstRowContainsColumnNames": true,
+          "autodetectColumnTypes": true,
+          "culture": "",
+          "ifTableExists": "Fail",
+          "server": "(local)",
+          "database": "TEST",
+          "username": "sa",
+          "password": "gianluca80$",
+          "connectionStringOptions": "Encrypt=false",
+          "commandTimeout": 30,
+          "pluginId": "SqlServerFileLoaderTask",
+          "supportedOSPlatformList": [
+            "All platforms"
+          ]
+        },
+        "position": {
+          "x": 424,
+          "y": 297
+        }
+      },
+      {
+        "workspaceItemConfig": {
+          "id": "5",
+          "name": "Detect new files",
+          "enabled": true,
+          "log": true,
+          "foldersToMonitor": [
+            {
+              "id": 1,
+              "path": "D:\\_Appoggio\\LoadToSqlServer",
+              "monitorAction": "NewFiles",
+              "monitorSubfolders": false,
+              "isNew": false
+            }
+          ],
+          "pluginId": "FileSystemEvent",
+          "supportedOSPlatformList": [
+            "All platforms"
+          ]
+        },
+        "position": {
+          "x": 65,
+          "y": 293
+        }
       }
     ]
   },
@@ -157,5 +233,5 @@
       "label": "Root"
     }
   ],
-  "lastId": 3
+  "lastId": 5
 }

@@ -209,6 +209,7 @@ import SendEMailTaskConfigForm from "src/robotObjects/sendEMailTask/SendEMailTas
 import SqlServerBackupTaskConfigForm from "src/robotObjects/sqlServerBackupTask/SqlServerBackupTaskConfigForm.vue";
 import SqlServerBulkCopyTaskConfigForm from "src/robotObjects/sqlServerBulkCopyTask/SqlServerBulkCopyTaskConfigForm.vue";
 import SqlServerCommandTaskConfigForm from "src/robotObjects/sqlServerCommandTask/SqlServerCommandTaskConfigForm.vue";
+import SqlServerFileLoaderTaskConfigForm from "src/robotObjects/sqlServerFileLoaderTask/SqlServerFileLoaderTaskConfigForm.vue";
 import UnzipTaskConfigForm from "src/robotObjects/unzipTask/unzipTaskConfigForm.vue";
 import ZipTaskConfigForm from "src/robotObjects/zipTask/zipTaskConfigForm.vue";
 import WriteBinaryFileTaskConfigForm from "src/robotObjects/writeBinaryFileTask/WriteBinaryFileTaskConfigForm.vue";
@@ -280,6 +281,7 @@ const _configForms = {
   SqlServerBackupTaskConfigForm,
   SqlServerBulkCopyTaskConfigForm,
   SqlServerCommandTaskConfigForm,
+  SqlServerFileLoaderTaskConfigForm,
   UnzipTaskConfigForm,
   ZipTaskConfigForm,
   WriteBinaryFileTaskConfigForm,
