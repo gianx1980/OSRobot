@@ -28,6 +28,12 @@ when. Jobs are organized into folders and run entirely on the machine OS-Robot i
 - **Execution logging** per job/task run, browsable from the editor.
 - Runs as a normal process or, on Windows, as a Windows Service.
 
+## Documentation
+
+The [User Manual](docs/user-manual/README.md) covers installation, server configuration, the job
+editor, connections and conditions, dynamic data, and a reference for every built-in event and
+task.
+
 ## Repository layout
 
 This repo contains two apps: a .NET backend (API + job engine + plugins) and a Vue/Quasar

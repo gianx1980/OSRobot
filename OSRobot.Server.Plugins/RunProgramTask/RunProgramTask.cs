@@ -26,6 +26,34 @@ public class RunProgramTask : MultipleIterationTask
         if (newProc == null)
             throw new ApplicationException($"Run program failed: Process.Start returned null for '{config.ProgramPath}'.");
 
-        await newProc.WaitForExitAsync(_cancellationToken);
+        try
+        {
+            await newProc.WaitForExitAsync(_cancellationToken);
+        }
+        catch (OperationCanceledException)
+        {
+            // Cancelling the wait doesn't end the program: kill it, or it would outlive the task.
+            KillProcessTree(newProc);
+            throw;
+        }
+
+        if (config.FailOnNonZeroExitCode && newProc.ExitCode != 0)
+            throw new ApplicationException($"Program '{config.ProgramPath}' exited with code {newProc.ExitCode}.");
+
+        _instanceLogger.Info(this, $"Program exited with code {newProc.ExitCode}");
+    }
+
+    private void KillProcessTree(Process process)
+    {
+        try
+        {
+            process.Kill(entireProcessTree: true);
+            _instanceLogger.Info(this, $"Program killed (process id {process.Id}): task cancelled.");
+        }
+        catch (Exception ex) when (ex is InvalidOperationException or System.ComponentModel.Win32Exception)
+        {
+            // Already exited, or the OS refused: nothing more can be done here.
+            _instanceLogger.Info(this, $"Could not kill program (process id {process.Id}): {ex.Message}");
+        }
     }
 }

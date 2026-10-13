@@ -170,6 +170,7 @@ export default {
   expectedFormat: "Expected format",
   eventConfiguration: "Event configuration",
   fail: "Fail",
+  failOnNonZeroExitCode: "Fail if the program exits with a non-zero code",
   fieldsDefinition: "Fields definition",
   fieldValue: "Field value",
   fieldWidth: "Field width",

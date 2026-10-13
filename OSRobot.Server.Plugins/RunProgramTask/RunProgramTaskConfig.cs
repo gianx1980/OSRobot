@@ -24,4 +24,7 @@ public class RunProgramTaskConfig : ITaskConfig
     public string Parameters { get; set; } = string.Empty;
     [DynamicData]
     public string WorkingFolder { get; set; } = string.Empty;
+
+    // Also the value for jobs saved before this setting existed.
+    public bool FailOnNonZeroExitCode { get; set; } = true;
 }
