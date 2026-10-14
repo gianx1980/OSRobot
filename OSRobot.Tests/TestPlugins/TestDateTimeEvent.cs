@@ -150,10 +150,65 @@ public sealed class TestDateTimeEvent
             // Act
             // ---------
             DateTime start = DateTime.Now;
-            DateTime expectedLastTrigger = start.AddMinutes(everyNumMinutes * repeatNumber);
+            // Occurrences are aligned to AtDate, not to the moment the event is initialized.
+            DateTime expectedLastTrigger = config.AtDate.AddMinutes(everyNumMinutes * repeatNumber);
             eventObj.Init(sink);
 
             DateTime? lastTriggeredAt = await sink.WaitForOccurrenceAsync(repeatNumber, new TimeSpan(0, 0, (everyNumMinutes * 60 * repeatNumber) + toleranceSec + LateOccurrenceMarginSec));
+
+            // ---------
+            // Assert
+            // ---------
+            Assert.IsNotNull(lastTriggeredAt, $"The event occurred {sink.Count} time(s) instead of {repeatNumber}, at: {sink.Describe(start)}.");
+            Assert.IsLessThanOrEqualTo(toleranceSec, Math.Abs(lastTriggeredAt.Value.Subtract(expectedLastTrigger).TotalSeconds), $"The event did not occur at the expected time. Occurrences: {sink.Describe(start)}.");
+        }
+        finally
+        {
+            eventObj.Destroy();
+        }
+    }
+
+    [TestMethod]
+    public async Task TestRecurringAlignedToAtDateAfterRestart()
+    {
+        // ---------
+        // Arrange
+        // ---------
+        // Simulates a restart after AtDate has passed: the first occurrence must follow the
+        // AtDate-based schedule (AtDate + N * interval), not happen a full interval after Init.
+        int everyNumSeconds = 10;
+        int repeatNumber = 2;
+        int toleranceSec = 1;
+        Folder folder = Common.CreateRootFolder();
+
+        DateTimeEventConfig config = new()
+        {
+            Id = 1,
+            Name = "DateTimeEvent 1",
+            OneTime = false,
+            EverySeconds = true,
+            AtDate = DateTime.Now.AddSeconds(-everyNumSeconds * 3 - 4), // Next scheduled occurrence in ~6 seconds
+            EveryNumSeconds = everyNumSeconds
+        };
+
+        DateTimeEvent eventObj = new()
+        {
+            ParentFolder = folder,
+            Config = config
+        };
+
+        RecordingEventSink sink = new();
+
+        try
+        {
+            // ---------
+            // Act
+            // ---------
+            DateTime start = DateTime.Now;
+            DateTime expectedLastTrigger = config.AtDate.AddSeconds(everyNumSeconds * (3 + repeatNumber));
+            eventObj.Init(sink);
+
+            DateTime? lastTriggeredAt = await sink.WaitForOccurrenceAsync(repeatNumber, new TimeSpan(0, 0, (everyNumSeconds * repeatNumber) + toleranceSec + LateOccurrenceMarginSec));
 
             // ---------
             // Assert

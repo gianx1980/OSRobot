@@ -22,6 +22,8 @@ public class DateTimeEvent : IEvent
 
     private readonly System.Timers.Timer _recurringTimer = new();
 
+    private double _recurringIntervalMs;
+
     public void Init(IEventSink sink)
     {
         _sink = sink;
@@ -34,32 +36,37 @@ public class DateTimeEvent : IEvent
         _recurringTimer.AutoReset = true;
         _recurringTimer.Elapsed += RecurringTimer_Elapsed;
 
-        bool enableOneTimeTimer = false;
-        bool enableRecurringTimer = false;
         DateTimeEventConfig config = (DateTimeEventConfig)Config;
+
+        TimeSpan recurringInterval = TimeSpan.Zero;
+        if (config.EveryDaysHoursSecs)
+            recurringInterval = new TimeSpan(config.EveryNumDays, config.EveryNumHours, config.EveryNumMinutes, 0);
+        else if (config.EverySeconds)
+            recurringInterval = new TimeSpan(0, 0, 0, config.EveryNumSeconds);
+
+        if (recurringInterval > TimeSpan.Zero)
+        {
+            _recurringIntervalMs = recurringInterval.TotalMilliseconds;
+            _recurringTimer.Interval = _recurringIntervalMs;
+        }
 
         DateTime now = DateTime.Now;
         if (config.AtDate > now)
         {
             _oneTimeTimer.Interval = config.AtDate.Subtract(now).TotalMilliseconds;
-            enableOneTimeTimer = true;
-        }
-
-        if (config.EveryDaysHoursSecs)
-        {
-            _recurringTimer.Interval = new TimeSpan(config.EveryNumDays, config.EveryNumHours, config.EveryNumMinutes, 0).TotalMilliseconds;
-            enableRecurringTimer = true;
-        }
-        else if (config.EverySeconds)
-        {
-            _recurringTimer.Interval = new TimeSpan(0, 0, 0, config.EveryNumSeconds).TotalMilliseconds;
-            enableRecurringTimer = true;
-        }
-
-        if (enableOneTimeTimer)
             _oneTimeTimer.Enabled = true;
-        else if (enableRecurringTimer)
+        }
+        else if (recurringInterval > TimeSpan.Zero)
+        {
+            // AtDate has already passed (e.g. the service was restarted): the first occurrence must be
+            // the next one of the AtDate-based schedule, not a full interval from now. Otherwise every
+            // restart shifts the schedule, and restarting more often than the interval prevents the event
+            // from ever firing. RecurringTimer_Elapsed restores the regular interval after the first occurrence.
+            long elapsedPeriods = (now - config.AtDate).Ticks / recurringInterval.Ticks;
+            DateTime next = config.AtDate.AddTicks(recurringInterval.Ticks * (elapsedPeriods + 1));
+            _recurringTimer.Interval = next.Subtract(now).TotalMilliseconds;
             _recurringTimer.Enabled = true;
+        }
     }
 
     public void Destroy()
@@ -74,31 +81,35 @@ public class DateTimeEvent : IEvent
 
         try
         {
+            // Start the recurring timer first, so the time spent publishing does not delay the schedule.
+            DateTimeEventConfig config = (DateTimeEventConfig)Config;
+            if (!config.OneTime && _recurringIntervalMs > 0)
+                _recurringTimer.Enabled = true;
+
             if (Config.Log)
                 logger.EventTriggered(this);
-            
+
             DateTime now = DateTime.Now;
             DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, true, 0, now, now, 1);
 
             if (Config.Log)
                 logger.EventTriggering(this);
             _sink?.Publish(this, dDataSet, logger);
-
-            DateTimeEventConfig config = (DateTimeEventConfig)Config;
-            if (!config.OneTime)
-                _recurringTimer.Enabled = true;
         }
         catch (Exception ex)
         {
             // Errors are always logged, regardless of Config.Log: an event has no ExecResult to
-            // report failure through, so without this the event would fail silently forever
-            // (here that includes the recurring timer never being re-armed).
+            // report failure through, so without this the event would fail silently forever.
             logger.EventError(this, ex);
         }
     }
 
     private void RecurringTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
     {
+        // After an aligned first occurrence (see Init) switch back to the regular interval.
+        if (_recurringTimer.Interval != _recurringIntervalMs)
+            _recurringTimer.Interval = _recurringIntervalMs;
+
         IPluginInstanceLogger logger = PluginInstanceLogger.GetLogger(this);
 
         try
