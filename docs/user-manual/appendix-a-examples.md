@@ -3,7 +3,7 @@
 ## A.1 Nightly database backup with notification
 
 1. Create a folder **Backups** and open it.
-2. Add a **Date/Time event** (Id 1): *At date* tomorrow 02:00, *Every* 1 day, *All days*.
+2. Add a **Date/Time event** (Id 1): *Every day at* 02:00:00, *All days*.
 3. Add a **SQL Server backup** task (Id 2): connection to your instance, *Full*, *All user
    databases*, destination `D:\SqlBackups`, file name template using
    `{object[1].ExecutionStartDateUnderscoreDate}`, *Verify backup* on.

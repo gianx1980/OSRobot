@@ -5,133 +5,143 @@ using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging;
 using OSRobot.Server.Core.Logging.Abstract;
-using System.ComponentModel; 
 
-namespace OSRobot.Server.Plugins.DateTimeEvent;  
+namespace OSRobot.Server.Plugins.DateTimeEvent;
 
+/// <summary>
+/// Fires on the schedule computed by <see cref="DateTimeEventScheduler"/>.
+///
+/// Rather than a repeating timer (which drifts, and gets out of step with the clock after computer sleep,
+/// a clock change or a daylight saving change), a one-shot timer is armed for the next occurrence and
+/// re-armed after each one. No single wait is longer than <see cref="MaxWait"/>: each wake-up re-reads the
+/// clock, so the schedule corrects itself within MaxWait whatever happened to the clock in the meantime,
+/// and the final wait before an occurrence is exact.
+/// </summary>
 public class DateTimeEvent : IEvent
 {
+    /// <summary>The longest the timer waits before it re-checks the clock.</summary>
+    internal static readonly TimeSpan MaxWait = TimeSpan.FromSeconds(30);
+
+    /// <summary>
+    /// An occurrence noticed later than this is skipped instead of fired: it was missed because the service
+    /// was not running, the computer was asleep or the clock moved forward.
+    /// </summary>
+    internal static readonly TimeSpan MissedOccurrenceTolerance = TimeSpan.FromMinutes(1);
+
     public IFolder? ParentFolder { get; set; }
     public IPluginInstanceConfig Config { get; set; } = new DateTimeEventConfig();
 
     public List<PluginInstanceConnection> Connections { get; set; } = [];
 
+    private readonly object _gate = new();
     private IEventSink? _sink;
-
-    private readonly System.Timers.Timer _oneTimeTimer = new();
-
-    private readonly System.Timers.Timer _recurringTimer = new();
-
-    private double _recurringIntervalMs;
+    private Timer? _timer;                 // guarded by _gate; null once destroyed
+    private DateTime? _nextOccurrenceUtc;  // guarded by _gate; null when nothing is left to fire
 
     public void Init(IEventSink sink)
     {
         _sink = sink;
-
-        _oneTimeTimer.Enabled = false;
-        _oneTimeTimer.AutoReset = false;
-        _oneTimeTimer.Elapsed += OnTimeTimer_Elapsed;
-
-        _recurringTimer.Enabled = false;
-        _recurringTimer.AutoReset = true;
-        _recurringTimer.Elapsed += RecurringTimer_Elapsed;
-
         DateTimeEventConfig config = (DateTimeEventConfig)Config;
 
-        TimeSpan recurringInterval = TimeSpan.Zero;
-        if (config.EveryDaysHoursSecs)
-            recurringInterval = new TimeSpan(config.EveryNumDays, config.EveryNumHours, config.EveryNumMinutes, 0);
-        else if (config.EverySeconds)
-            recurringInterval = new TimeSpan(0, 0, 0, config.EveryNumSeconds);
-
-        if (recurringInterval > TimeSpan.Zero)
+        // An invalid configuration must not throw: the engine initializes all the events in one go.
+        string? configError = DateTimeEventScheduler.Validate(config);
+        if (configError != null)
         {
-            _recurringIntervalMs = recurringInterval.TotalMilliseconds;
-            _recurringTimer.Interval = _recurringIntervalMs;
+            PluginInstanceLogger.GetLogger(this).EventError(this, new ApplicationException(configError));
+            return;
         }
 
-        DateTime now = DateTime.Now;
-        if (config.AtDate > now)
+        lock (_gate)
         {
-            _oneTimeTimer.Interval = config.AtDate.Subtract(now).TotalMilliseconds;
-            _oneTimeTimer.Enabled = true;
-        }
-        else if (recurringInterval > TimeSpan.Zero)
-        {
-            // AtDate has already passed (e.g. the service was restarted): the first occurrence must be
-            // the next one of the AtDate-based schedule, not a full interval from now. Otherwise every
-            // restart shifts the schedule, and restarting more often than the interval prevents the event
-            // from ever firing. RecurringTimer_Elapsed restores the regular interval after the first occurrence.
-            long elapsedPeriods = (now - config.AtDate).Ticks / recurringInterval.Ticks;
-            DateTime next = config.AtDate.AddTicks(recurringInterval.Ticks * (elapsedPeriods + 1));
-            _recurringTimer.Interval = next.Subtract(now).TotalMilliseconds;
-            _recurringTimer.Enabled = true;
+            // Occurrences that are already due are missed: they are not fired at startup.
+            _nextOccurrenceUtc = DateTimeEventScheduler.GetNextOccurrence(config, DateTime.UtcNow, TimeZoneInfo.Local);
+            _timer = new Timer(Timer_Elapsed, null, Timeout.Infinite, Timeout.Infinite);
+            ArmTimer();
         }
     }
 
     public void Destroy()
     {
-        _oneTimeTimer.Dispose();
-        _recurringTimer.Dispose();
-    }
-
-    private void OnTimeTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
-    {
-        IPluginInstanceLogger logger = PluginInstanceLogger.GetLogger(this);
-
-        try
+        lock (_gate)
         {
-            // Start the recurring timer first, so the time spent publishing does not delay the schedule.
-            DateTimeEventConfig config = (DateTimeEventConfig)Config;
-            if (!config.OneTime && _recurringIntervalMs > 0)
-                _recurringTimer.Enabled = true;
-
-            if (Config.Log)
-                logger.EventTriggered(this);
-
-            DateTime now = DateTime.Now;
-            DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, true, 0, now, now, 1);
-
-            if (Config.Log)
-                logger.EventTriggering(this);
-            _sink?.Publish(this, dDataSet, logger);
-        }
-        catch (Exception ex)
-        {
-            // Errors are always logged, regardless of Config.Log: an event has no ExecResult to
-            // report failure through, so without this the event would fail silently forever.
-            logger.EventError(this, ex);
+            _timer?.Dispose();
+            _timer = null;
+            _nextOccurrenceUtc = null;
         }
     }
 
-    private void RecurringTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
+    // Called under _gate.
+    private void ArmTimer()
     {
-        // After an aligned first occurrence (see Init) switch back to the regular interval.
-        if (_recurringTimer.Interval != _recurringIntervalMs)
-            _recurringTimer.Interval = _recurringIntervalMs;
+        if (_timer == null || _nextOccurrenceUtc == null)
+            return;
 
-        IPluginInstanceLogger logger = PluginInstanceLogger.GetLogger(this);
+        TimeSpan wait = _nextOccurrenceUtc.Value - DateTime.UtcNow;
+        if (wait > MaxWait)
+            wait = MaxWait;
+        else if (wait < TimeSpan.Zero)
+            wait = TimeSpan.Zero;
+
+        _timer.Change(wait, Timeout.InfiniteTimeSpan);
+    }
+
+    private void Timer_Elapsed(object? state)
+    {
+        DateTime? dueOccurrenceUtc = null;
+        bool fire = false;
 
         try
         {
-            if (Config.Log)
-                logger.EventTriggered(this);
-            DateTime now = DateTime.Now;
-            DateTimeEventConfig config = (DateTimeEventConfig)Config;
-            DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, true, 0, now, now, 1);
-
-            if ((config.OnDays.Where(i => i.Equals(now.DayOfWeek)).Any()) || config.OnAllDays)
+            lock (_gate)
             {
-                if (Config.Log)
-                    logger.EventTriggering(this);
-                _sink?.Publish(this, dDataSet, logger);
+                if (_timer == null || _nextOccurrenceUtc == null)
+                    return;
+
+                DateTime nowUtc = DateTime.UtcNow;
+                if (nowUtc < _nextOccurrenceUtc.Value)
+                {
+                    // An intermediate wake-up (see MaxWait), or the clock moved back: wait some more.
+                    ArmTimer();
+                    return;
+                }
+
+                dueOccurrenceUtc = _nextOccurrenceUtc.Value;
+                fire = nowUtc - dueOccurrenceUtc.Value <= MissedOccurrenceTolerance;
+
+                // Schedule the next occurrence before publishing, so the time spent publishing doesn't delay it.
+                // Computed from now, not from the due occurrence: occurrences missed in between are skipped.
+                _nextOccurrenceUtc = DateTimeEventScheduler.GetNextOccurrence((DateTimeEventConfig)Config, nowUtc, TimeZoneInfo.Local);
+                ArmTimer();
             }
         }
         catch (Exception ex)
         {
-            // Errors are always logged, regardless of Config.Log: an event has no ExecResult to
-            // report failure through, so without this the event would fail silently forever
-            // (here that includes the recurring timer never being re-armed).
+            // Errors are always logged, regardless of Config.Log: an event has no ExecResult to report
+            // failure through, so without this the event would stop firing silently.
+            PluginInstanceLogger.GetLogger(this).EventError(this, ex);
+            return;
+        }
+
+        IPluginInstanceLogger logger = PluginInstanceLogger.GetLogger(this);
+
+        try
+        {
+            if (!fire)
+            {
+                if (Config.Log)
+                    logger.Info(this, $"Occurrence of {dueOccurrenceUtc!.Value.ToLocalTime().ToIsoDate()} skipped: it was missed (service stopped, computer asleep or clock changed).");
+                return;
+            }
+
+            if (Config.Log)
+                logger.EventTriggering(this);
+
+            DateTime now = DateTime.Now;
+            DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, true, 0, now, now, 1);
+            _sink?.Publish(this, dDataSet, logger);
+        }
+        catch (Exception ex)
+        {
             logger.EventError(this, ex);
         }
     }

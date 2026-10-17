@@ -403,3 +403,8 @@ FodyWeavers.xsd
 # Never commit it: it contains real credential hashes.
 OSRobot.Server/Data/config.db
 OSRobot.Server/Data/config.db-*
+
+# Runtime jobs configuration - created from Resources/InitJobs.txt on first start and rewritten
+# by the job editor. Local to each installation (it can hold connection credentials).
+OSRobot.Server/Data/jobs.json
+OSRobot.Server/Data/jobs.json.*

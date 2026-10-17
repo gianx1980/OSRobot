@@ -6,15 +6,30 @@ below list the specific settings.
 
 ## 9.1 Date/Time event
 
-Fires at a given date and time and, optionally, repeatedly afterwards. **Platforms:** all.
+Fires on a schedule. **Platforms:** all.
+
+Choose one of three schedules:
 
 | Setting | Description |
 |---|---|
-| At date | First date and time the event fires. If it is in the past when the jobs are loaded, recurring timing starts immediately. |
-| One time | Fire once, at the given date. |
-| Every (days / hours / minutes) | Repeat at this interval after the first occurrence. |
-| Every (seconds) | Repeat every N seconds. |
-| On days | Fire only on the selected weekdays, or on **All days**. |
+| One time | Fire once, at **At date**. |
+| Every day at | Fire every day at the given **Time** (`HH:mm:ss`), on the selected weekdays. |
+| Every (hours / minutes / seconds) | Fire repeatedly at this interval, on the selected weekdays. Occurrences are aligned to **Starting from**: every 15 minutes starting from 10:00 fires at 10:00, 10:15, 10:30... even after a restart or a reload. If *Starting from* is in the future, nothing fires until then. |
+| At date / Starting from | The date and time of the one-time occurrence, or the first occurrence of the interval. |
+| On days | The weekdays an **Every day at** or **Every** schedule fires on, or **All days**. Not used by **One time**. |
+
+Timing details:
+
+- **Precision.** Occurrences fire within a few milliseconds of the scheduled time, and don't drift
+  over time.
+- **Missed occurrences are skipped.** If OS-Robot was not running, the computer was asleep or the
+  clock was moved forward at the scheduled time, that occurrence does not fire later: the event
+  waits for the next one. The same applies when the jobs are loaded: a *One time* event whose date
+  has passed never fires.
+- **Daylight saving time.** *Every day at* keeps the same clock time across the change (02:00
+  stays 02:00). A time that doesn't exist on the day the clocks move forward fires when the clock
+  jumps; a time that happens twice when the clocks move back fires once. An interval stays evenly
+  spaced in real time.
 
 **Dynamic data:** standard fields only (the start date is the time the event fired).
 
