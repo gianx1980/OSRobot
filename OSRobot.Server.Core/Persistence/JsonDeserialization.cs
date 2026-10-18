@@ -47,6 +47,13 @@ public class JsonDeserialization(JsonDocument jsonDoc)
         }
     }
 
+    /// <summary>How plugin configs are read from jobs.json. CoreHelpers.CloneObjects uses them too, so a cloned config matches a loaded one.</summary>
+    public static JsonSerializerOptions JobsJsonOptions { get; } = new()
+    {
+        Converters = { new StringToIntConverter() },
+        PropertyNameCaseInsensitive = true
+    };
+
     private readonly JsonDocument _jsonDoc = jsonDoc;
 
     private List<Folder> GetFolderList(Folder folder)
@@ -90,11 +97,7 @@ public class JsonDeserialization(JsonDocument jsonDoc)
     {
         JsonElement jsonRootElement = _jsonDoc.RootElement;
 
-        JsonSerializerOptions jsonSerializerOptions = new()
-        {
-            Converters = { new StringToIntConverter() },
-            PropertyNameCaseInsensitive = true
-        };
+        JsonSerializerOptions jsonSerializerOptions = JobsJsonOptions;
 
         // Deserialize workspace's folder tree structure
         JsonElement jsonFolderTree = jsonRootElement.GetProperty("folderTree");

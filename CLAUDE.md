@@ -76,8 +76,9 @@ validates with the same deserializer before an atomic temp-file + `File.Replace`
 **Engine flow** (`JobEngine.cs`): `Start()` inits all tasks, opens the queue, then inits enabled
 events. An event calls `IEventSink.Publish` from its own thread (timer/watcher callback); the
 engine only evaluates connections and enqueues targets — it never runs tasks inline. Each queued
-task runs as a **clone** (`CoreHelpers.CloneObjects`, XML round-trip) because the same definition
-can run concurrently; successors are taken from the shared definition. `WaitSeconds` uses a timer,
+task runs as a **clone** (`CoreHelpers.CloneTaskForRun`: a fresh instance with a JSON-cloned config,
+sharing the definition's `ParentFolder` and `Connections`) because the same definition can run
+concurrently; successors are taken from the shared definition. `WaitSeconds` uses a timer,
 not a worker. `SerialExecution` = 1 worker; otherwise `MaxConcurrentTasks`.
 
 **Connections** (`PluginInstanceConnection`): `DontExecuteConditions` are checked first (any match
@@ -95,7 +96,10 @@ Pattern (see `OSRobot.Server.Plugins/ZipTask/` as a compact example) — one fol
 - `XxxConfig : ITaskConfig` / `IEventConfig` – must carry `Id`, `Name`, `Enabled`, `Log` and, for
   tasks, `PluginIterationMode`/`IterationObject`/`IterationsCount`. Mark user-editable strings that
   accept `{object[N].Field}` placeholders with `[DynamicData]`; enums use
-  `[JsonConverter(typeof(JsonStringEnumConverter))]`. Secrets use `[XmlEncryptField]`.
+  `[JsonConverter(typeof(JsonStringEnumConverter))]`. Secrets are marked `[XmlEncryptField]`, but
+  that is only a marker: nothing encrypts them and `jobs.json` holds them in plain text.
+  Config properties need a public getter and setter (get-only collections are silently dropped
+  when `jobs.json` loads) and concrete, non-interface types.
 - `Xxx` task – derive from `MultipleIterationTask` (runs once per iteration;
   `RunMultipleIterationTaskAsync(i)` reads `_iterationTaskConfig`) or `SingleIterationTask`
   (`RunSingleIterationTaskAsync()` reads `_taskConfig`). Do not read dynamic values from `Config`
@@ -147,5 +151,7 @@ auth, scripting, or `RunProgramTask`.
   that density in engine/base-class code.
 - Editor: Vue 3 `<script setup>`, Quasar components, ESLint + Prettier; module-level helper
   functions are prefixed `_`.
-- `JobsPersistence.SaveXML/LoadXML` are legacy; the XML serializer is still used for config
-  cloning, so properties must survive an XML round-trip.
+- The XML serializer (`XmlSerialization`/`XmlDeserialization`, `JobsPersistence.SaveXML/LoadXML`)
+  is `[Obsolete]` and unused. Configs are cloned (`CoreHelpers.CloneObjects`) by a System.Text.Json
+  round-trip with `JsonDeserialization.JobsJsonOptions`, the same options `jobs.json` is loaded with,
+  so a cloned config always matches a loaded one. `TestConfigCloning` checks this for every plugin.

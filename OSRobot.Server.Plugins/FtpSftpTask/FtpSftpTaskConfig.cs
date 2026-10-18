@@ -48,7 +48,7 @@ public class FtpSftpTaskConfig : ITaskConfig
     public CommandEnum Command { get; set; }
 
 
-    public List<FtpSftpCopyItem> CopyItems { get; } = [];
+    public List<FtpSftpCopyItem> CopyItems { get; set; } = [];
 
-    public List<FtpSftpDeleteItem> DeleteItems { get; } = [];
+    public List<FtpSftpDeleteItem> DeleteItems { get; set; } = [];
 }

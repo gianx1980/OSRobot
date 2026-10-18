@@ -54,9 +54,9 @@ public class SqlServerBackupTaskConfig : ITaskConfig
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public DatabasesToBackupEnum DatabasesToBackup { get; set; }
 
-    public List<string> DatabasesList { get; } = [];
+    public List<string> DatabasesList { get; set; } = [];
 
-    public List<string> SelectedDatabases { get; } = [];
+    public List<string> SelectedDatabases { get; set; } = [];
 
     [DynamicData]
     public string DestinationPath { get; set; } = string.Empty;

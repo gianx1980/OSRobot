@@ -9,6 +9,7 @@ using System.Xml;
 
 namespace OSRobot.Server.Core.Persistence;
 
+[Obsolete("Legacy XML persistence, no longer used: configs are cloned with CoreHelpers.CloneObjects (System.Text.Json) and jobs are stored in jobs.json.")]
 public class XmlSerialization
 {
     class ObjectSerialized(int id, object obj)

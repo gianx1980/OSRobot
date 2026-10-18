@@ -330,9 +330,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config) : 
             try
             {
                 // Run a clone, never the shared definition: the same task can run several times at once.
-                taskCopy = (ITask?)CoreHelpers.CloneObjects(item.Task);
-                if (taskCopy == null)
-                    throw new ApplicationException("Cloning configuration returned null");
+                taskCopy = CoreHelpers.CloneTaskForRun(item.Task);
 
                 if (taskCopy.Config.Log)
                     item.Logger.TaskStarting(taskCopy);

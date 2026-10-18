@@ -10,6 +10,7 @@ using System.Xml;
 
 namespace OSRobot.Server.Core.Persistence;
 
+[Obsolete("Legacy XML persistence, no longer used: configs are cloned with CoreHelpers.CloneObjects (System.Text.Json) and jobs are loaded from jobs.json.")]
 public class XmlDeserialization
 {
     private readonly XmlDocument _xmlDoc;
