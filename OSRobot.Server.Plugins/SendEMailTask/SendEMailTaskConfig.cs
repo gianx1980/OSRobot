@@ -3,7 +3,6 @@
 
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
-using OSRobot.Server.Core.Persistence;
 using System.Text.Json.Serialization;
 
 namespace OSRobot.Server.Plugins.SendEMailTask;
@@ -57,7 +56,6 @@ public class SendEMailTaskConfig : ITaskConfig
     public string Sender { get; set; } = string.Empty;
 
     [DynamicData]
-    [XmlEncryptField]
     public string SMTPServer { get; set; } = string.Empty;
 
     [DynamicData]
@@ -70,10 +68,8 @@ public class SendEMailTaskConfig : ITaskConfig
     public bool Authenticate { get; set; }
 
     [DynamicData]
-    [XmlEncryptField]
     public string Username { get; set; } = string.Empty;
     [DynamicData]
-    [XmlEncryptField]
     public string Password { get; set; } = string.Empty;
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public IterationMode PluginIterationMode { get; set; }

@@ -4,6 +4,7 @@
 namespace OSRobot.Server.Core.Persistence;
 
 [AttributeUsage(AttributeTargets.Property | AttributeTargets.Field)]
+[Obsolete("Never encrypted anything: only read by the legacy XmlSerialization, whose encryption is commented out.")]
 public class XmlEncryptFieldAttribute : Attribute
 {
 

@@ -96,8 +96,8 @@ Pattern (see `OSRobot.Server.Plugins/ZipTask/` as a compact example) — one fol
 - `XxxConfig : ITaskConfig` / `IEventConfig` – must carry `Id`, `Name`, `Enabled`, `Log` and, for
   tasks, `PluginIterationMode`/`IterationObject`/`IterationsCount`. Mark user-editable strings that
   accept `{object[N].Field}` placeholders with `[DynamicData]`; enums use
-  `[JsonConverter(typeof(JsonStringEnumConverter))]`. Secrets are marked `[XmlEncryptField]`, but
-  that is only a marker: nothing encrypts them and `jobs.json` holds them in plain text.
+  `[JsonConverter(typeof(JsonStringEnumConverter))]`. Secrets (passwords, connection options) are
+  not encrypted: `jobs.json` holds them in plain text and they reach the editor as they are.
   Config properties need a public getter and setter (get-only collections are silently dropped
   when `jobs.json` loads) and concrete, non-interface types.
 - `Xxx` task – derive from `MultipleIterationTask` (runs once per iteration;

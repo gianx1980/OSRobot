@@ -3,7 +3,6 @@
 
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
-using OSRobot.Server.Core.Persistence;
 using System.Text.Json.Serialization;
 
 namespace OSRobot.Server.Plugins.SqlServerCommandTask;
@@ -36,15 +35,10 @@ public class SqlServerCommandTaskConfig : ITaskConfig
 
     public bool ReturnsRecordset { get; set; }
 
-    [XmlEncryptField]
     public string Server { get; set; } = string.Empty;
-    [XmlEncryptField]
     public string Database { get; set; } = string.Empty;
-    [XmlEncryptField]
     public string Username { get; set; } = string.Empty;
-    [XmlEncryptField]
     public string Password { get; set; } = string.Empty;
-    [XmlEncryptField]
     public string ConnectionStringOptions { get; set; } = string.Empty;
     public int CommandTimeout { get; set; } = _defaultCommandTimeout;
 }

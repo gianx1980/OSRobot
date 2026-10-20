@@ -3,7 +3,6 @@
 
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
-using OSRobot.Server.Core.Persistence;
 using System.Text.Json.Serialization;
 
 namespace OSRobot.Server.Plugins.SqlServerBackupTask;
@@ -41,13 +40,9 @@ public class SqlServerBackupTaskConfig : ITaskConfig
     public int IterationsCount { get; set; }
 
 
-    [XmlEncryptField]
     public string Server { get; set; } = string.Empty;
-    [XmlEncryptField]
     public string Username { get; set; } = string.Empty;
-    [XmlEncryptField]
     public string Password { get; set; } = string.Empty;
-    [XmlEncryptField]
     public string ConnectionStringOptions { get; set; } = string.Empty;
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public BackupTypeEnum BackupType { get; set; }
