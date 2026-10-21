@@ -13,13 +13,16 @@ using OSRobot.Server;
 using OSRobot.Server.Configuration;
 using OSRobot.Server.Core.Logging;
 using OSRobot.Server.Core.Logging.Abstract;
+using OSRobot.Server.Core.Notifications;
 using OSRobot.Server.Infrastructure.DataAccess.Models;
 using OSRobot.Server.Infrastructure.Hosting;
+using OSRobot.Server.Infrastructure.Notifications;
 using OSRobot.Server.Infrastructure.Security;
 using OSRobot.Server.Infrastructure.Security.Abstract;
 using OSRobot.Server.JobEngineLib;
 using OSRobot.Server.JobEngineLib.Infrastructure.Abstract;
 using Serilog;
+using Serilog.Events;
 using System.Net;
 using System.Reflection;
 using System.Text;
@@ -134,8 +137,13 @@ var options = new WebApplicationOptions
 
 var builder = WebApplication.CreateBuilder(options);
 
+// ASP.NET's request start/finish lines carry the full URL, and the notifications hub receives the
+// JWT as ?access_token= (see the JWT OnMessageReceived handler). Enforced here, after the
+// configuration is read, so neither an appsettings.json kept from an older version nor a lowered
+// level can write tokens to osrobot-*.log. See SECURITY.md.
 var logger = new LoggerConfiguration()
     .ReadFrom.Configuration(builder.Configuration)
+    .MinimumLevel.Override("Microsoft.AspNetCore.Hosting.Diagnostics", LogEventLevel.Warning)
     .Enrich.FromLogContext()
     .CreateLogger();
 
@@ -194,6 +202,21 @@ builder.Services.AddAuthentication(options =>
         ValidateAudience = true,
         ValidateLifetime = true,
         ValidateIssuerSigningKey = true
+    };
+
+    // Browsers cannot set an Authorization header on a WebSocket, so the SignalR client sends the
+    // token as ?access_token=. Accepted only for the notifications hub: API calls never take a
+    // token from the URL, where proxies and browser history would record it. See SECURITY.md.
+    o.Events = new JwtBearerEvents
+    {
+        OnMessageReceived = context =>
+        {
+            string? accessToken = context.Request.Query["access_token"];
+            if (!string.IsNullOrEmpty(accessToken) && context.HttpContext.Request.Path.StartsWithSegments(NotificationsHub.Path))
+                context.Token = accessToken;
+
+            return Task.CompletedTask;
+        }
     };
 });
 builder.Services.AddAuthorization();
@@ -256,6 +279,11 @@ Serilog.ILogger auditLogger = new LoggerConfiguration()
     .CreateLogger();
 builder.Services.AddSingleton<IAuditLogger>(new AppLogger(auditLogger));
 
+// NotifyUsersTask notifications reach the editors through this hub; the engine installs the
+// notifier as Core.UserNotifier at start.
+builder.Services.AddSignalR();
+builder.Services.AddSingleton<IUserNotifier, HubUserNotifier>();
+
 builder.Services.AddSingleton<IJobEngineConfig>(sp => sp.GetRequiredService<IOptions<AppSettings>>().Value.JobEngineConfig);
 builder.Services.AddSingleton<IJobEngine, JobEngine>();
 builder.Services.AddHostedService<JobEngineHostedService>();
@@ -296,6 +324,7 @@ app.UseAuthentication();
 app.UseAuthorization();
 
 app.MapControllers();
+app.MapHub<NotificationsHub>(NotificationsHub.Path);
 
 _warnIfExposedWithoutHttps(builder.Configuration, logger);
 

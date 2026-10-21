@@ -33,6 +33,18 @@ around it:
    [OSRobot.Server/DEPLOYMENT.md](OSRobot.Server/DEPLOYMENT.md)). Without TLS, the JWT bearer
    token used for every authenticated request travels in plaintext, and capturing it is
    equivalent to capturing the password.
+   - One exception to "the token travels in a header": browsers cannot set headers on a
+     WebSocket, so the editor's notifications connection (`/hubs/notifications`, used by the
+     Notification task) sends the JWT as an `access_token` query parameter. The server accepts a
+     token from the URL for that path only. OSRobot's own log doesn't record request URLs:
+     `Program.cs` forces ASP.NET's request logging (`Microsoft.AspNetCore.Hosting.Diagnostics`)
+     to `Warning` after reading the Serilog configuration, so no `appsettings.json` can turn it
+     back on (the `Logging:LogLevel` section never applied to the Serilog file anyway).
+     **Reverse proxies (IIS, nginx) usually log full URLs**: exclude the `access_token` parameter
+     from their access logs, or treat those logs as sensitive. Tokens are short-lived, which limits
+     what a leaked log line is worth.
+   - The notifications hub refuses users who still have to change the default password, the
+     same way `MustChangePasswordFilter` blocks the API.
 2. **Authentication.** A single admin account, PBKDF2-hashed password, JWT-based sessions.
    - Change the default `admin` credentials before doing anything else — the app enforces this on
      first login (`MustChangePassword`).

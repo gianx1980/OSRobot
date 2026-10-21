@@ -208,18 +208,12 @@ public class ExcelFileTask : SingleIterationTask
             dDataSet.TryAdd(CommonDynamicData.DefaultRecordsetName, _defaultRecordset);
 
         if (Config.Log)
-        {
             _instanceLogger.Info(this, $"Rows processed: {_actualIterations}");
-            _instanceLogger.TaskCompleted(this);
-        }
     }
 
     protected override void PostTaskFailed(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
     {
         if (Config.Log)
-        {
             _instanceLogger.Info(this, $"Rows processed: {_actualIterations}");
-            _instanceLogger.TaskCompleted(this);
-        }
     }
 }

@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using OSRobot.Server.Core.Logging;
 using OSRobot.Server.Core.Logging.Abstract;
+using OSRobot.Server.Core.Notifications;
 using OSRobot.Server.JobEngineLib;
 using OSRobot.Server.JobEngineLib.Infrastructure.Abstract;
 
@@ -33,6 +34,7 @@ public sealed class TestEngineConfig : IJobEngineConfig
     public string LogPath { get; set; } = string.Empty;
     public string DataPath { get; set; } = string.Empty;
     public bool SerialExecution { get; set; }
+    public int MaxConcurrentTasks { get; set; } = 8;
     public int CleanUpLogsOlderThanHours { get; set; }
     public int CleanUpLogsIntervalHours { get; set; }
     public int StopDrainTimeoutSeconds { get; set; } = 5;
@@ -48,9 +50,10 @@ public sealed class JobGraph
     private readonly List<object> _nodes = [];
     private readonly List<object> _edges = [];
 
-    public JobGraph()
+    /// <param name="eventFiresOnInit">The event publishes once from inside Init(), like OSRobotServiceStartEvent.</param>
+    public JobGraph(bool eventFiresOnInit = false)
     {
-        _nodes.Add(new { workspaceItemConfig = new { pluginId = "TestTriggerEvent", id = EventId, name = "Trigger" } });
+        _nodes.Add(new { workspaceItemConfig = new { pluginId = "TestTriggerEvent", id = EventId, name = "Trigger", fireOnInit = eventFiresOnInit } });
     }
 
     /// <summary>Adds a probe task. Its label is what shows up in the ProbeLog.</summary>
@@ -74,25 +77,63 @@ public sealed class JobGraph
         return this;
     }
 
-    /// <summary>Connects two objects. With no conditions given, the target runs when the source succeeds.</summary>
-    public JobGraph Connect(int source, int target, int? waitSeconds = null, bool enabled = true,
-                            string[]? executeOperators = null, string[]? dontExecuteOperators = null)
+    /// <summary>Adds an iterating task: each iteration shows up in the ProbeLog as "label#iterationIndex".</summary>
+    public JobGraph IteratingTask(int id, string label, int iterations = 1, string value = "", int failOnIteration = -1,
+                                  string iterationMode = "IterateExactNumber", string iterationObject = "", int rowsPerIteration = 0)
     {
-        static object[] Conditions(string[] operators) =>
-            [.. operators.Select(o => new { dynamicDataCode = string.Empty, @operator = o, minValue = string.Empty, maxValue = string.Empty })];
-
-        _edges.Add(new
+        _nodes.Add(new
         {
-            workspaceConnectionConfig = new
+            workspaceItemConfig = new
             {
-                source,
-                target,
-                enabled,
-                waitSeconds,
-                executeConditions = Conditions(executeOperators ?? ["ObjectExecutes"]),
-                dontExecuteConditions = Conditions(dontExecuteOperators ?? [])
+                pluginId = "TestIteratingTask",
+                id,
+                name = label,
+                label,
+                value,
+                failOnIteration,
+                rowsPerIteration,
+                pluginIterationMode = iterationMode,
+                iterationObject,
+                iterationsCount = iterations
             }
         });
+        return this;
+    }
+
+    /// <summary>Adds an object of any plugin, given its workspaceItemConfig (which must include pluginId and id).</summary>
+    public JobGraph Node(object workspaceItemConfig)
+    {
+        _nodes.Add(new { workspaceItemConfig });
+        return this;
+    }
+
+    /// <summary>
+    /// Connects two objects. With no conditions given, the target runs when the source succeeds. runMode and
+    /// collectedResultRule are left out of the JSON when not given, like in jobs saved before they existed.
+    /// </summary>
+    public JobGraph Connect(int source, int target, int? waitSeconds = null, bool enabled = true,
+                            string[]? executeOperators = null, string[]? dontExecuteOperators = null, string dynamicDataCode = "",
+                            string? runMode = null, string? collectedResultRule = null)
+    {
+        object[] Conditions(string[] operators) =>
+            [.. operators.Select(o => new { dynamicDataCode, @operator = o, minValue = string.Empty, maxValue = string.Empty })];
+
+        Dictionary<string, object?> connection = new()
+        {
+            ["source"] = source,
+            ["target"] = target,
+            ["enabled"] = enabled,
+            ["waitSeconds"] = waitSeconds,
+            ["executeConditions"] = Conditions(executeOperators ?? ["ObjectExecutes"]),
+            ["dontExecuteConditions"] = Conditions(dontExecuteOperators ?? [])
+        };
+
+        if (runMode != null)
+            connection["runMode"] = runMode;
+        if (collectedResultRule != null)
+            connection["collectedResultRule"] = collectedResultRule;
+
+        _edges.Add(new { workspaceConnectionConfig = connection });
         return this;
     }
 
@@ -122,7 +163,8 @@ public sealed class EngineHarness : IDisposable
     public CapturingAppLogger Log { get; } = new();
     public TestEngineConfig Config { get; }
 
-    public EngineHarness(JobGraph graph, bool serialExecution = false, int stopDrainTimeoutSeconds = 5)
+    public EngineHarness(JobGraph graph, bool serialExecution = false, int stopDrainTimeoutSeconds = 5, int maxConcurrentTasks = 8,
+                         IUserNotifier? userNotifier = null)
     {
         _root = Path.Combine(Path.GetTempPath(), "OSRobotEngineTests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(Path.Combine(_root, "Data"));
@@ -134,11 +176,12 @@ public sealed class EngineHarness : IDisposable
             DataPath = Path.Combine(_root, "Data"),
             LogPath = Path.Combine(_root, "Logs"),
             SerialExecution = serialExecution,
+            MaxConcurrentTasks = maxConcurrentTasks,
             StopDrainTimeoutSeconds = stopDrainTimeoutSeconds
         };
 
         ProbeLog.Clear();
-        Engine = new JobEngine(Log, Config);
+        Engine = new JobEngine(Log, Config, userNotifier);
         Engine.Start();
     }
 

@@ -19,6 +19,7 @@
   <ItemGroup>
     <ProjectReference Include="..\OSRobot.Server.Plugins\OSRobot.Server.Plugins.csproj" />
     <ProjectReference Include="..\OSRobot.Server.JobEngineLib\OSRobot.Server.JobEngineLib.csproj" />
+    <ProjectReference Include="..\OSRobot.Server\OSRobot.Server.csproj" />
   </ItemGroup>
 
 </Project>

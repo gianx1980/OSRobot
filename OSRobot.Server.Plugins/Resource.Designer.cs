@@ -835,6 +835,15 @@ namespace OSRobot.Server.Plugins {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Notification task.
+        /// </summary>
+        internal static string TxtNotifyUsersTask {
+            get {
+                return ResourceManager.GetString("TxtNotifyUsersTask", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Options.
         /// </summary>
         internal static string TxtOptions {
@@ -1110,6 +1119,42 @@ namespace OSRobot.Server.Plugins {
         internal static string TxtSqlServerCommandTask {
             get {
                 return ResourceManager.GetString("TxtSqlServerCommandTask", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Sql Server auto loader.
+        /// </summary>
+        internal static string TxtSqlServerFileLoaderTask {
+            get {
+                return ResourceManager.GetString("TxtSqlServerFileLoaderTask", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Rows loaded.
+        /// </summary>
+        internal static string TxtDynDataRowsLoaded {
+            get {
+                return ResourceManager.GetString("TxtDynDataRowsLoaded", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Table name.
+        /// </summary>
+        internal static string TxtDynDataLoadedTableName {
+            get {
+                return ResourceManager.GetString("TxtDynDataLoadedTableName", resourceCulture);
+            }
+        }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to Table created.
+        /// </summary>
+        internal static string TxtDynDataTableCreated {
+            get {
+                return ResourceManager.GetString("TxtDynDataTableCreated", resourceCulture);
             }
         }
         

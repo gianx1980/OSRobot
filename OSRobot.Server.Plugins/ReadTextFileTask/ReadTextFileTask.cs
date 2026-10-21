@@ -359,10 +359,7 @@ public class ReadTextFileTask : MultipleIterationTask
     private void PostIteration(int currentIteration, ExecResult result, DynamicDataSet dDataSet)
     {
         if (Config.Log)
-        {
-            _instanceLogger.Info(this, $"Rows processed: {currentIteration - 1}");
-            _instanceLogger.TaskCompleted(this);
-        }
+            _instanceLogger.Info(this, $"Rows processed: {((DataTable)_defaultRecordset).Rows.Count}");
 
         dDataSet.TryAdd(CommonDynamicData.DefaultRecordsetName, _defaultRecordset);
     }

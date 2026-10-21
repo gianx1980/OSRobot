@@ -10,6 +10,7 @@ public class JobEngineConfig : IJobEngineConfig
     public string LogPath { get; set; } = string.Empty;
     public string DataPath { get; set; } = string.Empty;
     public bool SerialExecution { get; set; }
+    public int MaxConcurrentTasks { get; set; } = 16;
     public int CleanUpLogsOlderThanHours { get; set; }
     public int CleanUpLogsIntervalHours { get; set; }
     public int StopDrainTimeoutSeconds { get; set; } = 30;

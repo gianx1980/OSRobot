@@ -8,6 +8,8 @@ namespace OSRobot.Server.Core;
 
 public interface ITask : IPluginInstance
 {
+    void Init();
+
     Task<InstanceExecResult> RunAsync(DynamicDataChain dataChain, DynamicDataSet lastDynamicDataSet, int? subInstanceIndex,
                                        IPluginInstanceLogger instanceLogger, CancellationToken cancellationToken);
 }

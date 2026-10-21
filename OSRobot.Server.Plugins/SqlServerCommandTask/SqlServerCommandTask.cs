@@ -156,10 +156,7 @@ public class SqlServerCommandTask : MultipleIterationTask
         SqlServerCommandTaskConfig config = (SqlServerCommandTaskConfig)_iterationTaskConfig;
 
         if (config.Log)
-        {
             _instanceLogger.Info(this, $"Number of queries/commands executed: {currentIteration + 1}");
-            _instanceLogger.TaskCompleted(this);
-        }
 
         if (config.ReturnsRecordset)
             dDataSet.TryAdd(CommonDynamicData.DefaultRecordsetName, _defaultRecordset);

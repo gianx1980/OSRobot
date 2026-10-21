@@ -4,6 +4,7 @@
 namespace OSRobot.Server.Core.Persistence;
 
 [AttributeUsage(AttributeTargets.Field)]
+[Obsolete("Only read by the legacy XmlSerialization.")]
 public class XmlSerializeFieldAttribute : Attribute
 {
 

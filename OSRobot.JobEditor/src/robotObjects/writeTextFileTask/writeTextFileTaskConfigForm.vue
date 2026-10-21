@@ -287,6 +287,19 @@
             />
           </div>
         </div>
+        <div
+          class="row q-mb-sm"
+          v-if="_propsRef.modelValue.taskType === 'AppendRow'"
+        >
+          <div class="col">
+            <q-toggle
+              v-model="_propsRef.modelValue.overwriteIfExists"
+              :label="_$t('overwriteFileIfExists')"
+              left-label
+              dense
+            />
+          </div>
+        </div>
         <div class="row" v-if="_propsRef.modelValue.taskType === 'InsertRow'">
           <div class="col-10">
             <q-input
@@ -309,7 +322,10 @@
         </div>
       </q-card-section>
     </q-card>
-    <PluginIterationConfigForm v-model="_propsRef.modelValue" />
+    <PluginIterationConfigForm
+      v-model="_propsRef.modelValue"
+      :containingFolderItems="_propsRef.containingFolderItems"
+    />
   </div>
   <q-dialog v-model="_columnDialogVisibility" persistent>
     <div

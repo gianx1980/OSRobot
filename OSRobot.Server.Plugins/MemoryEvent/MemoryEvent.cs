@@ -6,7 +6,6 @@ using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging;
 using OSRobot.Server.Core.Logging.Abstract;
-using System.ComponentModel;
 using System.Diagnostics;
 
 
@@ -27,7 +26,7 @@ public class MemoryEvent : IEvent
 
     public List<PluginInstanceConnection> Connections { get; set; } = [];
 
-    public event EventTriggeredDelegate? EventTriggered;
+    private IEventSink? _sink;
 
     private System.Timers.Timer? _recurringTimer;
 
@@ -41,23 +40,10 @@ public class MemoryEvent : IEvent
 
     private const int _defaultIntervalMinutes = 5;
 
-    protected virtual void OnEventTriggered(EventTriggeredEventArgs e)
+    public void Init(IEventSink sink)
     {
-        EventTriggeredDelegate? handler = EventTriggered;
-        if (handler != null)
-        {
-            foreach (EventTriggeredDelegate singleCast in handler.GetInvocationList().Cast<EventTriggeredDelegate>())
-            {
-                if ((singleCast.Target is ISynchronizeInvoke syncInvoke) && (syncInvoke.InvokeRequired))
-                    syncInvoke.Invoke(singleCast, [this, e]);
-                else
-                    singleCast(this, e);
-            }
-        }
-    }
+        _sink = sink;
 
-    public void Init()
-    {
         _memoryUsageSamples = [];
         _recurringTimer = new()
         {
@@ -148,7 +134,7 @@ public class MemoryEvent : IEvent
                     Logger.EventTriggering(this);
                 }
                     
-                OnEventTriggered(new EventTriggeredEventArgs(dDataSet, Logger));
+                _sink?.Publish(this, dDataSet, Logger);
                 _dateLastTrigger = now;
             }
 

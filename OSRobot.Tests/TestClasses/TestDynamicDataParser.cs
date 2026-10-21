@@ -205,6 +205,26 @@ public sealed class TestDynamicDataParser
         Assert.AreEqual(4, DynamicDataParser.GetIterationCount(config, chain, []));
     }
 
+    // Regression: an object recordset that couldn't be resolved used to fall back to a single iteration, silently.
+    [TestMethod]
+    [DataRow("object[7].Result", "is not a dynamic data reference", DisplayName = "Missing braces")]
+    [DataRow("", "is not a dynamic data reference", DisplayName = "Empty")]
+    [DataRow("{object[9].Result}", "object 9 has no data here", DisplayName = "Object that did not run")]
+    [DataRow("{object[7].Missing}", "object 7 has no field 'Missing'", DisplayName = "Missing field")]
+    [DataRow("{object[7].Name}", "is not a recordset", DisplayName = "Not a recordset")]
+    public void IterationCount_over_an_object_recordset_that_cannot_be_resolved_fails_with_the_reason(string iterationObject, string expectedMessage)
+    {
+        TestProbeTaskConfig config = new()
+        {
+            PluginIterationMode = IterationMode.IterateObjectRecordset,
+            IterationObject = iterationObject
+        };
+        DynamicDataChain chain = ChainWith(7, ("Result", Recordset("a", "b")), ("Name", "not a recordset"));
+
+        ApplicationException ex = Assert.ThrowsExactly<ApplicationException>(() => DynamicDataParser.GetIterationCount(config, chain, []));
+        StringAssert.Contains(ex.Message, expectedMessage);
+    }
+
     // ----- Parsing whole configs ----------------------------------------------------------------
 
     [TestMethod]

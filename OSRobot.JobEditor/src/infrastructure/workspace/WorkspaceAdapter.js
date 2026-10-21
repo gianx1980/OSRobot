@@ -89,6 +89,8 @@ export function createDefaultConnection(edgeId, source, target) {
     target,
     enabled: true,
     waitSeconds: 0,
+    runMode: "ForEachResult",
+    collectedResultRule: "AllSucceeded",
     executeConditions: [
       {
         dynamicDataCode: null,

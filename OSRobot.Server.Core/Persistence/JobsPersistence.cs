@@ -8,6 +8,7 @@ namespace OSRobot.Server.Core.Persistence;
 
 public static class JobsPersistence
 {
+    [Obsolete("Legacy XML persistence: jobs are stored in jobs.json.")]
     public static void SaveXML(string dataPath, string fileName, Folder rootFolderData)
     {
         string filePathName = Path.Combine(dataPath, fileName);
@@ -17,6 +18,7 @@ public static class JobsPersistence
         xmlDoc.Save(filePathName);
     }
 
+    [Obsolete("Legacy XML persistence: use LoadJobEditorJSON.")]
     public static Folder? LoadXML(string dataPath, string fileName)
     {
         string filePathName = Path.Combine(dataPath, fileName);

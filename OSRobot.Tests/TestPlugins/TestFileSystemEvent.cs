@@ -3,6 +3,7 @@
 
 using OSRobot.Server.Core;
 using OSRobot.Server.Plugins.FileSystemEvent;
+using OSRobot.Tests.Support;
 
 namespace OSRobot.Tests.TestPlugins;
 
@@ -10,7 +11,7 @@ namespace OSRobot.Tests.TestPlugins;
 public sealed class TestFileSystemEvent
 {
     [TestMethod]
-    public void TestAddFile()
+    public async Task TestAddFile()
     {
         // ---------
         // Arrange
@@ -45,45 +46,35 @@ public sealed class TestFileSystemEvent
             Config = config
         };
 
-        object objSync = new();
-        ManualResetEvent mre = new(false);
-        bool eventTriggered = false;
-        eventObj.EventTriggered += (sender, e) =>
+        RecordingEventSink sink = new();
+
+        try
         {
-            lock (objSync)
-            {
-                eventTriggered = true;
-            }
+            // ---------
+            // Act
+            // ---------
+            eventObj.Init(sink);
 
-            mre.Set();
-        };
-        eventObj.Config = config;
+            string filePath = Path.Combine(testFileFolder, "TestAdd.txt");
+            using FileStream fs = new(filePath, FileMode.Create);
+            using StreamWriter sw = new(fs);
+            sw.WriteLine("This is a test!");
 
-        // ---------
-        // Act
-        // ---------
-        eventObj.Init();
+            DateTime? triggeredAt = await sink.WaitForOccurrenceAsync(1, new TimeSpan(0, 0, toleranceSec));
 
-        string filePath = Path.Combine(testFileFolder, "TestAdd.txt");
-        using FileStream fs = new(filePath, FileMode.Create);
-        using StreamWriter sw = new(fs);
-        sw.WriteLine("This is a test!");
-        
-        mre.WaitOne(new TimeSpan(0, 0, toleranceSec));
-
-        // ---------
-        // Assert
-        // ---------
-        lock (objSync)
-        {
-            Assert.IsTrue(eventTriggered, "The event did not occur at the expected time.");
+            // ---------
+            // Assert
+            // ---------
+            Assert.IsNotNull(triggeredAt, "The event did not occur at the expected time.");
         }
-
-        eventObj.Destroy();
+        finally
+        {
+            eventObj.Destroy();
+        }
     }
 
     [TestMethod]
-    public void TestModifyFile()
+    public async Task TestModifyFile()
     {
         // Arrange
         int toleranceSec = 30;
@@ -125,48 +116,38 @@ public sealed class TestFileSystemEvent
             Config = config
         };
 
-        object objSync = new();
-        ManualResetEvent mre = new(false);
-        bool eventTriggered = false;
-        eventObj.EventTriggered += (sender, e) =>
+        RecordingEventSink sink = new();
+
+        try
         {
-            lock (objSync)
+            // ---------
+            // Act
+            // ---------
+            eventObj.Init(sink);
+
+            using (FileStream fs = new(filePath, FileMode.Append))
             {
-                eventTriggered = true;
+                using (StreamWriter sw = new(fs))
+                {
+                    sw.WriteLine("This is a test!");
+                }
             }
 
-            mre.Set();
-        };
-        eventObj.Config = config;
+            DateTime? triggeredAt = await sink.WaitForOccurrenceAsync(1, new TimeSpan(0, 0, toleranceSec));
 
-        // ---------
-        // Act
-        // ---------
-        eventObj.Init();
-
-        using (FileStream fs = new(filePath, FileMode.Append))
-        {
-            using (StreamWriter sw = new(fs))
-            {
-                sw.WriteLine("This is a test!");
-            }
+            // ---------
+            // Assert
+            // ---------
+            Assert.IsNotNull(triggeredAt, "The event did not occur at the expected time.");
         }
-
-        mre.WaitOne(new TimeSpan(0, 0, toleranceSec));
-
-        // ---------
-        // Assert
-        // ---------
-        lock (objSync)
+        finally
         {
-            Assert.IsTrue(eventTriggered, "The event did not occur at the expected time.");
+            eventObj.Destroy();
         }
-
-        eventObj.Destroy();
     }
 
     [TestMethod]
-    public void TestDeleteFile()
+    public async Task TestDeleteFile()
     {
         // ---------
         // Arrange
@@ -209,37 +190,27 @@ public sealed class TestFileSystemEvent
             Config = config
         };
 
-        object objSync = new();
-        ManualResetEvent mre = new(false);
-        bool eventTriggered = false;
-        eventObj.EventTriggered += (sender, e) =>
+        RecordingEventSink sink = new();
+
+        try
         {
-            lock (objSync)
-            {
-                eventTriggered = true;
-            }
+            // ---------
+            // Act
+            // ---------
+            eventObj.Init(sink);
 
-            mre.Set();
-        };
-        eventObj.Config = config;
+            File.Delete(filePath);
 
-        // ---------
-        // Act
-        // ---------
-        eventObj.Init();
+            DateTime? triggeredAt = await sink.WaitForOccurrenceAsync(1, new TimeSpan(0, 0, toleranceSec));
 
-        File.Delete(filePath);
-
-        mre.WaitOne(new TimeSpan(0, 0, toleranceSec));
-
-        // ---------
-        // Assert
-        // ---------
-        lock (objSync)
-        {
-            Assert.IsTrue(eventTriggered, "The event did not occur at the expected time.");
+            // ---------
+            // Assert
+            // ---------
+            Assert.IsNotNull(triggeredAt, "The event did not occur at the expected time.");
         }
-
-        eventObj.Destroy();
+        finally
+        {
+            eventObj.Destroy();
+        }
     }
 }

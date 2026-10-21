@@ -87,9 +87,21 @@
             />
           </div>
         </div>
+        <div class="row">
+          <div class="col">
+            <q-toggle
+              v-model="_propsRef.modelValue.failOnNonZeroExitCode"
+              :label="_$t('failOnNonZeroExitCode')"
+              dense
+            />
+          </div>
+        </div>
       </q-card-section>
     </q-card>
-    <PluginIterationConfigForm v-model="_propsRef.modelValue" />
+    <PluginIterationConfigForm
+      v-model="_propsRef.modelValue"
+      :containingFolderItems="_propsRef.containingFolderItems"
+    />
   </div>
 </template>
 <script setup>
@@ -111,4 +123,8 @@ const _$q = useQuasar();
 
 const _i18n = useI18n();
 const _$t = _i18n.t;
+
+// Tasks saved before this setting existed don't have it: show the server's default.
+if (_propsRef.value.modelValue.failOnNonZeroExitCode === undefined)
+  _propsRef.value.modelValue.failOnNonZeroExitCode = true;
 </script>

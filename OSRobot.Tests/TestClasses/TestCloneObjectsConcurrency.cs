@@ -1,28 +1,29 @@
 // SPDX-FileCopyrightText: Gianluca Di Bucci (gianx1980) <https://www.os-robot.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
+using System.Text.Json;
 using OSRobot.Server.Core;
-using OSRobot.Server.Core.Persistence;
 
 namespace OSRobot.Tests.TestClasses;
 
+// Not parallelizable: this stress test saturates the thread pool on purpose, which delays the
+// timer callbacks the event plugin tests depend on by several seconds when they run alongside it.
 [TestClass]
+[DoNotParallelize]
 public sealed class TestCloneObjectsConcurrency
 {
     private const int ClonesPerPlugin = 200;
 
-    private static string Serialize(object o) =>
-        new XmlSerialization { CheckSerializeAttribute = true }.SerializeToXmlString(o, "OSRobot");
+    private static string Serialize(object o) => JsonSerializer.Serialize(o, o.GetType());
 
     [TestMethod]
     public void CloneObjects_is_correct_when_called_concurrently_for_every_plugin()
     {
-        // One default-configured instance per plugin, and the expected serialized form of each.
-        List<(string Id, IPluginInstance Instance, string Expected)> subjects = [];
+        // One default config per plugin, and the expected serialized form of each.
+        List<(string Id, IPluginInstanceConfig Instance, string Expected)> subjects = [];
         foreach (IPlugin plugin in PluginRegistry.GetPlugins())
         {
-            IPluginInstance instance = plugin.GetInstance();
-            instance.Config = plugin.GetPluginDefaultConfig();
+            IPluginInstanceConfig instance = plugin.GetPluginDefaultConfig();
             subjects.Add((plugin.Id, instance, Serialize(instance)));
         }
 
@@ -32,7 +33,7 @@ public sealed class TestCloneObjectsConcurrency
 
         Parallel.For(0, subjects.Count * ClonesPerPlugin, new ParallelOptions { MaxDegreeOfParallelism = Environment.ProcessorCount * 4 }, i =>
         {
-            (string id, IPluginInstance instance, string expected) = subjects[i % subjects.Count];
+            (string id, IPluginInstanceConfig instance, string expected) = subjects[i % subjects.Count];
             try
             {
                 object? clone = CoreHelpers.CloneObjects(instance);

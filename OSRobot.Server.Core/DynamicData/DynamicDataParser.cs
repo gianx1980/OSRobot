@@ -186,19 +186,10 @@ public static partial class DynamicDataParser
         }
         else if (config.PluginIterationMode == IterationMode.IterateObjectRecordset)
         {
-            // Look for the recordset contained in config.IterationObject
-            object? source = DynamicDataParser.GetDynamicDataObject(config.IterationObject, dynamicDataChain);
-            if (source != null)
-            {
-                if (source is List<Dictionary<string, object>> list)
-                {
-                    count = list.Count;
-                }
-                else if (source is DataTable dataTable)
-                {
-                    count = dataTable.Rows.Count;
-                }
-            }
+            // Unlike the default recordset (legitimately absent when nothing upstream produced one), this
+            // recordset was named explicitly: when it can't be found, running once anyway would silently do
+            // the wrong thing, so fail with the reason instead.
+            count = GetObjectRecordsetRowCount(config.IterationObject, dynamicDataChain);
         }
         else 
         {
@@ -207,6 +198,29 @@ public static partial class DynamicDataParser
         }
 
         return count;
+    }
+
+    private static int GetObjectRecordsetRowCount(string iterationObject, DynamicDataChain dynamicDataChain)
+    {
+        Match regExMatch = _regExFieldValue.Match(iterationObject ?? string.Empty);
+        if (!regExMatch.Success)
+            throw new ApplicationException($"Iteration object '{iterationObject}' is not a dynamic data reference: write it as {{object[N].FieldName}}, e.g. {{object[2].DefaultRecordset}}.");
+
+        int objectID = int.Parse(regExMatch.Groups["ObjectID"].Value);
+        string fieldName = regExMatch.Groups["FieldName"].Value;
+
+        if (!dynamicDataChain.TryGetValue(objectID, out DynamicDataSet? objectDataSet))
+            throw new ApplicationException($"Iteration object '{iterationObject}': object {objectID} has no data here, it must run before this task.");
+
+        if (!objectDataSet.TryGetValue(fieldName, out object? source))
+            throw new ApplicationException($"Iteration object '{iterationObject}': object {objectID} has no field '{fieldName}'.");
+
+        return source switch
+        {
+            List<Dictionary<string, object>> list => list.Count,
+            DataTable dataTable => dataTable.Rows.Count,
+            _ => throw new ApplicationException($"Iteration object '{iterationObject}': field '{fieldName}' of object {objectID} is not a recordset.")
+        };
     }
 
     public static bool ContainsDynamicData(string input)

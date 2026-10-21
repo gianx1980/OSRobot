@@ -133,8 +133,10 @@ public class WriteTextFileTask : SingleIterationTask
     private async Task ExecuteTaskTypeAppendRow(WriteTextFileTaskConfig config)
     {
         int i = 0;
-        bool addHeader = ShouldAddHeader(config);
-        using StreamWriter sw = new(config.FilePath, true);
+        // Overwriting empties the file once, before this run's first row: an overwritten file is empty,
+        // so it gets the header again.
+        bool addHeader = config.OverwriteIfExists ? config.AddHeaderIfEmpty : ShouldAddHeader(config);
+        using StreamWriter sw = new(config.FilePath, append: !config.OverwriteIfExists);
 
         for (i = 0; i < _iterationsCount; i++)
         {

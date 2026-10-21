@@ -49,6 +49,7 @@
                 <q-item-section avatar><q-icon name="info" /></q-item-section>
                 <q-item-section>{{ _$t("about") }}</q-item-section>
               </q-item>
+              <DesktopNotificationsMenuItem />
               <q-separator />
               <q-item clickable v-close-popup @click="_exitClick">
                 <q-item-section avatar><q-icon name="logout" /></q-item-section>
@@ -209,11 +210,19 @@ import SendEMailTaskConfigForm from "src/robotObjects/sendEMailTask/SendEMailTas
 import SqlServerBackupTaskConfigForm from "src/robotObjects/sqlServerBackupTask/SqlServerBackupTaskConfigForm.vue";
 import SqlServerBulkCopyTaskConfigForm from "src/robotObjects/sqlServerBulkCopyTask/SqlServerBulkCopyTaskConfigForm.vue";
 import SqlServerCommandTaskConfigForm from "src/robotObjects/sqlServerCommandTask/SqlServerCommandTaskConfigForm.vue";
+import SqlServerFileLoaderTaskConfigForm from "src/robotObjects/sqlServerFileLoaderTask/SqlServerFileLoaderTaskConfigForm.vue";
 import UnzipTaskConfigForm from "src/robotObjects/unzipTask/unzipTaskConfigForm.vue";
 import ZipTaskConfigForm from "src/robotObjects/zipTask/zipTaskConfigForm.vue";
+import DesktopNotificationsMenuItem from "src/components/DesktopNotificationsMenuItem.vue";
+import NotificationHub from "src/infrastructure/server/NotificationHub.js";
+import {
+  initPresenter,
+  present as presentNotification,
+} from "src/infrastructure/NotificationPresenter.js";
 import WriteBinaryFileTaskConfigForm from "src/robotObjects/writeBinaryFileTask/WriteBinaryFileTaskConfigForm.vue";
 import WriteTextFileTaskConfigForm from "src/robotObjects/writeTextFileTask/writeTextFileTaskConfigForm.vue";
 import PingTaskConfigForm from "src/robotObjects/pingTask/PingTaskConfigForm.vue";
+import NotifyUsersTaskConfigForm from "src/robotObjects/notifyUsersTask/NotifyUsersTaskConfigForm.vue";
 
 import { ref, onMounted, onUnmounted, watch } from "vue";
 import {
@@ -280,11 +289,13 @@ const _configForms = {
   SqlServerBackupTaskConfigForm,
   SqlServerBulkCopyTaskConfigForm,
   SqlServerCommandTaskConfigForm,
+  SqlServerFileLoaderTaskConfigForm,
   UnzipTaskConfigForm,
   ZipTaskConfigForm,
   WriteBinaryFileTaskConfigForm,
   WriteTextFileTaskConfigForm,
   PingTaskConfigForm,
+  NotifyUsersTaskConfigForm,
 };
 
 const _appStore = useAppStore();
@@ -528,11 +539,27 @@ async function _saveClick(ev) {
     const workspace = new Workspace(_user.token, _user.refreshToken);
     let r = await workspace.save(_workspaceJobs);
 
-    _$q.notify({
-      color: "green",
-      message: _$t("theJobsHaveBeenSuccessfullySaved"),
-      position: "top",
-    });
+    // The server saves the jobs anyway, but reports the dynamic data references
+    // that would fail at runtime (missing object, object not upstream, unknown field).
+    const issues = r.responseObject ?? [];
+    if (issues.length > 0) {
+      const lines = issues.map(
+        (i) =>
+          `• ${i.objectId}:${i.objectName} - ${i.location}\n   ${i.reference}: ${i.message}`
+      );
+
+      _$q.dialog({
+        title: _$t("theJobsHaveBeenSavedWithWarnings"),
+        message: `${_$t("dynamicDataReferencesWillFailAtRuntime")}\n\n${lines.join("\n")}`,
+        style: "white-space: pre-line; max-width: 900px; width: 90vw;",
+      });
+    } else {
+      _$q.notify({
+        color: "green",
+        message: _$t("theJobsHaveBeenSuccessfullySaved"),
+        position: "top",
+      });
+    }
   } catch (e) {
     _$q.notify({
       color: "red",
@@ -1169,6 +1196,8 @@ onConnect((params) => {
     target: targetInt,
     enabled: true,
     waitSeconds: 0,
+    runMode: "ForEachResult",
+    collectedResultRule: "AllSucceeded",
     executeConditions: [
       {
         dynamicDataCode: null,
@@ -1185,10 +1214,14 @@ onConnect((params) => {
 
 onUnmounted(() => {
   window.removeEventListener("keydown", _onKeyDown);
+  // Leaving the layout means logging out: stop receiving notifications.
+  NotificationHub.stop();
 });
 
 onMounted(async () => {
   window.addEventListener("keydown", _onKeyDown);
+  initPresenter(_$t);
+  NotificationHub.start(presentNotification);
 
   // If connected flag is false, show the reconnect window immediately
   // (needed if the user press F5)

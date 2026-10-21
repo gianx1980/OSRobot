@@ -15,7 +15,7 @@ public sealed class TestPluginRegistry
         List<IPlugin> plugins = [.. PluginRegistry.GetPlugins().Where(p => p.GetType().Assembly == typeof(OSRobot.Server.Plugins.PingTask.PingTaskPlugin).Assembly)];
 
         // One *Plugin.cs per plugin folder in OSRobot.Server.Plugins.
-        Assert.HasCount(23, plugins);
+        Assert.HasCount(25, plugins);
         Assert.HasCount(plugins.Count, plugins.Select(p => p.Id).Distinct());
     }
 

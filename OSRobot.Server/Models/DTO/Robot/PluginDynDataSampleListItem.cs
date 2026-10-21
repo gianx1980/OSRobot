@@ -3,9 +3,10 @@
 
 namespace OSRobot.Server.Models.DTO.Robot;
 
-public class PluginDynDataSampleListItem(string name, string exampleValue, string internalName)
+public class PluginDynDataSampleListItem(string name, string exampleValue, string internalName, bool isRecordset)
 {
     public string Name { get; } = name;
     public string ExampleValue { get; } = exampleValue;
     public string InternalName { get; } = internalName;
+    public bool IsRecordset { get; } = isRecordset;
 }

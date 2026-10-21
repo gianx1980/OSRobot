@@ -13,132 +13,162 @@
         <div class="text-h6">{{ _$t("periodicity") }}</div>
       </q-card-section>
       <q-card-section class="q-pt-none">
-        <div class="row">
+        <div class="row items-center q-mb-sm">
+          <div class="col-4">
+            <q-radio
+              v-model="_formData.modelValue.schedule"
+              val="OneTime"
+              :label="_$t('oneTime')"
+              dense
+            />
+          </div>
+        </div>
+        <div
+          v-if="_formData.modelValue.schedule !== 'Interval'"
+          class="row q-mb-sm"
+        >
           <div class="col">
             <date-input
               :label="_$t('atDate')"
               v-model="_formData.modelValue.atDate"
               format="DD/MM/YYYY HH:mm"
+              :disable="_formData.modelValue.schedule !== 'OneTime'"
             ></date-input>
           </div>
         </div>
-        <div class="row q-mb-xs">
-          <div class="col">
+        <div class="row items-center q-mb-sm">
+          <div class="col-4">
             <q-radio
-              v-model="_formData.modelValue.periodicity"
-              val="OneTime"
-              :label="_$t('oneTime')"
-              left-label
+              v-model="_formData.modelValue.schedule"
+              val="EveryDayAt"
+              :label="_$t('everyDayAt')"
               dense
             />
           </div>
-        </div>
-        <div class="row q-mb-xs">
-          <div class="col">
-            <q-radio
-              v-model="_formData.modelValue.periodicity"
-              val="EveryDaysHoursMins"
-              :label="_$t('every')"
-              left-label
-              dense
-            />
-          </div>
-        </div>
-        <div class="row">
-          <div class="col">
-            <q-input
-              filled
-              v-model.number="_formData.modelValue.everyNumDays"
-              :label="_$t('days')"
-              lazy-rules
-              dense
-              :disable="
-                _formData.modelValue.periodicity !== 'EveryDaysHoursMins'
-              "
-              type="number"
-              min="0"
-              max="9999"
-              :rules="[
-                (val) => val === 0 || !!val || _$t('thisFieldIsMandatory'),
-                (val) =>
-                  (val >= 0 && val <= 9999) ||
-                  _$t('mustBeAValueBetweenXAndY', ['0', '9999']),
-              ]"
-            />
-          </div>
-          <div class="col">
-            <q-input
-              filled
-              v-model.number="_formData.modelValue.everyNumHours"
-              :label="_$t('hours')"
-              lazy-rules
-              dense
-              :disable="
-                _formData.modelValue.periodicity !== 'EveryDaysHoursMins'
-              "
-              type="number"
-              min="0"
-              max="999"
-              :rules="[
-                (val) => val === 0 || !!val || _$t('thisFieldIsMandatory'),
-                (val) =>
-                  (val >= 0 && val <= 999) ||
-                  _$t('mustBeAValueBetweenXAndY', ['0', '999']),
-              ]"
-            />
-          </div>
-          <div class="col">
-            <q-input
-              filled
-              v-model.number="_formData.modelValue.everyNumMinutes"
-              :label="_$t('minutes')"
-              lazy-rules
-              dense
-              :disable="
-                _formData.modelValue.periodicity !== 'EveryDaysHoursMins'
-              "
-              type="number"
-              min="0"
-              max="999"
-              :rules="[
-                (val) => val === 0 || !!val || _$t('thisFieldIsMandatory'),
-                (val) =>
-                  (val >= 0 && val <= 999) ||
-                  _$t('mustBeAValueBetweenXAndY', ['0', '999']),
-              ]"
-            />
-          </div>
-        </div>
-        <div class="row q-mb-xs">
-          <div class="col">
-            <q-radio
-              v-model="_formData.modelValue.periodicity"
-              val="EverySeconds"
-              :label="_$t('every')"
-              left-label
-              dense
-            />
-          </div>
-        </div>
-        <div class="row">
           <div class="col-4">
             <q-input
               filled
-              v-model.number="_formData.modelValue.everyNumSeconds"
-              :label="_$t('seconds')"
+              v-model="_formData.modelValue.dailyTime"
+              :label="_$t('time')"
+              mask="fulltime"
               lazy-rules
+              dense
+              hide-bottom-space
+              :disable="_formData.modelValue.schedule !== 'EveryDayAt'"
+              :rules="[(val) => _isValidTime(val) || _$t('invalidTime')]"
+            >
+              <template v-slot:append>
+                <q-icon name="access_time" class="cursor-pointer">
+                  <q-popup-proxy
+                    cover
+                    transition-show="scale"
+                    transition-hide="scale"
+                  >
+                    <q-time
+                      v-model="_formData.modelValue.dailyTime"
+                      mask="HH:mm:ss"
+                      with-seconds
+                      format24h
+                    >
+                      <div class="row items-center justify-end">
+                        <q-btn
+                          v-close-popup
+                          :label="_$t('close')"
+                          color="primary"
+                          flat
+                        />
+                      </div>
+                    </q-time>
+                  </q-popup-proxy>
+                </q-icon>
+              </template>
+            </q-input>
+          </div>
+        </div>
+        <div class="row items-center q-mb-sm">
+          <div class="col-4">
+            <q-radio
+              v-model="_formData.modelValue.schedule"
+              val="Interval"
+              :label="_$t('every')"
+              dense
+            />
+          </div>
+        </div>
+        <div class="row q-col-gutter-sm">
+          <div class="col">
+            <q-input
+              filled
+              v-model.number="_formData.modelValue.intervalHours"
+              :label="_$t('hours')"
+              lazy-rules
+              dense
+              :disable="_formData.modelValue.schedule !== 'Interval'"
               type="number"
               min="0"
-              max="9999"
-              dense
-              :disable="_formData.modelValue.periodicity !== 'EverySeconds'"
+              max="999"
               :rules="[
                 (val) => val === 0 || !!val || _$t('thisFieldIsMandatory'),
                 (val) =>
                   (val >= 0 && val <= 999) ||
-                  _$t('mustBeAValueBetweenXAndY', ['0', '9999']),
+                  _$t('mustBeAValueBetweenXAndY', ['0', '999']),
               ]"
             />
+          </div>
+          <div class="col">
+            <q-input
+              filled
+              v-model.number="_formData.modelValue.intervalMinutes"
+              :label="_$t('minutes')"
+              lazy-rules
+              dense
+              :disable="_formData.modelValue.schedule !== 'Interval'"
+              type="number"
+              min="0"
+              max="59"
+              :rules="[
+                (val) => val === 0 || !!val || _$t('thisFieldIsMandatory'),
+                (val) =>
+                  (val >= 0 && val <= 59) ||
+                  _$t('mustBeAValueBetweenXAndY', ['0', '59']),
+              ]"
+            />
+          </div>
+          <div class="col">
+            <q-input
+              filled
+              v-model.number="_formData.modelValue.intervalSeconds"
+              :label="_$t('seconds')"
+              lazy-rules
+              dense
+              :disable="_formData.modelValue.schedule !== 'Interval'"
+              type="number"
+              min="0"
+              max="59"
+              :rules="[
+                (val) => val === 0 || !!val || _$t('thisFieldIsMandatory'),
+                (val) =>
+                  (val >= 0 && val <= 59) ||
+                  _$t('mustBeAValueBetweenXAndY', ['0', '59']),
+              ]"
+            />
+          </div>
+        </div>
+        <div
+          v-if="_formData.modelValue.schedule === 'Interval' && _intervalIsZero"
+          class="text-negative text-caption q-mb-sm"
+        >
+          {{ _$t("intervalMustBeGreaterThanZero") }}
+        </div>
+        <!-- The interval's first occurrence, which the following ones are aligned to: the same
+             atDate as "One time", shown here instead while this schedule is selected. -->
+        <div v-if="_formData.modelValue.schedule === 'Interval'" class="row">
+          <div class="col">
+            <date-input
+              :label="_$t('startingFrom')"
+              v-model="_formData.modelValue.atDate"
+              format="DD/MM/YYYY HH:mm"
+            ></date-input>
           </div>
         </div>
         <div>{{ _$t("onDays") }}</div>
@@ -149,6 +179,7 @@
               v-model="_formData.modelValue.onMonday"
               :label="_$t('monday')"
               dense
+              :disable="_formData.modelValue.schedule === 'OneTime'"
             />
           </div>
           <div class="col">
@@ -157,6 +188,7 @@
               v-model="_formData.modelValue.onTuesday"
               :label="_$t('tuesday')"
               dense
+              :disable="_formData.modelValue.schedule === 'OneTime'"
             />
           </div>
           <div class="col">
@@ -165,6 +197,7 @@
               v-model="_formData.modelValue.onWednesday"
               :label="_$t('wednesday')"
               dense
+              :disable="_formData.modelValue.schedule === 'OneTime'"
             />
           </div>
         </div>
@@ -175,6 +208,7 @@
               v-model="_formData.modelValue.onThursday"
               :label="_$t('thursday')"
               dense
+              :disable="_formData.modelValue.schedule === 'OneTime'"
             />
           </div>
           <div class="col">
@@ -183,6 +217,7 @@
               v-model="_formData.modelValue.onFriday"
               :label="_$t('friday')"
               dense
+              :disable="_formData.modelValue.schedule === 'OneTime'"
             />
           </div>
           <div class="col">
@@ -191,6 +226,7 @@
               v-model="_formData.modelValue.onSaturday"
               :label="_$t('saturday')"
               dense
+              :disable="_formData.modelValue.schedule === 'OneTime'"
             />
           </div>
         </div>
@@ -201,6 +237,7 @@
               v-model="_formData.modelValue.onSunday"
               :label="_$t('sunday')"
               dense
+              :disable="_formData.modelValue.schedule === 'OneTime'"
             />
           </div>
           <div class="col-4">
@@ -210,6 +247,7 @@
               v-model="_onAllDays"
               :label="_$t('allDays')"
               dense
+              :disable="_formData.modelValue.schedule === 'OneTime'"
             />
           </div>
         </div>
@@ -218,7 +256,7 @@
   </div>
 </template>
 <script setup>
-import { ref, computed, watch, onMounted } from "vue";
+import { ref, computed, watch } from "vue";
 import { useI18n } from "vue-i18n";
 import DateInput from "src/components/DateInput.vue";
 import PluginGeneralConfigForm from "src/components/PluginGeneralConfigForm.vue";
@@ -231,6 +269,25 @@ const _$t = _i18n.t;
 
 const _formData = ref(_props);
 const _onAllDays = ref(true);
+
+// Schedule: "OneTime", "EveryDayAt" or "Interval" (DateTimeEventSchedule on the server)
+if (!_formData.value.modelValue.schedule)
+  _formData.value.modelValue.schedule = "OneTime";
+if (!_formData.value.modelValue.dailyTime)
+  _formData.value.modelValue.dailyTime = "00:00:00";
+
+function _isValidTime(val) {
+  return /^([01]\d|2[0-3]):[0-5]\d:[0-5]\d$/.test(val ?? "");
+}
+
+const _intervalIsZero = computed(
+  () =>
+    !(
+      _formData.value.modelValue.intervalHours > 0 ||
+      _formData.value.modelValue.intervalMinutes > 0 ||
+      _formData.value.modelValue.intervalSeconds > 0
+    )
+);
 
 // Handle days selection properties
 const _dayMonday = 1;
@@ -323,34 +380,4 @@ function _allClick() {
   _formData.value.modelValue.onSaturday = _onAllDays.value;
   _formData.value.modelValue.onSunday = _onAllDays.value;
 }
-
-// Handle "Periodicity" property
-if (!_formData.value.modelValue.hasOwnProperty("periodicity")) {
-  _formData.value.modelValue.periodicity = "OneTime";
-}
-
-watch(
-  () => _formData.value.modelValue.periodicity,
-  (newValue) => {
-    switch (newValue) {
-      case "OneTime":
-        _formData.value.modelValue.oneTime = true;
-        _formData.value.modelValue.everyDaysHoursSecs = false;
-        _formData.value.modelValue.everySeconds = false;
-        break;
-
-      case "EveryDaysHoursMins":
-        _formData.value.modelValue.oneTime = false;
-        _formData.value.modelValue.everyDaysHoursSecs = true;
-        _formData.value.modelValue.everySeconds = false;
-        break;
-
-      case "EverySeconds":
-        _formData.value.modelValue.oneTime = false;
-        _formData.value.modelValue.everyDaysHoursSecs = false;
-        _formData.value.modelValue.everySeconds = true;
-        break;
-    }
-  }
-);
 </script>

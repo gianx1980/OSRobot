@@ -40,6 +40,16 @@ export default class ServiceBase {
     } else throw new ServiceException(ServiceBase.NotAuthorized, null);
   }
 
+  // For callers that need the token itself rather than a request (the notifications hub):
+  // renews it first when it is about to expire, exactly as _post/_get do.
+  async ensureFreshToken() {
+    if (this._token && Utility.jwtShouldRenew(this._token)) {
+      await this._renewToken();
+    }
+
+    return this._token;
+  }
+
   async _post(config) {
     config.method = "post";
 

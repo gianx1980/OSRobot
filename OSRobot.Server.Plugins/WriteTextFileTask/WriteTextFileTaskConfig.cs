@@ -53,6 +53,10 @@ public class WriteTextFileTaskConfig : ITaskConfig
 
     public bool AddHeaderIfEmpty { get; set; }
 
+    // Append row only: empty an existing file once at the start of each run, then write all the
+    // run's rows. False when missing, so existing jobs keep appending.
+    public bool OverwriteIfExists { get; set; }
+
     [DynamicData]
     public string InsertAtRow { get; set; } = string.Empty;
 

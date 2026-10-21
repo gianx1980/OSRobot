@@ -56,6 +56,9 @@ RobotObjectUtility.getPluginIcon = function (objectId) {
     case "SqlServerCommandTask":
       return "touch_app";
 
+    case "SqlServerFileLoaderTask":
+      return "upload_file";
+
     case "SystemEventsEvent":
       return "event_repeat";
 
@@ -70,6 +73,9 @@ RobotObjectUtility.getPluginIcon = function (objectId) {
 
     case "ZipTask":
       return "folder_zip";
+
+    case "NotifyUsersTask":
+      return "notifications";
 
     case "PingTask":
       return "network_ping";

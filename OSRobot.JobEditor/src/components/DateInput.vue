@@ -42,7 +42,14 @@ const _emit = defineEmits(["update:modelValue"]);
 const _formData = ref(_props);
 const _dateValue = ref("");
 
-const _date = Date.parse(_formData.value.modelValue);
+// Dates are local wall-clock values. Older versions wrongly appended "Z",
+// so strip it to avoid shifting the time by the UTC offset on load.
+let _sourceValue = _formData.value.modelValue;
+if (typeof _sourceValue === "string" && _sourceValue.endsWith("Z")) {
+  _sourceValue = _sourceValue.slice(0, -1);
+}
+
+const _date = Date.parse(_sourceValue);
 if (!isNaN(_date)) {
   _dateValue.value = date.formatDate(_date, _props.format);
 }
@@ -54,7 +61,7 @@ watch(_dateValue, (newValue) => {
   const extractedDate = date.extractDate(newValue, _props.format);
   _emit(
     "update:modelValue",
-    date.formatDate(extractedDate, "YYYY-MM-DDTHH:mm:ss.SSS") + "Z"
+    date.formatDate(extractedDate, "YYYY-MM-DDTHH:mm:ss.SSS")
   );
 });
 </script>

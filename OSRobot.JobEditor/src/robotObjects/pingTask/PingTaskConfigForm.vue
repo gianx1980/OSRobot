@@ -16,11 +16,19 @@
           <div class="col-6">
             <q-input
               filled
-              v-model.number="_formData.modelValue.host"
+              v-model="_formData.modelValue.host"
               :label="_$t('host')"
               lazy-rules
               dense
               :rules="[(val) => !!val || _$t('thisFieldIsMandatory')]"
+            />
+          </div>
+          <div class="col-1">
+            <BtnDynamicDataBrowser
+              class="q-ml-sm"
+              v-model="_formData.modelValue"
+              :folderItems="_formData.containingFolderItems"
+              modelValueKey="host"
             />
           </div>
         </div>
@@ -72,6 +80,7 @@
 import { ref } from "vue";
 import { useI18n } from "vue-i18n";
 import PluginGeneralConfigForm from "src/components/PluginGeneralConfigForm.vue";
+import BtnDynamicDataBrowser from "src/components/BtnDynamicDataBrowser.vue";
 
 const _props = defineProps(["modelValue", "containingFolderItems"]);
 const _emit = defineEmits(["nodeNeedsUpdate"]);

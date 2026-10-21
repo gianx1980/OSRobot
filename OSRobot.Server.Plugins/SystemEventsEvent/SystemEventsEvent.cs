@@ -6,7 +6,6 @@ using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging;
 using OSRobot.Server.Core.Logging.Abstract;
-using System.ComponentModel;
 
 namespace OSRobot.Server.Plugins.SystemEventsEvent;
 
@@ -18,25 +17,12 @@ public class SystemEventsEvent : IEvent
 
     public List<PluginInstanceConnection> Connections { get; set; } = [];
 
-    public event EventTriggeredDelegate? EventTriggered;
+    private IEventSink? _sink;
 
-    protected virtual void OnEventTriggered(EventTriggeredEventArgs e)
+    public void Init(IEventSink sink)
     {
-        EventTriggeredDelegate? handler = EventTriggered;
-        if (handler != null)
-        {
-            foreach (EventTriggeredDelegate singleCast in handler.GetInvocationList().Cast<EventTriggeredDelegate>())
-            {
-                if ((singleCast.Target is ISynchronizeInvoke syncInvoke) && (syncInvoke.InvokeRequired))
-                    syncInvoke.Invoke(singleCast, [this, e]);
-                else
-                    singleCast(this, e);
-            }
-        }
-    }
+        _sink = sink;
 
-    public void Init()
-    {
         /*
         new Thread(() =>
         {
@@ -121,7 +107,7 @@ public class SystemEventsEvent : IEvent
                 logger.EventTriggering(this);
             }
                 
-            OnEventTriggered(new EventTriggeredEventArgs(dDataSet, logger));
+            _sink?.Publish(this, dDataSet, logger);
         }
         catch (Exception ex)
         {

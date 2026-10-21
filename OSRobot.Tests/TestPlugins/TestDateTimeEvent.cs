@@ -3,407 +3,259 @@
 
 using OSRobot.Server.Core;
 using OSRobot.Server.Plugins.DateTimeEvent;
+using OSRobot.Tests.Support;
 
 namespace OSRobot.Tests.TestPlugins;
 
+/// <summary>
+/// The DateTimeEvent with real timers, over a few seconds. The schedule itself (weekdays, daylight
+/// saving changes, ...) is covered without waiting by <see cref="TestDateTimeEventScheduler"/>.
+/// </summary>
 [TestClass]
 public sealed class TestDateTimeEvent
 {
-    [TestMethod]
-    public void TestAtTime()
+    private const double ToleranceSec = 1;
+
+    // How much longer than expected (plus tolerance) to keep waiting for an occurrence. A late
+    // occurrence then fails the timing assertion with its actual time, instead of looking like
+    // one that never happened.
+    private const int LateOccurrenceMarginSec = 10;
+
+    private static DateTimeEvent CreateEvent(DateTimeEventConfig config)
     {
-        // ---------
-        // Arrange
-        // ---------
-        int withinMinutes = 1;
-        int toleranceSec = 1;
-        Folder folder = Common.CreateRootFolder();
+        config.Id = 1;
+        config.Name = "DateTimeEvent 1";
 
-        DateTimeEventConfig config = new()
+        return new DateTimeEvent
         {
-            Id = 1,
-            Name = "DateTimeEvent 1",
-            OneTime = true,
-            AtDate = DateTime.Now.AddMinutes(withinMinutes)
-        };
-
-        DateTimeEvent eventObj = new()
-        {
-            ParentFolder = folder,
+            ParentFolder = Common.CreateRootFolder(),
             Config = config
         };
+    }
 
-        object objSync = new();
-        ManualResetEvent mre = new(false);
-        bool eventTriggered = false;
-        eventObj.EventTriggered += (sender, e) =>
-        {
-            lock (objSync)
-            {
-                eventTriggered = true;
-            }
-
-            mre.Set();
-        };
-        eventObj.Config = config;
-
-        // ---------
-        // Act
-        // ---------
-        eventObj.Init();
-
-        mre.WaitOne(new TimeSpan(0, withinMinutes, toleranceSec));
-
-        // ---------
-        // Assert
-        // ---------
-        lock (objSync)
-        {
-            Assert.IsTrue(eventTriggered && (Math.Abs(DateTime.Now.Subtract(config.AtDate).TotalSeconds) <= toleranceSec), "The event did not occur at the expected time.");
-        }
-
-        eventObj.Destroy();
+    private static void AssertOccurredAt(DateTime expected, DateTime? actual, RecordingEventSink sink, DateTime start)
+    {
+        Assert.IsNotNull(actual, $"The event did not occur as many times as expected. Occurrences: {sink.Describe(start)}.");
+        Assert.IsLessThanOrEqualTo(ToleranceSec, Math.Abs((actual.Value - expected).TotalSeconds),
+            $"The event did not occur at the expected time ({(expected - start).TotalSeconds:F1}s). Occurrences: {sink.Describe(start)}.");
     }
 
     [TestMethod]
-    public void TestEverySecond()
+    public async Task TestOneTime()
     {
-        // ---------
-        // Arrange
-        // ---------
-        int everyNumSeconds = 5;
-        int repeatNumber = 5;
-        int toleranceSec = 1;
-        Folder folder = Common.CreateRootFolder();
-
         DateTimeEventConfig config = new()
         {
-            Id = 1,
-            Name = "DateTimeEvent 1",
-            EverySeconds = true,
-            AtDate = DateTime.Now.AddSeconds(-10), // Start with AtTime in the past
-            EveryNumSeconds = everyNumSeconds
+            Schedule = DateTimeEventSchedule.OneTime,
+            AtDate = DateTime.Now.AddSeconds(4)
         };
+        DateTimeEvent eventObj = CreateEvent(config);
+        RecordingEventSink sink = new();
 
-        DateTimeEvent eventObj = new()
+        try
         {
-            ParentFolder = folder,
-            Config = config
-        };
+            DateTime start = DateTime.Now;
+            eventObj.Init(sink);
 
-        object objSync = new();
-        ManualResetEvent mre = new(false);
-        bool eventTriggered = false;
-        int repeatCount = 0;
-        DateTime expectedLastTrigger = DateTime.Now.AddSeconds(everyNumSeconds * repeatNumber);
-        eventObj.EventTriggered += (sender, e) =>
-        {
-            repeatCount++;
+            DateTime? triggeredAt = await sink.WaitForOccurrenceAsync(1, TimeSpan.FromSeconds(4 + ToleranceSec + LateOccurrenceMarginSec));
+            AssertOccurredAt(config.AtDate, triggeredAt, sink, start);
 
-            if (repeatCount == repeatNumber)
-            {
-                lock (objSync)
-                {
-                    eventTriggered = true;
-                }
-
-                mre.Set();
-                return;
-            }
-        };
-        eventObj.Config = config;
-
-        // ---------
-        // Act
-        // ---------
-        eventObj.Init();
-
-        mre.WaitOne(new TimeSpan(0, 0, (everyNumSeconds * repeatNumber) + toleranceSec));
-
-        // ---------
-        // Assert
-        // ---------
-        lock (objSync)
-        {
-            Assert.IsTrue(eventTriggered && (Math.Abs(DateTime.Now.Subtract(expectedLastTrigger).TotalSeconds) <= toleranceSec), "The event did not occur at the expected time.");
+            // Once only.
+            DateTime? second = await sink.WaitForOccurrenceAsync(2, TimeSpan.FromSeconds(3));
+            Assert.IsNull(second, $"A one time event occurred more than once: {sink.Describe(start)}.");
         }
-
-        eventObj.Destroy();
+        finally
+        {
+            eventObj.Destroy();
+        }
     }
 
     [TestMethod]
-    public void TestEveryMinute()
+    public async Task TestOneTimeInThePastNeverOccurs()
     {
-        // ---------
-        // Arrange
-        // ---------
-        int everyNumMinutes = 1;
-        int repeatNumber = 5;
-        int toleranceSec = 1;
-        Folder folder = Common.CreateRootFolder();
-
         DateTimeEventConfig config = new()
         {
-            Id = 1,
-            Name = "DateTimeEvent 1",
-            EveryDaysHoursSecs = true,
-            AtDate = DateTime.Now.AddSeconds(-10), // Start with AtTime in the past
-            EveryNumDays = 0,
-            EveryNumHours = 0,
-            EveryNumMinutes = everyNumMinutes
+            Schedule = DateTimeEventSchedule.OneTime,
+            AtDate = DateTime.Now.AddSeconds(-2)
         };
+        DateTimeEvent eventObj = CreateEvent(config);
+        RecordingEventSink sink = new();
 
-        DateTimeEvent eventObj = new()
+        try
         {
-            ParentFolder = folder
-        };
+            eventObj.Init(sink);
 
-        object objSync = new();
-        ManualResetEvent mre = new(false);
-        bool eventTriggeredInTime = false;
-        int repeatCount = 0;
-        DateTime expectedLastTrigger = DateTime.Now.AddMinutes(everyNumMinutes * repeatNumber);
-        eventObj.EventTriggered += (sender, e) =>
-        {
-            repeatCount++;
-
-            if (repeatCount == repeatNumber)
-            {
-                lock (objSync)
-                {
-                    eventTriggeredInTime = true;
-                }
-
-                mre.Set();
-                return;
-            }
-        };
-        eventObj.Config = config;
-
-        // ---------
-        // Act
-        // ---------
-        eventObj.Init();
-
-        mre.WaitOne(new TimeSpan(0, 0, (everyNumMinutes * 60 * repeatNumber) + toleranceSec));
-
-        // ---------
-        // Assert
-        // ---------
-        lock (objSync)
-        {
-            Assert.IsTrue(eventTriggeredInTime && (Math.Abs(DateTime.Now.Subtract(expectedLastTrigger).TotalSeconds) <= toleranceSec), "The event did not occur at the expected time.");
+            Assert.IsNull(await sink.WaitForOccurrenceAsync(1, TimeSpan.FromSeconds(3)), "A missed one time occurrence must be skipped, not fired at startup.");
         }
-
-        eventObj.Destroy();
+        finally
+        {
+            eventObj.Destroy();
+        }
     }
 
     [TestMethod]
-    public void TestEverySecondOnDaysTrue()
+    public async Task TestEveryDayAt()
     {
-        // ---------
-        // Arrange
-        // ---------
-        int everyNumSeconds = 5;
-        int repeatNumber = 1;
-        int toleranceSec = 1;
-        Folder folder = Common.CreateRootFolder();
+        DateTime now = DateTime.Now;
+        TimeSpan timeOfDay = TimeSpan.FromSeconds(Math.Floor(now.AddSeconds(4).TimeOfDay.TotalSeconds));
+        DateTime expected = now.Date + timeOfDay;
+        if (expected <= now)
+            expected = expected.AddDays(1);   // Just before midnight: the time is tomorrow's.
 
         DateTimeEventConfig config = new()
         {
-            Id = 1,
-            Name = "DateTimeEvent 1",
-            EverySeconds = true,
-            AtDate = DateTime.Now.AddSeconds(-10), // Start with AtTime in the past
-            EveryNumSeconds = everyNumSeconds
+            Schedule = DateTimeEventSchedule.EveryDayAt,
+            DailyTime = timeOfDay.ToString(@"hh\:mm\:ss")
         };
-        config.OnDays.Clear();
-        config.OnDays.Add(DateTime.Now.DayOfWeek);
+        DateTimeEvent eventObj = CreateEvent(config);
+        RecordingEventSink sink = new();
 
-        DateTimeEvent eventObj = new()
+        try
         {
-            ParentFolder = folder
-        };
+            DateTime start = DateTime.Now;
+            eventObj.Init(sink);
 
-        object objSync = new();
-        ManualResetEvent mre = new(false);
-        bool eventTriggered = false;
-        int repeatCount = 0;
-        DateTime expectedLastTrigger = DateTime.Now.AddSeconds(everyNumSeconds * repeatNumber);
-        eventObj.EventTriggered += (sender, e) =>
-        {
-            repeatCount++;
-
-            if (repeatCount == repeatNumber)
-            {
-                lock (objSync)
-                {
-                    eventTriggered = true;
-                }
-
-                mre.Set();
-                return;
-            }
-        };
-        eventObj.Config = config;
-
-        // ---------
-        // Act
-        // ---------
-        eventObj.Init();
-
-        mre.WaitOne(new TimeSpan(0, 0, (everyNumSeconds * repeatNumber) + toleranceSec));
-
-        // ---------
-        // Assert
-        // ---------
-        lock (objSync)
-        {
-            Assert.IsTrue(eventTriggered && (Math.Abs(DateTime.Now.Subtract(expectedLastTrigger).TotalSeconds) <= toleranceSec), "The event did not occur at the expected time.");
+            DateTime? triggeredAt = await sink.WaitForOccurrenceAsync(1, TimeSpan.FromSeconds(5 + ToleranceSec + LateOccurrenceMarginSec));
+            AssertOccurredAt(expected, triggeredAt, sink, start);
         }
-
-        eventObj.Destroy();
+        finally
+        {
+            eventObj.Destroy();
+        }
     }
 
     [TestMethod]
-    public void TestEverySecondOnAllDays()
+    public async Task TestIntervalAlignedToAtDate()
     {
-        // ---------
-        // Arrange
-        // ---------
-        int everyNumSeconds = 5;
-        int repeatNumber = 1;
-        int toleranceSec = 1;
-        Folder folder = Common.CreateRootFolder();
+        // Simulates a restart long after AtDate: the occurrences follow the AtDate-based schedule
+        // (AtDate + N * interval), not the moment the event is initialized.
+        int intervalSec = 2;
+        int repeatNumber = 3;
 
         DateTimeEventConfig config = new()
         {
-            Id = 1,
-            Name = "DateTimeEvent 1",
-            EverySeconds = true,
-            AtDate = DateTime.Now.AddSeconds(-10), // Start with AtTime in the past
-            EveryNumSeconds = everyNumSeconds
+            Schedule = DateTimeEventSchedule.Interval,
+            AtDate = DateTime.Now.AddSeconds(-7.3),
+            IntervalHours = 0,
+            IntervalMinutes = 0,
+            IntervalSeconds = intervalSec
         };
-        config.OnDays.Clear();
-        config.OnAllDays = true;
+        DateTimeEvent eventObj = CreateEvent(config);
+        RecordingEventSink sink = new();
 
-        DateTimeEvent eventObj = new()
+        try
         {
-            ParentFolder = folder
-        };
+            DateTime start = DateTime.Now;
+            long firstPeriod = (long)Math.Floor((start - config.AtDate).TotalSeconds / intervalSec) + 1;
+            DateTime expectedLast = config.AtDate.AddSeconds(intervalSec * (firstPeriod + repeatNumber - 1));
+            eventObj.Init(sink);
 
-        object objSync = new();
-        ManualResetEvent mre = new(false);
-        bool eventTriggered = false;
-        int repeatCount = 0;
-        DateTime expectedLastTrigger = DateTime.Now.AddSeconds(everyNumSeconds * repeatNumber);
-        eventObj.EventTriggered += (sender, e) =>
-        {
-            repeatCount++;
-
-            if (repeatCount == repeatNumber)
-            {
-                lock (objSync)
-                {
-                    eventTriggered = true;
-                }
-
-                mre.Set();
-                return;
-            }
-        };
-        eventObj.Config = config;
-
-        // ---------
-        // Act
-        // ---------
-        eventObj.Init();
-
-        mre.WaitOne(new TimeSpan(0, 0, (everyNumSeconds * repeatNumber) + toleranceSec));
-
-        // ---------
-        // Assert
-        // ---------
-        lock (objSync)
-        {
-            Assert.IsTrue(eventTriggered && (Math.Abs(DateTime.Now.Subtract(expectedLastTrigger).TotalSeconds) <= toleranceSec), "The event did not occur at the expected time.");
+            DateTime? lastTriggeredAt = await sink.WaitForOccurrenceAsync(repeatNumber, TimeSpan.FromSeconds((intervalSec * repeatNumber) + ToleranceSec + LateOccurrenceMarginSec));
+            AssertOccurredAt(expectedLast, lastTriggeredAt, sink, start);
         }
-
-        eventObj.Destroy();
+        finally
+        {
+            eventObj.Destroy();
+        }
     }
 
     [TestMethod]
-    public void TestEverySecondOnDaysFalse()
+    public async Task TestIntervalOnTodaysWeekday()
     {
-        // ---------
-        // Arrange
-        // ---------
-        int everyNumSeconds = 5;
-        int repeatNumber = 1;
-        int toleranceSec = 1;
-        Folder folder = Common.CreateRootFolder();
-
         DateTimeEventConfig config = new()
         {
-            Id = 1,
-            Name = "DateTimeEvent 1",
-            EverySeconds = true,
-            AtDate = DateTime.Now.AddSeconds(-10), // Start with AtTime in the past
-            EveryNumSeconds = everyNumSeconds
+            Schedule = DateTimeEventSchedule.Interval,
+            AtDate = DateTime.Now.AddSeconds(-10),
+            IntervalMinutes = 0,
+            IntervalSeconds = 1,
+            OnDays = [DateTime.Now.DayOfWeek]
         };
-        config.OnDays.Clear();
-        config.OnAllDays = false;
-        foreach (DayOfWeek D in Enum.GetValues(typeof(DayOfWeek)))
+        DateTimeEvent eventObj = CreateEvent(config);
+        RecordingEventSink sink = new();
+
+        try
         {
-            if (D != DateTime.Now.DayOfWeek)
-            {
-                config.OnDays.Add(D);
-                break;
-            }
+            eventObj.Init(sink);
+
+            Assert.IsNotNull(await sink.WaitForOccurrenceAsync(1, TimeSpan.FromSeconds(1 + ToleranceSec + LateOccurrenceMarginSec)), "The event did not occur on a day it is configured for.");
         }
-
-        DateTimeEvent eventObj = new()
+        finally
         {
-            ParentFolder = folder
-        };
-
-        object objSync = new();
-        ManualResetEvent mre = new(false);
-        bool eventTriggered = false;
-        int repeatCount = 0;
-        DateTime expectedLastTrigger = DateTime.Now.AddSeconds(everyNumSeconds * repeatNumber);
-        eventObj.EventTriggered += (sender, e) =>
-        {
-            repeatCount++;
-
-            if (repeatCount == repeatNumber)
-            {
-                lock (objSync)
-                {
-                    eventTriggered = true;
-                }
-
-                mre.Set();
-                return;
-            }
-        };
-        eventObj.Config = config;
-
-        // ---------
-        // Act
-        // ---------
-        eventObj.Init();
-
-        mre.WaitOne(new TimeSpan(0, 0, (everyNumSeconds * repeatNumber) + toleranceSec));
-
-        // ---------
-        // Assert
-        // ---------
-        lock (objSync)
-        {
-            Assert.IsFalse(eventTriggered, "The event did not occur at the expected time.");
+            eventObj.Destroy();
         }
+    }
+
+    [TestMethod]
+    public async Task TestIntervalNotOnTodaysWeekday()
+    {
+        DateTimeEventConfig config = new()
+        {
+            Schedule = DateTimeEventSchedule.Interval,
+            AtDate = DateTime.Now.AddSeconds(-10),
+            IntervalMinutes = 0,
+            IntervalSeconds = 1,
+            OnDays = [(DayOfWeek)(((int)DateTime.Now.DayOfWeek + 1) % 7)]
+        };
+        DateTimeEvent eventObj = CreateEvent(config);
+        RecordingEventSink sink = new();
+
+        try
+        {
+            eventObj.Init(sink);
+
+            Assert.IsNull(await sink.WaitForOccurrenceAsync(1, TimeSpan.FromSeconds(3)), "The event must not occur on a day it is not configured for.");
+        }
+        finally
+        {
+            eventObj.Destroy();
+        }
+    }
+
+    [TestMethod]
+    public async Task TestDestroyStopsTheEvent()
+    {
+        DateTimeEventConfig config = new()
+        {
+            Schedule = DateTimeEventSchedule.Interval,
+            AtDate = DateTime.Now,
+            IntervalMinutes = 0,
+            IntervalSeconds = 1
+        };
+        DateTimeEvent eventObj = CreateEvent(config);
+        RecordingEventSink sink = new();
+
+        eventObj.Init(sink);
+        Assert.IsNotNull(await sink.WaitForOccurrenceAsync(1, TimeSpan.FromSeconds(1 + ToleranceSec + LateOccurrenceMarginSec)), "The event did not occur.");
 
         eventObj.Destroy();
+        int countAtDestroy = sink.Count;
+        await Task.Delay(TimeSpan.FromSeconds(2.5));
+
+        Assert.AreEqual(countAtDestroy, sink.Count, "The event occurred after Destroy().");
+    }
+
+    [TestMethod]
+    public async Task TestInvalidConfigurationDoesNotThrowAndNeverOccurs()
+    {
+        DateTimeEventConfig config = new()
+        {
+            Schedule = DateTimeEventSchedule.Interval,
+            IntervalHours = 0,
+            IntervalMinutes = 0,
+            IntervalSeconds = 0
+        };
+        DateTimeEvent eventObj = CreateEvent(config);
+        RecordingEventSink sink = new();
+
+        try
+        {
+            // The engine initializes all the events in one go: one bad event must not stop the others.
+            eventObj.Init(sink);
+
+            Assert.IsNull(await sink.WaitForOccurrenceAsync(1, TimeSpan.FromSeconds(2)));
+        }
+        finally
+        {
+            eventObj.Destroy();
+        }
     }
 }

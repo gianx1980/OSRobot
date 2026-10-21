@@ -37,4 +37,8 @@ public class RESTApiTaskConfig : ITaskConfig
     [DynamicData]
     public string JsonPathToData { get; set; } = string.Empty;
     public bool ReturnsRecordset { get; set; }
+
+    // Accept any server certificate (self-signed, untrusted root, wrong name, expired). Insecure:
+    // meant for test servers. False when missing, so existing jobs keep validating.
+    public bool IgnoreCertificateErrors { get; set; }
 }
