@@ -20,11 +20,28 @@ public static class PluginServices
 
     private static readonly AsyncLocal<Overrides?> _overrides = new();
 
-    /// <summary>New HttpClient. The caller disposes it; an overridden handler is NOT disposed with it.</summary>
-    public static HttpClient CreateHttpClient()
+    /// <summary>
+    /// New HttpClient. The caller disposes it; an overridden handler is NOT disposed with it (and,
+    /// opening no connection, ignores <paramref name="ignoreCertificateErrors"/>).
+    /// </summary>
+    /// <param name="ignoreCertificateErrors">
+    /// Accept any server certificate. Insecure (anyone in between can read and change the traffic):
+    /// only for a task that explicitly asks for it, never shared with other requests.
+    /// </param>
+    public static HttpClient CreateHttpClient(bool ignoreCertificateErrors = false)
     {
         HttpMessageHandler? handler = _overrides.Value?.HttpHandler;
-        return handler == null ? new HttpClient() : new HttpClient(handler, disposeHandler: false);
+        if (handler != null)
+            return new HttpClient(handler, disposeHandler: false);
+
+        if (!ignoreCertificateErrors)
+            return new HttpClient();
+
+        SocketsHttpHandler insecureHandler = new()
+        {
+            SslOptions = { RemoteCertificateValidationCallback = (_, _, _, _) => true }
+        };
+        return new HttpClient(insecureHandler, disposeHandler: true);
     }
 
     /// <summary>New FTP/SFTP client. The caller disposes it.</summary>

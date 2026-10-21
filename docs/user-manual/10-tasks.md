@@ -39,6 +39,7 @@ Writes or edits a text file.
 | Columns definition | For each column: header title, field value (usually dynamic data) and field width. |
 | Format | **Format as delimited file** (choose delimiters, optionally enclose text in double quotes) or **Format as fixed length column file**. |
 | Add header if file is empty | Writes the header titles when the file is new or empty. |
+| Overwrite file if exists | **Append row** only, off by default. At the start of each run an existing file is emptied, then all the rows of that run are written (one per iteration), with the header again if *Add header if file is empty* is on. Off: rows are added at the end of the existing file. |
 
 > [!TIP]
 > Combine with iterations: a Write text file task iterating over a recordset appends one line per
@@ -183,6 +184,7 @@ Loads a delimited text file or an Excel `.xlsx` file into a table, creating the 
 |---|---|
 | URL | Address to call. Supports dynamic data. |
 | Method | **GET**, **POST**, **PUT** or **DELETE**. |
+| Ignore certificate errors (insecure) | Off by default. Turn on to call an HTTPS server whose certificate is not trusted (self-signed, untrusted root, wrong name, expired), typically a test server. **Insecure:** anyone between OS-Robot and the server could read and change the traffic, tokens included, so prefer trusting the server's certificate on the OS-Robot machine. Each run logs that validation is disabled. |
 | Headers | Name/value pairs, e.g. `Authorization`, `Content-Type`. |
 | Body | Request body for POST/PUT. |
 | JSON Path to data | JSONPath expression that extracts a value or array from the response. |

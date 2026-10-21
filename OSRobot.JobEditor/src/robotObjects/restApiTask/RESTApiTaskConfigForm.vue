@@ -49,6 +49,19 @@
         </div>
         <div class="row">
           <div class="col">
+            <q-toggle
+              v-model="_propsRef.modelValue.ignoreCertificateErrors"
+              :label="_$t('ignoreCertificateErrors')"
+              left-label
+              dense
+            />
+            <div class="text-caption text-grey-7">
+              {{ _$t("ignoreCertificateErrorsHint") }}
+            </div>
+          </div>
+        </div>
+        <div class="row">
+          <div class="col">
             <q-card class="q-mt-sm">
               <q-card-section>
                 <div class="text-subtitle1">

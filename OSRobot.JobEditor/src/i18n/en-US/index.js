@@ -249,6 +249,9 @@ export default {
   loggingOut: "Logging out...",
   login: "Login",
   logout: "Logout",
+  ignoreCertificateErrors: "Ignore certificate errors (insecure)",
+  ignoreCertificateErrorsHint:
+    "Use only for test servers with a self-signed certificate: anyone in between could read and change the traffic.",
   level: "Level",
   levelInfo: "Information",
   levelSuccess: "Success",

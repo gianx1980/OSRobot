@@ -32,8 +32,11 @@ public class RESTApiTask : MultipleIterationTask
 
     protected override async Task RunMultipleIterationTaskAsync(int currentIteration)
     {
-        using HttpClient client = PluginServices.CreateHttpClient();
         RESTApiTaskConfig config = (RESTApiTaskConfig)_iterationTaskConfig;
+        using HttpClient client = PluginServices.CreateHttpClient(config.IgnoreCertificateErrors);
+
+        if (config.IgnoreCertificateErrors)
+            _instanceLogger?.Info(this, $"Certificate validation is DISABLED for {config.URL} (insecure: any server certificate is accepted).");
 
         client.DefaultRequestHeaders.Clear();
         foreach (RESTApiHeader apiHeader in config.Headers)
