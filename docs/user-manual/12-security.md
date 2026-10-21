@@ -23,6 +23,9 @@ The full explanation is in [SECURITY.md](../../SECURITY.md).
   `RunProgramAllowedExecutablePaths` - the two settings work as a pair.
 - Protect `Data\jobs.json`: it contains connection passwords.
 - Review `ExecLogs\audit-*.log` periodically.
+- Behind a reverse proxy, exclude the `access_token` URL parameter from the proxy's access logs:
+  the editor's notifications connection (`/hubs/notifications`) sends the login token that way,
+  because browsers cannot add headers to a WebSocket.
 
 ## 12.3 Remote access options
 

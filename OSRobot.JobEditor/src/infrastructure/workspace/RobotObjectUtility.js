@@ -74,6 +74,9 @@ RobotObjectUtility.getPluginIcon = function (objectId) {
     case "ZipTask":
       return "folder_zip";
 
+    case "NotifyUsersTask":
+      return "notifications";
+
     case "PingTask":
       return "network_ping";
   }

@@ -375,6 +375,9 @@
   <data name="TxtNoValue" xml:space="preserve">
     <value>&lt;No value&gt;</value>
   </data>
+  <data name="TxtNotifyUsersTask" xml:space="preserve">
+    <value>Notification task</value>
+  </data>
   <data name="TxtOptions" xml:space="preserve">
     <value>Options</value>
   </data>

@@ -49,6 +49,7 @@
                 <q-item-section avatar><q-icon name="info" /></q-item-section>
                 <q-item-section>{{ _$t("about") }}</q-item-section>
               </q-item>
+              <DesktopNotificationsMenuItem />
               <q-separator />
               <q-item clickable v-close-popup @click="_exitClick">
                 <q-item-section avatar><q-icon name="logout" /></q-item-section>
@@ -212,9 +213,16 @@ import SqlServerCommandTaskConfigForm from "src/robotObjects/sqlServerCommandTas
 import SqlServerFileLoaderTaskConfigForm from "src/robotObjects/sqlServerFileLoaderTask/SqlServerFileLoaderTaskConfigForm.vue";
 import UnzipTaskConfigForm from "src/robotObjects/unzipTask/unzipTaskConfigForm.vue";
 import ZipTaskConfigForm from "src/robotObjects/zipTask/zipTaskConfigForm.vue";
+import DesktopNotificationsMenuItem from "src/components/DesktopNotificationsMenuItem.vue";
+import NotificationHub from "src/infrastructure/server/NotificationHub.js";
+import {
+  initPresenter,
+  present as presentNotification,
+} from "src/infrastructure/NotificationPresenter.js";
 import WriteBinaryFileTaskConfigForm from "src/robotObjects/writeBinaryFileTask/WriteBinaryFileTaskConfigForm.vue";
 import WriteTextFileTaskConfigForm from "src/robotObjects/writeTextFileTask/writeTextFileTaskConfigForm.vue";
 import PingTaskConfigForm from "src/robotObjects/pingTask/PingTaskConfigForm.vue";
+import NotifyUsersTaskConfigForm from "src/robotObjects/notifyUsersTask/NotifyUsersTaskConfigForm.vue";
 
 import { ref, onMounted, onUnmounted, watch } from "vue";
 import {
@@ -287,6 +295,7 @@ const _configForms = {
   WriteBinaryFileTaskConfigForm,
   WriteTextFileTaskConfigForm,
   PingTaskConfigForm,
+  NotifyUsersTaskConfigForm,
 };
 
 const _appStore = useAppStore();
@@ -1205,10 +1214,14 @@ onConnect((params) => {
 
 onUnmounted(() => {
   window.removeEventListener("keydown", _onKeyDown);
+  // Leaving the layout means logging out: stop receiving notifications.
+  NotificationHub.stop();
 });
 
 onMounted(async () => {
   window.addEventListener("keydown", _onKeyDown);
+  initPresenter(_$t);
+  NotificationHub.start(presentNotification);
 
   // If connected flag is false, show the reconnect window immediately
   // (needed if the user press F5)

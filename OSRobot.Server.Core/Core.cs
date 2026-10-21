@@ -2,6 +2,7 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 using OSRobot.Server.Core.Logging;
+using OSRobot.Server.Core.Notifications;
 
 namespace OSRobot.Server.Core;
 
@@ -18,12 +19,20 @@ public static class Core
     /// </summary>
     public static bool ScriptingEnabled { get; private set; } = true;
 
+    /// <summary>
+    /// Where NotifyUsersTask sends its notifications. The host passes its implementation to the
+    /// JobEngine (in the server: a SignalR broadcast to every open editor); without one it is a no-op.
+    /// </summary>
+    public static IUserNotifier UserNotifier { get; private set; } = NullUserNotifier.Instance;
+
     private static string[] _allowedExecutablePaths = [];
 
-    public static void Init(string logPath, bool scriptingEnabled = true, string? runProgramAllowedExecutablePaths = null)
+    public static void Init(string logPath, bool scriptingEnabled = true, string? runProgramAllowedExecutablePaths = null,
+                            IUserNotifier? userNotifier = null)
     {
         PluginInstanceLogger.LogPath = logPath;
         ScriptingEnabled = scriptingEnabled;
+        UserNotifier = userNotifier ?? NullUserNotifier.Instance;
         _allowedExecutablePaths =
         [
             .. (runProgramAllowedExecutablePaths ?? string.Empty)

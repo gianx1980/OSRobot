@@ -8,9 +8,10 @@
   "scripts": {
     "lint": "eslint --ext .js,.vue ./",
     "format": "prettier --write \"**/*.{js,vue,scss,html,md,json}\" --ignore-path .gitignore",
-    "test": "echo \"No test specified\" && exit 0"
+    "test": "node --experimental-detect-module --test test/"
   },
   "dependencies": {
+    "@microsoft/signalr": "^8.0.7",
     "@quasar/extras": "^1.0.0",
     "@vue-flow/background": "^1.2.0",
     "@vue-flow/core": "^1.38.5",

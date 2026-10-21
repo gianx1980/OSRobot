@@ -45,6 +45,9 @@ ASP.NET Core Module (ANCM), "out-of-process" hosting model.
    `https` as the scheme for redirect/JWT-issuer purposes.
 7. IIS on the *same* machine as OSRobot needs no extra config — loopback is trusted by default.
    Only fill in `AppSettings:ReverseProxy:KnownProxies` (see Option B) if IIS runs elsewhere.
+8. For editor notifications (Notification task), install the IIS **WebSocket Protocol** feature
+   (Server Manager → Web Server → Application Development). Without it they still work, over a
+   slower fallback transport.
 
 ## Option B — nginx / Caddy (reverse proxy)
 
@@ -67,6 +70,17 @@ Keep OSRobot listening on loopback only and let the proxy hold the certificate.
 
        location / {
            proxy_pass         http://127.0.0.1:7098;
+           proxy_set_header   Host              $host;
+           proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
+           proxy_set_header   X-Forwarded-Proto $scheme;
+       }
+
+       # Editor notifications (Notification task) use a WebSocket.
+       location /hubs/ {
+           proxy_pass         http://127.0.0.1:7098;
+           proxy_http_version 1.1;
+           proxy_set_header   Upgrade           $http_upgrade;
+           proxy_set_header   Connection        "upgrade";
            proxy_set_header   Host              $host;
            proxy_set_header   X-Forwarded-For   $proxy_add_x_forwarded_for;
            proxy_set_header   X-Forwarded-Proto $scheme;

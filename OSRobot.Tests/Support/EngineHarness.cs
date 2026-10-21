@@ -5,6 +5,7 @@ using System.Diagnostics;
 using System.Text.Json;
 using OSRobot.Server.Core.Logging;
 using OSRobot.Server.Core.Logging.Abstract;
+using OSRobot.Server.Core.Notifications;
 using OSRobot.Server.JobEngineLib;
 using OSRobot.Server.JobEngineLib.Infrastructure.Abstract;
 
@@ -162,7 +163,8 @@ public sealed class EngineHarness : IDisposable
     public CapturingAppLogger Log { get; } = new();
     public TestEngineConfig Config { get; }
 
-    public EngineHarness(JobGraph graph, bool serialExecution = false, int stopDrainTimeoutSeconds = 5, int maxConcurrentTasks = 8)
+    public EngineHarness(JobGraph graph, bool serialExecution = false, int stopDrainTimeoutSeconds = 5, int maxConcurrentTasks = 8,
+                         IUserNotifier? userNotifier = null)
     {
         _root = Path.Combine(Path.GetTempPath(), "OSRobotEngineTests", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(Path.Combine(_root, "Data"));
@@ -179,7 +181,7 @@ public sealed class EngineHarness : IDisposable
         };
 
         ProbeLog.Clear();
-        Engine = new JobEngine(Log, Config);
+        Engine = new JobEngine(Log, Config, userNotifier);
         Engine.Start();
     }
 

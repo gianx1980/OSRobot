@@ -81,6 +81,15 @@ sharing the definition's `ParentFolder` and `Connections`) because the same defi
 concurrently; successors are taken from the shared definition. `WaitSeconds` uses a timer,
 not a worker. `SerialExecution` = 1 worker; otherwise `MaxConcurrentTasks`.
 
+**User notifications**: `NotifyUsersTask` calls `Core.UserNotifier` (`IUserNotifier`, no-op by
+default), which `JobEngine` installs from its optional constructor parameter. The server's
+`HubUserNotifier` broadcasts to every editor connected to `NotificationsHub`
+(`/hubs/notifications`, JWT via `access_token` query for that path only; refuses
+must-change-password tokens). `Program.cs` forces Serilog's
+`Microsoft.AspNetCore.Hosting.Diagnostics` to `Warning` in code, keeping those URLs (and tokens)
+out of `osrobot-*.log` whatever `appsettings.json` says. Fire-and-forget: nothing is stored; tests that swap
+`Core.UserNotifier` must be `[DoNotParallelize]`.
+
 **Connections** (`PluginInstanceConnection`): `DontExecuteConditions` are checked first (any match
 blocks), then `ExecuteConditions` (any match runs). `RunMode` is `ForEachResult` (default) or
 `OnceWithAllResults` (collected into the source's `IterationResults` recordset, judged by

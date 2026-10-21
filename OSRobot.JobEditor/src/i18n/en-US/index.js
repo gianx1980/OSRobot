@@ -249,6 +249,20 @@ export default {
   loggingOut: "Logging out...",
   login: "Login",
   logout: "Logout",
+  level: "Level",
+  levelInfo: "Information",
+  levelSuccess: "Success",
+  levelWarning: "Warning",
+  levelError: "Error",
+  desktopNotifications: "Desktop notifications",
+  desktopNotificationsOn: "On",
+  desktopNotificationsOff: "Off",
+  desktopNotificationsBlocked: "Blocked",
+  desktopNotificationsBlockedHint:
+    "Allow notifications for this site in the browser settings",
+  desktopNotificationsUnsupported: "Requires HTTPS or localhost",
+  notificationsMissed:
+    "{count} older notifications arrived while you were away and are not shown",
   low: "Low",
   noWarrantyDisclaimer:
     "This program is distributed in the hope that it will be useful, but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.",

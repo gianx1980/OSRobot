@@ -8,7 +8,7 @@ settings accept dynamic data unless stated otherwise. Unless noted, tasks run on
 - [10.1 File tasks](#101-file-tasks) - Read/Write text file, Read/Write binary file, File system, Excel file
 - [10.2 Archives](#102-archives) - Zip, Unzip
 - [10.3 SQL Server tasks](#103-sql-server-tasks) - Command, Bulk copy, File loader, Backup
-- [10.4 Network tasks](#104-network-tasks) - FTP/SFTP, REST API, Ping, Send e-mail
+- [10.4 Network tasks](#104-network-tasks) - FTP/SFTP, REST API, Ping, Send e-mail, Notification
 - [10.5 Run program](#105-run-program)
 
 ## 10.1 File tasks
@@ -212,6 +212,37 @@ connection condition (see [Execute and don't-execute conditions](07-connections.
 | SMTP server / Port | Mail server (default port 25). |
 | Connection security | **Automatic (recommended)**, **None (unencrypted)**, **STARTTLS (required)**, **STARTTLS (if available)** or **Implicit TLS / SSL (usually port 465)**. |
 | Authenticate | Turn on and enter Username and Password if the server requires login. |
+
+### Notification
+
+Shows a short message to everyone who has the job editor open, without e-mail: a desktop
+notification when the editor's browser tab is in the background or minimized, a notification
+inside the editor when it is in front.
+
+| Setting | Description |
+|---|---|
+| Title | Required. Up to 200 characters are sent; longer text is cut. |
+| Message | Optional body text, up to 2,000 characters. |
+| Level | **Information**, **Success**, **Warning** or **Error**: sets the colour and icon. Error notifications inside the editor stay until closed; the others close after 8 seconds. |
+
+One notification is sent per iteration. By default the task iterates the default recordset of the
+previous task: one notification per row, or a single one when the previous object has no default
+recordset (an event, or a task that doesn't produce one, such as Ping). A recordset that is present
+but empty, for example a query that returned no rows, sends nothing. Title and message accept dynamic data, for example
+`Backup of {object[3].Name} failed`; a title that ends up empty makes that iteration fail.
+
+Things to know:
+
+- **An editor must be open to receive it.** A background tab or a minimized window is enough.
+  Notifications sent while no editor is open are not kept, and nothing is retried. The task
+  still succeeds: it only fails if the server could not send the notification at all.
+- **Desktop notifications must be allowed**, once per browser: open the user menu (person icon)
+  and click **Desktop notifications**. Clicking it again turns them off and on for that browser
+  only. Notifications inside the editor are always shown.
+- **Browsers only allow desktop notifications on HTTPS or on the server itself**
+  (`http://localhost`). When the editor is opened over plain HTTP from another computer, the menu
+  item is disabled and only notifications inside the editor are shown.
+- Everyone signed in to the editor receives every notification.
 
 ## 10.5 Run program
 

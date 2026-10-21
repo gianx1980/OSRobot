@@ -835,6 +835,15 @@ namespace OSRobot.Server.Plugins {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Notification task.
+        /// </summary>
+        internal static string TxtNotifyUsersTask {
+            get {
+                return ResourceManager.GetString("TxtNotifyUsersTask", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Options.
         /// </summary>
         internal static string TxtOptions {
