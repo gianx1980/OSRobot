@@ -8,17 +8,21 @@ using OSRobot.Server.Core.Logging;
 using OSRobot.Server.Core.Logging.Abstract;
 using OSRobot.Server.Core.Notifications;
 using OSRobot.Server.Core.Persistence;
+using OSRobot.Server.Core.Variables;
 using OSRobot.Server.JobEngineLib.Infrastructure.Abstract;
 
 
 namespace OSRobot.Server.JobEngineLib;
 
 // userNotifier: where NotifyUsersTask sends notifications (Core.UserNotifier); null = nowhere.
-public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config, IUserNotifier? userNotifier = null) : IJobEngine, IEventSink
+// variables: the values of {var[...]} and {secret[...]} (Core.Variables); null = none defined.
+public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config, IUserNotifier? userNotifier = null,
+                               IVariableResolver? variables = null) : IJobEngine, IEventSink
 {
     private readonly IAppLogger _log = appLogger;
     private readonly IJobEngineConfig _config = config;
     private readonly IUserNotifier? _userNotifier = userNotifier;
+    private readonly IVariableResolver? _variables = variables;
     private IFolder _rootFolder = new Folder();
 
     private List<IEvent> _events = [];
@@ -424,7 +428,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config, IU
 
         try
         {
-            Server.Core.Core.Init(_config.LogPath, _config.ScriptingEnabled, _config.RunProgramAllowedExecutablePaths, _userNotifier);
+            Server.Core.Core.Init(_config.LogPath, _config.ScriptingEnabled, _config.RunProgramAllowedExecutablePaths, _userNotifier, _variables);
 
             _log.Info("Starting OSRobot.JobEngine...");
 

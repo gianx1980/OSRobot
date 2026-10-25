@@ -9,6 +9,10 @@
 
         <q-toolbar-title>{{ _$t("osRobot") }}</q-toolbar-title>
 
+        <q-btn dense flat round icon="password" @click="_showVariablesDialog">
+          <q-tooltip>{{ _$t("variablesAndSecrets") }}</q-tooltip>
+        </q-btn>
+
         <q-btn dense flat round icon="work_history" @click="_toggleLogDrawer">
           <q-tooltip>{{ _$t("showLogs") }}</q-tooltip>
         </q-btn>
@@ -266,6 +270,7 @@ import Workspace from "src/infrastructure/server/Workspace.js";
 import RobotObjectUtility from "src/infrastructure/workspace/RobotObjectUtility.js";
 import ChangePasswordDialog from "src/components/ChangePasswordDialog.vue";
 import AboutDialog from "src/components/AboutDialog.vue";
+import VariablesDialog from "src/components/VariablesDialog.vue";
 
 const _configForms = {
   EmptyConfigForm,
@@ -1144,6 +1149,10 @@ function _showChangePasswordDialog() {
 
 function _showAboutDialog() {
   _$q.dialog({ component: AboutDialog });
+}
+
+function _showVariablesDialog() {
+  _$q.dialog({ component: VariablesDialog });
 }
 
 function _exitClick() {

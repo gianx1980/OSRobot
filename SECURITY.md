@@ -10,7 +10,8 @@ This is not an accidental gap to be patched; it is what the product does. A job 
 - Run any executable on the host, with any arguments (`RunProgramTask`).
 - Run arbitrary inline C# via `[CODE]` dynamic-data expressions, with full access to the .NET
   BCL — file system, network, process creation, reflection, everything (`DynamicDataParser`).
-- Read any environment variable the service process can see (`{environment['VAR']}`).
+- Read any environment variable the service process can see (`{environment['VAR']}`), and use
+  any stored variable or secret (`{var['Name']}`, `{secret['Name']}`).
 - Connect to any database, FTP/SFTP server, or SMTP server it's given credentials for.
 
 None of this is sandboxed. There is no capability restriction between "what a job is allowed to
@@ -59,6 +60,44 @@ around it:
    [OSRobot.Server/DEPLOYMENT.md](OSRobot.Server/DEPLOYMENT.md) for guidance. A compromised job
    editor on a least-privilege account is a contained incident; the same compromise running as
    `LocalSystem` is a full host takeover.
+
+## Secrets and variables
+
+Credentials don't have to sit in `jobs.json`: a job can write `{secret['Name']}` and the value is
+kept in `config.db`, encrypted with ASP.NET Core Data Protection.
+
+- **Keys.** The Data Protection key ring lives in its own folder (`Data/keys`,
+  `AppSettings:DataProtection:KeysPath`), never in `config.db`. The keys are encrypted with a
+  certificate when `AppSettings:DataProtection:CertificatePath` is set, otherwise with DPAPI on
+  Windows (tied to the service account and machine), otherwise not at all: on Linux/macOS without
+  a certificate only the folder's permissions protect them, and the server logs a warning at
+  startup. A configured certificate that can't be opened stops the server instead of falling back.
+  Data Protection never re-encrypts an existing key, so at each start `SecretKeyRotation` checks the
+  key in use against the configuration and, if they differ, creates a new key and re-encrypts every
+  secret with it: changing the protection takes effect at once, not when the old key expires.
+  On Linux, deliver the certificate's password as a TPM-bound systemd credential (see
+  [OSRobot.Server/DEPLOYMENT.md](OSRobot.Server/DEPLOYMENT.md)).
+- **What this protects against:** a copied or leaked `config.db`, `jobs.json` or backup of
+  either, and anyone looking at the editor. A secret's value never leaves the server: the API
+  can set it but never returns it, and the SQL Server *Test connection* endpoints resolve
+  placeholders on the server and take the connection details in a POST body, so no password ends
+  up in a URL or a proxy log.
+- **What it does not protect against:** anyone who can edit jobs. They can use every secret,
+  including sending it to a server of their own with a REST API task. And anyone who can run code
+  as the service account can decrypt the keys, since that's how the engine reads them. Secrets are
+  not access control between job authors.
+- **Redaction.** Every secret value of 4 characters or more is replaced with `***` in execution
+  logs, in the messages of the application log and in Notification task messages. It is a safety
+  net: a transformed secret (encoded, split, truncated) isn't recognized, and exception details in
+  the application log are written as they are.
+- **Single-pass resolution.** Placeholders are found in the configured text and replaced in one
+  pass, so data coming from outside (a file, a REST response, an e-mail) that contains
+  `{secret['X']}` or `{environment['X']}` is never expanded.
+- **Audit.** Creating, changing and deleting a variable or secret is written to the audit log, by
+  name only.
+- **Plain-text passwords.** Saving the jobs warns about every `Password` setting written as plain
+  text, and the editor offers to move it to a secret. `jobs.json.bak` keeps the previous version
+  of the jobs until the next save.
 
 ## Reducing the surface (optional, off by default)
 

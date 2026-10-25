@@ -5,6 +5,7 @@ using System.Text.Json;
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Persistence;
+using OSRobot.Server.Core.Variables;
 using OSRobot.Tests.Support;
 
 namespace OSRobot.Tests.TestClasses;
@@ -12,11 +13,18 @@ namespace OSRobot.Tests.TestClasses;
 [TestClass]
 public sealed class TestDynamicDataValidator
 {
-    private static List<DynamicDataIssue> Validate(JobGraph graph)
+    private static List<DynamicDataIssue> Validate(JobGraph graph, IVariableResolver? variables = null)
     {
         using JsonDocument jsonDoc = JsonDocument.Parse(graph.ToJson());
         Folder rootFolder = (Folder)new JsonDeserialization(jsonDoc).Deserialize()!;
-        return DynamicDataValidator.Validate(rootFolder);
+        return DynamicDataValidator.Validate(rootFolder, variables ?? VariableSet.Empty);
+    }
+
+    private static JobGraph WithSendEMailPassword(string password)
+    {
+        return new JobGraph()
+            .Node(new { pluginId = "SendEMailTask", id = 2, name = "Mail", authenticate = true, username = "robot", password, iterationsCount = 1 })
+            .Connect(JobGraph.EventId, 2);
     }
 
     private static DynamicDataIssue Single(List<DynamicDataIssue> issues)
@@ -223,5 +231,68 @@ public sealed class TestDynamicDataValidator
             .Connect(2, 3);
 
         StringAssert.Contains(Single(Validate(graph)).Message, "is not a recordset");
+    }
+
+    // ----- Variables, secrets and plain-text passwords -------------------------------------------
+
+    [TestMethod]
+    public void Defined_variables_and_secrets_produce_no_issues()
+    {
+        JobGraph graph = new JobGraph()
+            .Task(2, "A", value: "{var['ShareRoot']} {secret['Token']}")
+            .Connect(JobGraph.EventId, 2);
+        VariableSet variables = new([KeyValuePair.Create("ShareRoot", "x")], [KeyValuePair.Create("Token", (string?)"y")]);
+
+        Assert.AreEqual(0, Validate(graph, variables).Count);
+    }
+
+    [TestMethod]
+    public void An_undefined_variable_or_secret_is_reported()
+    {
+        JobGraph graph = new JobGraph()
+            .Task(2, "A", value: "{var['ShareRoot']} {secret['Token']}")
+            .Connect(JobGraph.EventId, 2);
+
+        List<DynamicDataIssue> issues = Validate(graph);
+
+        Assert.AreEqual(2, issues.Count, string.Join(Environment.NewLine, issues));
+        Assert.AreEqual("{var['ShareRoot']}", issues[0].Reference);
+        StringAssert.Contains(issues[0].Message, "Variable 'ShareRoot' is not defined");
+        Assert.AreEqual("{secret['Token']}", issues[1].Reference);
+        StringAssert.Contains(issues[1].Message, "Secret 'Token' is not defined");
+    }
+
+    [TestMethod]
+    public void A_variable_defined_only_as_a_secret_is_reported()
+    {
+        JobGraph graph = new JobGraph()
+            .Task(2, "A", value: "{var['Token']}")
+            .Connect(JobGraph.EventId, 2);
+
+        StringAssert.Contains(Single(Validate(graph, new VariableSet([], [KeyValuePair.Create("Token", (string?)"y")]))).Message,
+                              "Variable 'Token' is not defined");
+    }
+
+    [TestMethod]
+    public void A_plain_text_password_is_reported_without_showing_it()
+    {
+        DynamicDataIssue issue = Single(Validate(WithSendEMailPassword("hunter2")));
+
+        Assert.AreEqual("Password", issue.Location);
+        Assert.AreEqual(string.Empty, issue.Reference);
+        StringAssert.Contains(issue.Message, "plain text");
+        Assert.IsFalse(issue.ToString().Contains("hunter2"));
+    }
+
+    [TestMethod]
+    [DataRow("", DisplayName = "Empty")]
+    [DataRow("{secret['SmtpPassword']}", DisplayName = "Secret")]
+    [DataRow("{environment['OSROBOT_SMTP_PASSWORD']}", DisplayName = "Environment variable")]
+    [DataRow("[CODE]Environment.GetEnvironmentVariable(\"X\")", DisplayName = "Code expression")]
+    public void A_password_not_written_in_jobs_json_is_not_reported(string password)
+    {
+        VariableSet variables = new([], [KeyValuePair.Create("SmtpPassword", (string?)"y")]);
+
+        Assert.AreEqual(0, Validate(WithSendEMailPassword(password), variables).Count, string.Join(Environment.NewLine, Validate(WithSendEMailPassword(password), variables)));
     }
 }

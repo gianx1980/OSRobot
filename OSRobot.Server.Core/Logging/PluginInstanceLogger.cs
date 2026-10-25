@@ -57,6 +57,10 @@ public class PluginInstanceLogger : IPluginInstanceLogger
 
     private void WriteLine(string text, int position = -1)
     {
+        // Everything reaching an execution log, exception texts included, goes through here: a secret
+        // that ended up in a URL, a message or an error is written as *** instead.
+        text = Core.Variables.Redact(text);
+
         lock (_lockWriting)
         {
             using StreamWriter sw = new(_pathFileName, true);

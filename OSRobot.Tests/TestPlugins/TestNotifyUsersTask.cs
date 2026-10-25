@@ -7,6 +7,7 @@ using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging;
 using OSRobot.Server.Core.Logging.Abstract;
 using OSRobot.Server.Core.Notifications;
+using OSRobot.Server.Core.Variables;
 using OSRobot.Server.Plugins.NotifyUsersTask;
 using OSRobot.Tests.Support;
 
@@ -54,6 +55,19 @@ public sealed class TestNotifyUsersTask
         NotifyUsersTaskConfig config = (NotifyUsersTaskConfig)new NotifyUsersTaskPlugin().GetPluginDefaultConfig();
         config.Title = title;
         return config;
+    }
+
+    [TestMethod]
+    public async Task Secrets_are_redacted_from_title_and_message()
+    {
+        Core.Init(PluginInstanceLogger.LogPath, userNotifier: _notifier,
+                  variables: new VariableSet([], [KeyValuePair.Create("Token", (string?)"abc-123-xyz")]));
+
+        await RunAsync(Config("Token {secret['Token']}", "it was abc-123-xyz"));
+
+        UserNotification notification = _notifier.Notifications.Single();
+        Assert.AreEqual("Token ***", notification.Title);
+        Assert.AreEqual("it was ***", notification.Message);
     }
 
     [TestMethod]

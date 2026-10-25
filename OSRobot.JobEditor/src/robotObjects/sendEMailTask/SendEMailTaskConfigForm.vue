@@ -400,7 +400,7 @@
       </q-card-section>
       <q-card-section>
         <div class="row">
-          <div class="col">
+          <div class="col-10">
             <q-input
               filled
               v-model="_propsRef.modelValue.sender"
@@ -410,9 +410,17 @@
               :rules="[(val) => !!val || _$t('thisFieldIsMandatory')]"
             />
           </div>
+          <div class="col-2">
+            <BtnDynamicDataBrowser
+              class="q-ml-sm"
+              v-model="_propsRef.modelValue"
+              :folderItems="_propsRef.containingFolderItems"
+              modelValueKey="sender"
+            />
+          </div>
         </div>
         <div class="row">
-          <div class="col">
+          <div class="col-10">
             <q-input
               filled
               v-model="_propsRef.modelValue.smtpServer"
@@ -420,6 +428,14 @@
               lazy-rules
               dense
               :rules="[(val) => !!val || _$t('thisFieldIsMandatory')]"
+            />
+          </div>
+          <div class="col-2">
+            <BtnDynamicDataBrowser
+              class="q-ml-sm"
+              v-model="_propsRef.modelValue"
+              :folderItems="_propsRef.containingFolderItems"
+              modelValueKey="smtpServer"
             />
           </div>
         </div>
@@ -465,7 +481,7 @@
           </div>
         </div>
         <div class="row">
-          <div class="col">
+          <div class="col-10">
             <q-input
               ref="_ctlUsername"
               filled
@@ -482,9 +498,18 @@
               ]"
             />
           </div>
+          <div class="col-2">
+            <BtnDynamicDataBrowser
+              class="q-ml-sm"
+              v-model="_propsRef.modelValue"
+              :folderItems="_propsRef.containingFolderItems"
+              modelValueKey="username"
+              :disable="!_propsRef.modelValue.authenticate"
+            />
+          </div>
         </div>
         <div class="row">
-          <div class="col">
+          <div class="col-10">
             <q-input
               ref="_ctlPassword"
               filled
@@ -499,6 +524,23 @@
                   !!val ||
                   _$t('thisFieldIsMandatory'),
               ]"
+            >
+              <template v-slot:append>
+                <BtnMoveToSecret
+                  :modelValue="_propsRef.modelValue"
+                  modelValueKey="password"
+                  suggestedName="SmtpPassword"
+                />
+              </template>
+            </q-input>
+          </div>
+          <div class="col-2">
+            <BtnDynamicDataBrowser
+              class="q-ml-sm"
+              v-model="_propsRef.modelValue"
+              :folderItems="_propsRef.containingFolderItems"
+              modelValueKey="password"
+              :disable="!_propsRef.modelValue.authenticate"
             />
           </div>
         </div>
@@ -719,6 +761,7 @@ import PluginGeneralConfigForm from "src/components/PluginGeneralConfigForm.vue"
 import PluginIterationConfigForm from "src/components/PluginIterationConfigForm.vue";
 import BtnDynamicDataBrowser from "src/components/BtnDynamicDataBrowser.vue";
 import BtnFileBrowser from "src/components/BtnFileBrowser.vue";
+import BtnMoveToSecret from "src/components/BtnMoveToSecret.vue";
 
 const _props = defineProps(["modelValue", "containingFolderItems"]);
 const _propsRef = ref(_props);

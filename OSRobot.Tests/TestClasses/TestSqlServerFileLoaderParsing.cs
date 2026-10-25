@@ -15,9 +15,12 @@ public sealed class TestSqlServerFileLoaderParsing
     private static readonly CultureInfo Italian = CultureInfo.GetCultureInfo("it-IT");
     private static readonly CultureInfo English = CultureInfo.GetCultureInfo("en-US");
 
+    // A folder of its own for each call: tests run in parallel (DataRow rows included), and two of them
+    // writing and reading the same path made An_invalid_configured_encoding_is_reported flaky.
+    // The name is kept as given, since the extension decides how the file is read.
     private static string TempFile(string name)
     {
-        string folder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "TestSqlServerFileLoaderParsing");
+        string folder = Path.Combine(AppDomain.CurrentDomain.BaseDirectory, "TestSqlServerFileLoaderParsing", Guid.NewGuid().ToString("N"));
         Directory.CreateDirectory(folder);
         return Path.Combine(folder, name);
     }

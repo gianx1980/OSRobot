@@ -19,13 +19,21 @@ public partial class RobotDBContext : DbContext
     public virtual DbSet<User> Users { get; set; }
 
     public virtual DbSet<UserRefreshToken> UserRefreshTokens { get; set; }
-   
+
+    public virtual DbSet<Variable> Variables { get; set; }
+
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
         modelBuilder.Entity<User>(entity =>
         {
             entity.HasIndex(e => e.UserName, "IX_Users_UserName").IsUnique();
+        });
+
+        modelBuilder.Entity<Variable>(entity =>
+        {
+            // The column is COLLATE NOCASE (see ConfigDatabaseSchema): lookups by name ignore case.
+            entity.HasIndex(e => e.Name).IsUnique();
         });
 
         OnModelCreatingPartial(modelBuilder);

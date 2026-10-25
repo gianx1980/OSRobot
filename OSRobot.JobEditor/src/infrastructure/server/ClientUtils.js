@@ -85,18 +85,20 @@ export default class ClientUtils extends ServiceBase {
     return result;
   }
 
+  // The connection details travel in the body (POST): they include a password, which must not end
+  // up in a URL. Placeholders such as {secret['Name']} are resolved by the server.
   async sqlServerTestConnection(connectionInfo) {
     let result = null;
 
     try {
-      const response = await this._get({
+      const response = await this._post({
         url: "/ClientUtils/SqlServerConnectionTest",
-        params: connectionInfo,
+        data: connectionInfo,
       });
 
       result = new ServiceResponse(response.data.responseCode, null);
     } catch (e) {
-      this._throwException(e);
+      result = this._invalidVariableResponse(e);
     }
 
     return result;
@@ -106,9 +108,9 @@ export default class ClientUtils extends ServiceBase {
     let result = null;
 
     try {
-      const response = await this._get({
+      const response = await this._post({
         url: "/ClientUtils/SqlServerDatabases",
-        params: connectionInfo,
+        data: connectionInfo,
       });
       const item = response.data.responseObject;
 
@@ -117,9 +119,22 @@ export default class ClientUtils extends ServiceBase {
         response.data.responseCode === 0 ? item : null
       );
     } catch (e) {
-      this._throwException(e);
+      result = this._invalidVariableResponse(e);
     }
 
     return result;
   }
+
+  // A placeholder naming an undefined variable or secret is reported with a message for the user;
+  // any other error is thrown as before.
+  _invalidVariableResponse(e) {
+    const data = e.response?.data;
+    if (data?.responseCode === ClientUtils.InvalidVariable) {
+      return new ServiceResponse(data.responseCode, null, data.responseMessage);
+    }
+
+    this._throwException(e);
+  }
 }
+
+ClientUtils.InvalidVariable = -300;

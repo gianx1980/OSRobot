@@ -14,6 +14,8 @@ before the task runs.
 | `{object[ID].Recordset[{iterationIndex}]['Column']}` | Explicitly the row of the current iteration (same as omitting the row). |
 | `{object[ID].Recordset[{subInstanceIndex}]['Column']}` | The row matching the iteration of the upstream task that started this run (useful with *Once for each result*). |
 | `{environment['NAME']}` | Value of the server's environment variable NAME. |
+| `{var['NAME']}` | Value of the variable NAME (see 8.7). |
+| `{secret['NAME']}` | Value of the secret NAME, stored encrypted on the server (see 8.7). |
 | `[CODE]...` | The whole setting is a C# expression (see 8.6). |
 
 Examples:
@@ -23,7 +25,13 @@ C:\Backup\{object[1].ExecutionStartDateUnderscoreDate}\report.csv
 {object[5].DefaultRecordset['CustomerName']}
 {object[5].DefaultRecordset[0]['Total']}
 {environment['TEMP']}\work
+{var['ShareRoot']}\exports\{object[1].ExecutionStartDateUnderscoreDate}.csv
+{secret['SmtpPassword']}
 ```
+
+Placeholders are replaced in a single pass: what a placeholder is replaced with is never read
+again. A value that comes from outside - a line of a file, a REST response, an e-mail - and happens
+to contain `{secret['X']}` or `{environment['X']}` stays as that text.
 
 ## 8.2 Which data is available
 
@@ -81,6 +89,54 @@ The **Code editor** dialog offers a larger editing area for these expressions.
 > [!WARNING]
 > C# expressions have full access to the server (files, network, processes) with the rights of the
 > service account. Disable them with `ScriptingEnabled: false` if your jobs do not need them.
+
+## 8.7 Variables and secrets
+
+Variables and secrets are named values shared by all jobs and kept on the server, outside the jobs.
+Manage them with the **Variables and secrets** button in the toolbar.
+
+- A **variable** is a plain value, visible to everyone who uses the editor: a server name, a
+  shared folder, a base URL. Use it as `{var['Name']}`.
+- A **secret** is stored encrypted, and its value is never shown again, not even to whoever
+  entered it: passwords, API keys, tokens. Use it as `{secret['Name']}`. To change it, enter a new
+  value; leave the field empty to keep the current one.
+
+Names start with a letter or `_` and contain only letters, digits, `_`, `.` and `-`. Upper and
+lower case are the same name. A variable and a secret may share a name. In the **Dynamic data
+editor** (lightning bolt next to a field), **Insert variable or secret** inserts the placeholder
+for you.
+
+Things to know:
+
+- **Changes apply immediately.** The next task that runs uses the new value: there is nothing to
+  reload.
+- **A name that doesn't exist makes the task fail**, with *"Variable 'X' is not defined"* in the
+  log. Saving the job warns about such names, like other broken references.
+- **Secrets are hidden in logs and notifications.** A secret's value (4 characters or more) found in
+  an execution log, in the server log or in a Notification task is written as `***`. This is a
+  safety net, not a guarantee: a secret that was transformed (encoded, split, cut) is not
+  recognized.
+- **Not available inside `[CODE]`.** C# expressions don't see variables or secrets.
+- **Secrets are not access control.** Anyone who can edit jobs can use any secret, including
+  sending it to a server of their own. Secrets keep values out of `jobs.json`, out of backups of it
+  and off the screen. See [SECURITY.md](../../SECURITY.md).
+
+### Moving passwords out of jobs.json
+
+Saving a job warns about every password written in plain text. Next to the password of the SQL
+Server, FTP/SFTP and Send e-mail tasks, the lock button **Move to a secret** stores the password
+as a secret and replaces it with `{secret['Name']}`. Save the job afterwards.
+
+> [!NOTE]
+> `Data\jobs.json.bak` keeps the previous version of the jobs, password included, until the next
+> save replaces it. Save a second time, or delete the file.
+
+### Where secrets are kept
+
+Secrets are stored in `Data\config.db`, encrypted with keys kept in the `Data\keys` folder. **Back
+up the two together**: secrets can't be read without the keys, and would have to be entered
+again (the dialog marks them *Cannot be decrypted*). How the keys themselves are protected is
+explained in [Server configuration](03-configuration.md#35-secrets-encryption-appsettingsdataprotection).
 
 ---
 

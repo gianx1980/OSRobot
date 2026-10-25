@@ -3,6 +3,7 @@
 
 using OSRobot.Server.Core.Logging;
 using OSRobot.Server.Core.Notifications;
+using OSRobot.Server.Core.Variables;
 
 namespace OSRobot.Server.Core;
 
@@ -25,14 +26,22 @@ public static class Core
     /// </summary>
     public static IUserNotifier UserNotifier { get; private set; } = NullUserNotifier.Instance;
 
+    /// <summary>
+    /// The values of the {var['Name']} and {secret['Name']} placeholders, and the secrets redacted from
+    /// the execution logs. The host passes its implementation to the JobEngine (in the server: the
+    /// variables stored in config.db); without one nothing is defined.
+    /// </summary>
+    public static IVariableResolver Variables { get; private set; } = VariableSet.Empty;
+
     private static string[] _allowedExecutablePaths = [];
 
     public static void Init(string logPath, bool scriptingEnabled = true, string? runProgramAllowedExecutablePaths = null,
-                            IUserNotifier? userNotifier = null)
+                            IUserNotifier? userNotifier = null, IVariableResolver? variables = null)
     {
         PluginInstanceLogger.LogPath = logPath;
         ScriptingEnabled = scriptingEnabled;
         UserNotifier = userNotifier ?? NullUserNotifier.Instance;
+        Variables = variables ?? VariableSet.Empty;
         _allowedExecutablePaths =
         [
             .. (runProgramAllowedExecutablePaths ?? string.Empty)

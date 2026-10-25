@@ -21,7 +21,12 @@ The full explanation is in [SECURITY.md](../../SECURITY.md).
 - Give jobs database, FTP and SMTP accounts with only the permissions they need.
 - If job authors are not fully trusted, set `ScriptingEnabled: false` **and**
   `RunProgramAllowedExecutablePaths` - the two settings work as a pair.
-- Protect `Data\jobs.json`: it contains connection passwords.
+- Move passwords out of `jobs.json` into [secrets](08-dynamic-data.md#87-variables-and-secrets)
+  (saving warns about those still in plain text), and protect `Data\jobs.json`, `Data\config.db`
+  and `Data\keys`.
+- On Linux, protect the secrets' keys with a certificate (see
+  [DEPLOYMENT.md](../../OSRobot.Server/DEPLOYMENT.md)). Back up `Data\keys` together with
+  `config.db`.
 - Review `ExecLogs\audit-*.log` periodically.
 - Behind a reverse proxy, exclude the `access_token` URL parameter from the proxy's access logs:
   the editor's notifications connection (`/hubs/notifications`) sends the login token that way,

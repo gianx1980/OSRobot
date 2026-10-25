@@ -222,7 +222,7 @@ export default {
   inTheLast: "in the last",
   insertAtRow: "Insert at row",
   insertPlaceholder: "Insert placeholder",
-  insertVariable: "Insert variable",
+  insertVariable: "Insert index",
   installedFontsChanged: "Installed fonts changed",
   isIdentity: "Is identity",
   iterations: "Iterations",
@@ -510,6 +510,35 @@ export default {
     "You must change your password before continuing.",
   yourSessionHasExpiredLoginAgain:
     "Your session has expired, please login again",
+
+  // Variables and secrets
+  addVariableOrSecret: "Add variable or secret",
+  cannotBeDecrypted: "Cannot be decrypted: enter its value again",
+  confirmDeleteVariable:
+    "Delete {name}? Jobs that use it will fail until it is added again.",
+  copyPlaceholder: "Copy placeholder",
+  description: "Description",
+  editVariableOrSecret: "Edit variable or secret",
+  enterTheValueAgainToMakeItVisible:
+    "Enter the value again: a secret's value is never shown",
+  insertVariableOrSecret: "Insert variable or secret",
+  leaveEmptyToKeepTheCurrentValue: "Leave empty to keep the current value",
+  moveToSecret: "Move to a secret",
+  passwordMovedToSecret:
+    "The password is now a secret. Save the job to remove it from jobs.json.",
+  placeholderCopied: "Placeholder copied",
+  secret: "Secret",
+  secretHint:
+    "Stored encrypted on the server and never shown again. Hidden as *** in logs and notifications.",
+  thereAreNoVariables: "There are no variables or secrets",
+  useItAs: "Use it in a job as",
+  variable: "Variable",
+  variableHint: "A plain value, visible to everyone who uses the editor.",
+  variableNameRule:
+    "Start with a letter or _; use only letters, digits, _, . and -",
+  variablesAndSecrets: "Variables and secrets",
+  variablesAndSecretsDescription:
+    "Values shared by all jobs. Write {'{'}var['Name']{'}'} or {'{'}secret['Name']{'}'} in a job setting; changes apply to the next task that runs.",
 
   // Data types
   varchar: "Varchar",

@@ -4,7 +4,9 @@ Out of the box, OSRobot Server listens on `http://localhost:7098` only. That's d
 safe: nothing outside the machine it runs on can reach it, so plaintext HTTP is fine — the
 traffic never leaves the loopback interface.
 
-**If you never rebind that address, you don't need anything in this document.**
+**If you never rebind that address, you don't need the HTTPS options below.** The sections
+after them (service account, running on Linux, protecting the secrets' keys) apply to every
+installation.
 
 If you want the web UI reachable from other machines on your LAN, or from the internet, put TLS
 in front of it using **one** of the three options below. Pick based on what you already run:
@@ -173,6 +175,144 @@ that can do to the host.
 
 A compromised job editor on a least-privilege account is a contained incident. The same
 compromise running as `LocalSystem` is a full host takeover.
+
+---
+
+## Linux: run as a systemd service
+
+On Linux, systemd starts and supervises OSRobot Server. Publish the server to a folder (for
+example `/opt/osrobot`), create a dedicated account that owns its `Data` and `ExecLogs` folders,
+then describe the service in a *unit file*:
+
+```ini
+# /etc/systemd/system/osrobot.service
+[Unit]
+Description=OS-Robot automation server
+After=network.target
+
+[Service]
+User=osrobot
+WorkingDirectory=/opt/osrobot
+# Self-contained publish; for a framework-dependent one: /usr/bin/dotnet /opt/osrobot/OSRobot.Server.dll
+ExecStart=/opt/osrobot/OSRobot.Server
+Environment=ASPNETCORE_ENVIRONMENT=Production
+Restart=on-failure
+# See "Protecting the secrets' keys" below.
+LoadCredentialEncrypted=dp-cert-password:/etc/osrobot/dp-cert-password.cred
+
+[Install]
+WantedBy=multi-user.target
+```
+
+`Data` and `ExecLogs` are relative to `WorkingDirectory`. Enable and start the service once:
+
+```bash
+sudo systemctl daemon-reload
+sudo systemctl enable --now osrobot
+```
+
+`systemctl status osrobot` shows whether it runs; `journalctl -u osrobot` shows its console output.
+
+---
+
+## Protecting the secrets' keys
+
+Secrets (`{secret['Name']}`) are stored in `Data/config.db`, encrypted with keys kept in
+`Data/keys` (`AppSettings:DataProtection:KeysPath`). Those keys are themselves encrypted:
+
+| Platform | Without a certificate | With `AppSettings:DataProtection:CertificatePath` |
+|---|---|---|
+| Windows | DPAPI, tied to the service account on this computer. Changing the account or moving to another computer makes the secrets unreadable. | The certificate. |
+| Linux, macOS | **Not encrypted**: only the folder's permissions protect the keys. The server logs a warning at startup. | The certificate. |
+
+Whatever you choose, **back up `Data/keys` together with `Data/config.db`**: one without the other
+can't decrypt the secrets.
+
+A certificate only helps if its private key isn't sitting next to the keys it protects. What
+matters is where the `.pfx` password lives. OS-Robot looks for it, in order, in:
+
+1. the systemd credential named by `CertificatePasswordCredential` (default `dp-cert-password`),
+   read from `$CREDENTIALS_DIRECTORY`;
+2. the environment variable named by `CertificatePasswordEnvironmentVariable` (default
+   `OSROBOT_DP_CERT_PASSWORD`).
+
+If the certificate is configured but can't be opened (missing file, no private key, wrong
+password), the server refuses to start rather than store keys unprotected.
+
+### Linux, recommended: certificate + TPM-bound systemd credential
+
+With `LoadCredentialEncrypted=`, systemd decrypts the password when the service starts and hands
+it to OS-Robot only. Encrypted with the machine's TPM, the credential file is useless on another
+machine: a copied disk or VM image can't decrypt it. Requires systemd 250 or later and a TPM 2.0
+(physical or virtual).
+
+1. Create a certificate and export it as a `.pfx` with a password:
+
+   ```bash
+   sudo mkdir -p /etc/osrobot
+   openssl req -x509 -newkey rsa:3072 -nodes -days 3650 \
+       -subj "/CN=OSRobot Data Protection" -keyout dp.key -out dp.crt
+   openssl pkcs12 -export -inkey dp.key -in dp.crt -out dp-cert.pfx
+   shred -u dp.key
+   sudo mv dp-cert.pfx /etc/osrobot/
+   sudo chown root:osrobot /etc/osrobot/dp-cert.pfx
+   sudo chmod 640 /etc/osrobot/dp-cert.pfx
+   ```
+
+2. Encrypt the `.pfx` password as a systemd credential, without leaving it in the shell history:
+
+   ```bash
+   systemd-ask-password -n "PFX password:" | sudo systemd-creds encrypt --with-key=tpm2 \
+       --name=dp-cert-password - /etc/osrobot/dp-cert-password.cred
+   ```
+
+   The `--name` must match the name before the `:` in `LoadCredentialEncrypted=` and
+   `CertificatePasswordCredential`.
+
+3. Point OS-Robot at the certificate in `appsettings.Production.json`:
+
+   ```json
+   { "AppSettings": { "DataProtection": { "CertificatePath": "/etc/osrobot/dp-cert.pfx" } } }
+   ```
+
+4. Add the `LoadCredentialEncrypted=` line to the unit file (see above), then
+   `sudo systemctl daemon-reload && sudo systemctl restart osrobot`. The startup log names the
+   certificate that protects the keys.
+
+Without a TPM, `--with-key=host` encrypts the credential with a key kept by systemd in
+`/var/lib/systemd/credential.secret` (root only): it protects copies of `/etc/osrobot`, not a
+copy of the whole disk. The simplest, weakest option is the environment variable, set in a
+root-only drop-in (`sudo systemctl edit osrobot`, then
+`Environment=OSROBOT_DP_CERT_PASSWORD=...`).
+
+### Changing or replacing the certificate
+
+At startup OS-Robot compares the key in use with `AppSettings:DataProtection`. When they differ, it
+creates a new key protected as configured and re-encrypts every secret with it (the log says
+*"creating a new key and re-encrypting the secrets"*). So:
+
+- **Adding a certificate** where there was none (or DPAPI): set `CertificatePath` and restart.
+- **Replacing the certificate**: set `CertificatePath` to the new `.pfx`, list the old one in
+  `PreviousCertificatePaths` (same password) so the current key can still be read, and restart.
+  After that first start the secrets use a key protected by the new certificate: the old one can
+  be removed from `PreviousCertificatePaths`.
+
+### Windows
+
+DPAPI needs no setup, and is the stronger choice for an installation that stays on one machine:
+only that account on that computer can decrypt the keys. A certificate makes the keys portable
+(another computer, another service account, a restore elsewhere) at the price of keeping its
+password where the service can read it:
+
+1. Export a certificate with its private key as a `.pfx`, and allow only the service account and
+   administrators to read the file.
+2. Set `AppSettings:DataProtection:CertificatePath` to it.
+3. Give the service the password in `OSROBOT_DP_CERT_PASSWORD`, for that service only: a
+   multi-string value named `Environment` under
+   `HKLM\SYSTEM\CurrentControlSet\Services\<service name>`, containing
+   `OSROBOT_DP_CERT_PASSWORD=...`.
+4. Restart the service **on the current machine**: the secrets are re-encrypted with a key the
+   certificate protects. Only then move the installation.
 
 ---
 

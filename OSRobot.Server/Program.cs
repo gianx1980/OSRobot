@@ -14,11 +14,14 @@ using OSRobot.Server.Configuration;
 using OSRobot.Server.Core.Logging;
 using OSRobot.Server.Core.Logging.Abstract;
 using OSRobot.Server.Core.Notifications;
+using OSRobot.Server.Core.Variables;
+using OSRobot.Server.Infrastructure.DataAccess;
 using OSRobot.Server.Infrastructure.DataAccess.Models;
 using OSRobot.Server.Infrastructure.Hosting;
 using OSRobot.Server.Infrastructure.Notifications;
 using OSRobot.Server.Infrastructure.Security;
 using OSRobot.Server.Infrastructure.Security.Abstract;
+using OSRobot.Server.Infrastructure.Variables;
 using OSRobot.Server.JobEngineLib;
 using OSRobot.Server.JobEngineLib.Infrastructure.Abstract;
 using Serilog;
@@ -254,6 +257,7 @@ if (!File.Exists(dbConfigPathName))
     _initConfigDatabase(dbConnectionString);
 }
 _upgradeUserSchema(dbConnectionString);
+ConfigDatabaseSchema.UpgradeVariablesSchema(dbConnectionString);
 
 // Initialize jobs configuration file
 string jobsConfigPathName = Path.Combine(builder.Configuration["AppSettings:JobEngineConfig:DataPath"]!, "jobs.json");
@@ -284,6 +288,21 @@ builder.Services.AddSingleton<IAuditLogger>(new AppLogger(auditLogger));
 builder.Services.AddSignalR();
 builder.Services.AddSingleton<IUserNotifier, HubUserNotifier>();
 
+// Variables and secrets ({var['Name']}, {secret['Name']}). Secrets are encrypted with Data Protection,
+// whose keys live in their own folder, encrypted by a certificate or DPAPI. The store is also the
+// engine's IVariableResolver (Core.Variables). See SECURITY.md.
+DataProtectionConfig dataProtectionConfig = builder.Configuration.GetSection("AppSettings:DataProtection").Get<DataProtectionConfig>() ?? new DataProtectionConfig();
+DataProtectionSetupResult dataProtection = builder.Services.AddOSRobotDataProtection(dataProtectionConfig, builder.Configuration["AppSettings:JobEngineConfig:DataPath"]!);
+if (dataProtection.ProtectedAtRest)
+    logger.Information("Secrets encryption keys in {KeysPath}, protected by {Protection}.", dataProtection.KeysPath, dataProtection.Protection);
+else
+    logger.Warning("Secrets encryption keys in {KeysPath} are protected only by the folder's permissions: anyone who can read the folder " +
+                   "and config.db can read the secrets. Configure AppSettings:DataProtection:CertificatePath - see DEPLOYMENT.md.", dataProtection.KeysPath);
+
+builder.Services.AddSingleton<VariableStore>();
+builder.Services.AddSingleton<IVariableStore>(sp => sp.GetRequiredService<VariableStore>());
+builder.Services.AddSingleton<IVariableResolver>(sp => sp.GetRequiredService<VariableStore>());
+
 builder.Services.AddSingleton<IJobEngineConfig>(sp => sp.GetRequiredService<IOptions<AppSettings>>().Value.JobEngineConfig);
 builder.Services.AddSingleton<IJobEngine, JobEngine>();
 builder.Services.AddHostedService<JobEngineHostedService>();
@@ -295,6 +314,18 @@ builder.Services.AddScoped<IJWTManager, JWTManager>();
 builder.Host.UseWindowsService();
 
 var app = builder.Build();
+
+// Before the engine starts using them: re-encrypt the secrets if the key protecting them no longer
+// matches AppSettings:DataProtection (e.g. a certificate was added). A failure here is logged, not fatal:
+// the secrets keep working with the key they have.
+try
+{
+    SecretKeyRotation.EnsureActiveKeyMatchesConfiguration(app.Services, dataProtection, app.Services.GetRequiredService<ILogger<VariableStore>>());
+}
+catch (Exception ex)
+{
+    logger.Error(ex, "Could not check or update the protection of the secrets' encryption keys.");
+}
 
 // Must run before anything that inspects Request.Scheme or the remote IP - notably
 // UseHttpsRedirection and authentication - so a reverse-proxied HTTPS request is recognized

@@ -9,7 +9,7 @@
 
     <q-card-section class="q-pt-none">
       <div class="row">
-        <div class="col">
+        <div class="col-11">
           <q-input
             filled
             v-model="_propsRef.modelValue.server"
@@ -20,9 +20,17 @@
             maxlength="500"
           />
         </div>
+        <div class="col-1">
+          <BtnDynamicDataBrowser
+            class="q-ml-sm"
+            v-model="_propsRef.modelValue"
+            :folderItems="_propsRef.containingFolderItems ?? []"
+            modelValueKey="server"
+          />
+        </div>
       </div>
       <div class="row" v-if="_showDatabaseField">
-        <div class="col">
+        <div class="col-11">
           <q-input
             filled
             v-model="_propsRef.modelValue.database"
@@ -33,9 +41,17 @@
             maxlength="500"
           />
         </div>
+        <div class="col-1">
+          <BtnDynamicDataBrowser
+            class="q-ml-sm"
+            v-model="_propsRef.modelValue"
+            :folderItems="_propsRef.containingFolderItems ?? []"
+            modelValueKey="database"
+          />
+        </div>
       </div>
       <div class="row">
-        <div class="col">
+        <div class="col-11">
           <q-input
             filled
             v-model="_propsRef.modelValue.username"
@@ -46,9 +62,17 @@
             maxlength="500"
           />
         </div>
+        <div class="col-1">
+          <BtnDynamicDataBrowser
+            class="q-ml-sm"
+            v-model="_propsRef.modelValue"
+            :folderItems="_propsRef.containingFolderItems ?? []"
+            modelValueKey="username"
+          />
+        </div>
       </div>
       <div class="row">
-        <div class="col">
+        <div class="col-11">
           <q-input
             filled
             v-model="_propsRef.modelValue.password"
@@ -57,11 +81,27 @@
             :rules="[(val) => !!val || _$t('thisFieldIsMandatory')]"
             dense
             maxlength="500"
+          >
+            <template v-slot:append>
+              <BtnMoveToSecret
+                :modelValue="_propsRef.modelValue"
+                modelValueKey="password"
+                suggestedName="SqlServerPassword"
+              />
+            </template>
+          </q-input>
+        </div>
+        <div class="col-1">
+          <BtnDynamicDataBrowser
+            class="q-ml-sm"
+            v-model="_propsRef.modelValue"
+            :folderItems="_propsRef.containingFolderItems ?? []"
+            modelValueKey="password"
           />
         </div>
       </div>
       <div class="row">
-        <div class="col">
+        <div class="col-11">
           <q-input
             filled
             v-model="_propsRef.modelValue.connectionStringOptions"
@@ -69,6 +109,14 @@
             lazy-rules
             dense
             maxlength="500"
+          />
+        </div>
+        <div class="col-1">
+          <BtnDynamicDataBrowser
+            class="q-ml-sm"
+            v-model="_propsRef.modelValue"
+            :folderItems="_propsRef.containingFolderItems ?? []"
+            modelValueKey="connectionStringOptions"
           />
         </div>
       </div>
@@ -93,6 +141,9 @@ import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useQuasar } from "quasar";
 import ClientUtils from "src/infrastructure/server/ClientUtils.js";
+import Utility from "src/infrastructure/Utility.js";
+import BtnMoveToSecret from "src/components/BtnMoveToSecret.vue";
+import BtnDynamicDataBrowser from "src/components/BtnDynamicDataBrowser.vue";
 import { useAppStore } from "src/stores/appStore.js";
 
 const _$q = useQuasar();
@@ -105,8 +156,10 @@ import { useI18n } from "vue-i18n";
 const _i18n = useI18n();
 const _$t = _i18n.t;
 
+// containingFolderItems: the objects of the folder, for the dynamic data buttons (as in the task forms).
 const _props = defineProps([
   "modelValue",
+  "containingFolderItems",
   "showDatabaseField",
   "showTestConnectionButton",
   "testConnectionButtonLabel",
@@ -137,6 +190,15 @@ async function _testRefreshConnection() {
     _connecting.value = true;
     const result = await utils.sqlServerTestConnection(connectionInfo);
     _connecting.value = false;
+
+    // e.g. a {secret['Name']} that is not defined
+    if (result.responseCode === ClientUtils.InvalidVariable) {
+      _$q.notify({
+        color: "red",
+        message: result.responseMessage,
+        position: "top",
+      });
+    }
 
     const eventArgs = { result: result.responseCode === 0 };
     _emit("attemptedConnection", eventArgs);

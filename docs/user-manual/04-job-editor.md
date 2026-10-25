@@ -8,6 +8,7 @@ and panels that open on the right.
 | Button (icon) | Function |
 |---|---|
 | Menu (☰) | Shows or hides the left panel. |
+| Variables and secrets (asterisks) | Manages the values shared by all jobs, used as `{var['Name']}` and `{secret['Name']}` (see [Dynamic data](08-dynamic-data.md#87-variables-and-secrets)). |
 | Show logs (clock) | Opens the Logs panel for the folder currently selected. |
 | Reload server configuration (sync arrows) | Tells the job engine to reload `jobs.json`, so saved changes take effect. Refused while jobs are running. |
 | Save (disk) | Saves the whole workspace to the server. |
