@@ -216,6 +216,9 @@
   <data name="TxtDynDataFieldXOfRecordsetsRow" xml:space="preserve">
     <value>Field X of recordset's row</value>
   </data>
+  <data name="TxtDynDataErrorMessage" xml:space="preserve">
+    <value>Error message, when the object failed</value>
+  </data>
   <data name="TxtDynDataNumberOfIterations" xml:space="preserve">
     <value>Number of iterations</value>
   </data>

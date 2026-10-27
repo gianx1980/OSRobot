@@ -17,7 +17,8 @@ when. Jobs are organized into folders and run entirely on the machine OS-Robot i
   execution conditions (e.g. "only if the previous task succeeded", or a dynamic-data condition),
   and per-object enable/disable and logging toggles.
 - **Events** - `DateTimeEvent` (schedule/recurrence), `CpuEvent`, `MemoryEvent`, `DiskSpaceEvent`,
-  `FileSystemEvent`, `SystemEventsEvent`, `OSRobotServiceStartEvent`.
+  `FileSystemEvent`, `SystemEventsEvent`, `OSRobotServiceStartEvent`, and `TaskFailureEvent`, which
+  reports the failures of other jobs (one e-mail for a whole folder, grouped over time).
 - **Tasks** - file I/O (`ReadTextFileTask`, `WriteTextFileTask`, `ReadBinaryFileTask`,
   `WriteBinaryFileTask`, `FileSystemTask`), archives (`ZipTask`, `UnzipTask`), data
   (`ExcelFileTask`, `SqlServerBackupTask`, `SqlServerBulkCopyTask`, `SqlServerCommandTask`),

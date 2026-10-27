@@ -25,14 +25,21 @@ internal sealed class JobRun
     // dispatching its first tasks. The trigger releases it with CompleteItem() once done.
     private int _pendingItems = 1;
 
-    public JobRun(long id, TaskQueue queue, CancellationToken callerToken)
+    public JobRun(long id, TaskQueue queue, CancellationToken callerToken, bool reportsFailures = true)
     {
         Id = id;
         Queue = queue;
+        ReportsFailures = reportsFailures;
         _cts = CancellationTokenSource.CreateLinkedTokenSource(queue.Token, callerToken);
     }
 
     public long Id { get; }
+
+    /// <summary>
+    /// Whether this run's task failures are reported to the Task failure events. False for a run started by
+    /// one of them: a failure there (a mail server that is down) would otherwise fire the event again, forever.
+    /// </summary>
+    public bool ReportsFailures { get; }
 
     /// <summary>The queue this run's work goes to. Fixed at creation, so work from a run started before a reload never lands in the new queue.</summary>
     public TaskQueue Queue { get; }

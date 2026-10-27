@@ -621,4 +621,34 @@
   <data name="TxtZipTask" xml:space="preserve">
     <value>Zip task</value>
   </data>
+  <data name="TxtTaskFailureEvent" xml:space="preserve">
+    <value>Task failure event</value>
+  </data>
+  <data name="TxtDynDataFailedObjectID" xml:space="preserve">
+    <value>ID of the task that failed</value>
+  </data>
+  <data name="TxtDynDataFailedObjectName" xml:space="preserve">
+    <value>Name of the task that failed</value>
+  </data>
+  <data name="TxtDynDataFailedObjectType" xml:space="preserve">
+    <value>Type of the task that failed</value>
+  </data>
+  <data name="TxtDynDataFailedObjectFolder" xml:space="preserve">
+    <value>Folder of the task that failed</value>
+  </data>
+  <data name="TxtDynDataFailureMessage" xml:space="preserve">
+    <value>Why the task failed</value>
+  </data>
+  <data name="TxtDynDataFailedIterationIndex" xml:space="preserve">
+    <value>Iteration that failed (-1: the whole task)</value>
+  </data>
+  <data name="TxtDynDataFailureDate" xml:space="preserve">
+    <value>When the task failed</value>
+  </data>
+  <data name="TxtDynDataFailureCount" xml:space="preserve">
+    <value>Number of failures reported by this occurrence</value>
+  </data>
+  <data name="TxtDynDataFailures" xml:space="preserve">
+    <value>Every failure reported by this occurrence, one row each</value>
+  </data>
 </root>

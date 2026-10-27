@@ -37,6 +37,19 @@
    `ThresholdSuccessRate` *Value less than* `50`, recipient
    `{object[2].DefaultRecordset[{subInstanceIndex}]['Owner']}`.
 
+## A.4 One e-mail for every failure in a folder
+
+1. In the folder whose jobs you want to watch (for example **Backups**), add a **Task failure
+   event** (Id 9): *Watch*: *This folder and its subfolders*, *Group failures for* `60` seconds.
+2. Add a **Send e-mail** task connected to it. Subject:
+   `{object[9].FailureCount} failure(s) in {object[9].FailedObjectFolder}`. Message:
+   `First: {object[9].FailedObjectName} - {object[9].FailureMessage}`.
+3. Store the SMTP password as a secret and write `{secret['SmtpPassword']}` in the password field.
+4. Click **Save**, then **Reload server configuration**.
+
+From now on any task in the folder that fails without its own *Object does not execute* path is
+reported, at most one e-mail a minute.
+
 ---
 
 Previous: [13. Troubleshooting](13-troubleshooting.md) · Next: [Appendix B. Quick reference](appendix-b-quick-reference.md)

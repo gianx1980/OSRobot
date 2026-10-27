@@ -40,6 +40,9 @@ public static class CommonDynamicData
 
     public const string NumberOfIterations = "NumberOfIterations";
 
+    /// <summary>Why the object failed (the exception message, secrets redacted); empty when it succeeded.</summary>
+    public const string ErrorMessage = "ErrorMessage";
+
     /// <summary>
     /// Recordset with one row per iteration, each row holding that iteration's dynamic data. Present only
     /// in the data a task passes through a connection set to <see cref="EnumConnectionRunMode.OnceWithAllResults"/>.
@@ -90,7 +93,13 @@ public static class CommonDynamicData
         DateTime end = last.TryGetValue(ExecutionEndDate, out object? e) && e is DateTime endDate ? endDate : DateTime.Now;
         int iterations = last.TryGetValue(NumberOfIterations, out object? n) && n is int count ? count : execResults.Count;
 
-        foreach (KeyValuePair<string, object> field in BuildStandardDynamicDataSet(source, succeeded, succeeded ? 0 : -1, start, end, iterations))
+        // The messages of all the failed iterations, one per line.
+        string errorMessage = string.Join(Environment.NewLine,
+                                          execResults.Where(r => !r.Result)
+                                                     .Select(r => r.Data.TryGetValue(ErrorMessage, out object? m) ? m?.ToString() : null)
+                                                     .Where(m => !string.IsNullOrEmpty(m)));
+
+        foreach (KeyValuePair<string, object> field in BuildStandardDynamicDataSet(source, succeeded, succeeded ? 0 : -1, start, end, iterations, errorMessage))
             collected[field.Key] = field.Value;
 
         // Recordsets: the rows of all the iterations. An iteration without the recordset (e.g. a failed one) adds no rows.
@@ -163,7 +172,7 @@ public static class CommonDynamicData
     public static DynamicDataSet BuildStandardDynamicDataSet(IPluginInstance pluginInstance, 
                                                         bool executionResult, int executionReturnValue,
                                                         DateTime executionStartDate, DateTime executionEndDate,
-                                                        int numberOfIterations)
+                                                        int numberOfIterations, string errorMessage = "")
     {
         DynamicDataSet dynDataSet = new();
         dynDataSet.TryAdd(ObjectName, pluginInstance.Config.Name);
@@ -193,6 +202,7 @@ public static class CommonDynamicData
         dynDataSet.TryAdd(ExecutionEndDateUnderscoreDate, $"{executionEndDate:yyyy_MM_dd}");
         dynDataSet.TryAdd(ExecutionEndDateUnderscoreTime, $"{executionEndDate:HH_mm_ss}");
         dynDataSet.TryAdd(NumberOfIterations, numberOfIterations);
+        dynDataSet.TryAdd(ErrorMessage, errorMessage);
 
         return dynDataSet;
     }
@@ -230,7 +240,8 @@ public static class CommonDynamicData
             new DynamicDataSample(ExecutionEndDateUnderscoreDate, Resource.TxtDynDataExecutionEndDateUnderscoreDate, "2021_02_20"),
             new DynamicDataSample(ExecutionEndDateUnderscoreTime, Resource.TxtDynDataExecutionEndDateUnderscoreTime, "18_30_00"),
 
-            new DynamicDataSample(NumberOfIterations, Resource.TxtDynDataNumberOfIterations, "10")
+            new DynamicDataSample(NumberOfIterations, Resource.TxtDynDataNumberOfIterations, "10"),
+            new DynamicDataSample(ErrorMessage, Resource.TxtDynDataErrorMessage, "The network path was not found.")
         ];
     }
 }

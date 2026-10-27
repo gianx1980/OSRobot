@@ -61,6 +61,7 @@ row, and `{object[ID].DefaultRecordset['Column']}` returns the value of the curr
 | `...Year`, `...Month`, `...Day`, `...Hour`, `...Minute`, `...Second`, `...Ticks` | Parts of the start/end date, e.g. `ExecutionStartDateYear`. |
 | `ExecutionStartDateUnderscore` | Start date as `yyyy_MM_dd_HH_mm_ss` - handy in file names. Also `...UnderscoreDate` (`yyyy_MM_dd`) and `...UnderscoreTime` (`HH_mm_ss`). The same fields exist for the end date. |
 | `NumberOfIterations` | How many iterations the task ran. |
+| `ErrorMessage` | Why the object failed (secrets hidden as `***`); empty when it succeeded. Use it after an *Object does not execute* connection, e.g. `Backup failed: {object[2].ErrorMessage}`. With *Once, after all iterations*, it holds the messages of all the failed iterations, one per line. |
 | `IterationResults` (tasks) | Recordset with one row per iteration; filled when a connection uses *Once, after all iterations*. |
 
 ## 8.5 Plugin-specific fields

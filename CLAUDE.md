@@ -81,6 +81,13 @@ sharing the definition's `ParentFolder` and `Connections`) because the same defi
 concurrently; successors are taken from the shared definition. `WaitSeconds` uses a timer,
 not a worker. `SerialExecution` = 1 worker; otherwise `MaxConcurrentTasks`.
 
+**Failure reporting**: a failed result carries the standard `ErrorMessage` field (set by
+`BaseTask.RecordFailure`). After dispatching a task's connections the engine reports each failed
+result to the events implementing `ITaskFailureListener` (the Task failure event), with `Handled`
+= some connection queued a task for it; errors the engine catches itself are reported too. Those
+events are initialized first and publish from their own thread. Runs started by them have
+`JobRun.ReportsFailures` false, so a failing report job can't trigger itself in a loop.
+
 **User notifications**: `NotifyUsersTask` calls `Core.UserNotifier` (`IUserNotifier`, no-op by
 default), which `JobEngine` installs from its optional constructor parameter. The server's
 `HubUserNotifier` broadcasts to every editor connected to `NotificationsHub`

@@ -93,6 +93,45 @@ restarts. **Platforms:** all.
 | Trigger if service starts within the following number of minutes from computer boot | Fires only when the server starts shortly after the computer booted (e.g. after a reboot). |
 | Trigger if service starts after the following number of minutes from computer boot | Fires only when the server starts long after boot (e.g. a manual restart or a crash recovery). |
 
+## 9.8 Task failure event
+
+Fires when tasks fail, so a single job can report the failures of many - with an e-mail, a
+notification, a call to a chat - instead of an *Object does not execute* connection on every task.
+**Platforms:** all.
+
+Place it in a folder and connect it to the tasks that should react, as with any event.
+
+| Setting | Description |
+|---|---|
+| Watch | Whose failures to report: **This folder and its subfolders** (the default), **This folder only** or **All folders**, relative to the folder the event is in. |
+| Only failures the job doesn't already handle | On by default. A failure is *handled* when a connection of the failed task starts something for it, typically an *Object does not execute* connection: those failures are skipped, so a job that already reacts to its own failures doesn't alert twice. Turn it off to report every failure. |
+| Group failures for (seconds) | **0** (the default): the event fires once per failure. Otherwise the first failure opens a window of this many seconds, and at its end the event fires **once** with every failure of the window. The window closes after that time whatever happens, so a task failing over and over is still reported every window. |
+
+Each failed iteration counts as one failure.
+
+**Dynamic data:**
+
+| Field | Content |
+|---|---|
+| `FailedObjectID`, `FailedObjectName`, `FailedObjectType` | The task that failed (the first one of the window when grouping). |
+| `FailedObjectFolder` | Its folder, e.g. `Backups/Nightly`; empty for the root folder. |
+| `FailureMessage` | Why it failed. Secrets are hidden as `***`. |
+| `FailedIterationIndex` | The iteration that failed; `-1` when the task failed as a whole. |
+| `FailureDate` | When it failed. |
+| `FailureCount` | How many failures this occurrence reports. |
+| `Failures` | Recordset with one row per failure: `ObjectID`, `ObjectName`, `ObjectType`, `Folder`, `Message`, `IterationIndex`, `FailureDate`. At most 500 rows; `FailureCount` still counts them all. |
+
+Things to know:
+
+- **The event's own job is not watched.** If the tasks connected to a Task failure event fail (for
+  example the mail server is down), that failure is logged but doesn't fire the event again, which
+  would otherwise loop forever.
+- **When the server stops or reloads the jobs while a window is open**, the failures collected so
+  far are not reported: the event's log says how many.
+- `Failures` is not the default recordset: a Send e-mail or Notification task connected to the
+  event sends one message, not one per row. To list the failures in the message, use a C#
+  expression over `dynamicDataChain[ID]["Failures"]`, or iterate over the recordset on purpose.
+
 ---
 
 Previous: [8. Dynamic data](08-dynamic-data.md) · Next: [10. Tasks reference](10-tasks.md)
