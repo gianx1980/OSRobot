@@ -47,8 +47,9 @@
 3. Store the SMTP password as a secret and write `{secret['SmtpPassword']}` in the password field.
 4. Click **Save**, then **Reload server configuration**.
 
-From now on any task in the folder that fails without its own *Object does not execute* path is
-reported, at most one e-mail a minute.
+From now on every task failure in the folder is reported, at most one e-mail a minute. To leave
+out a task that already sends its own failure e-mail, add a *don't execute* condition to the
+connection from the event: `FailedObjectName` *Value equals to* the task's name.
 
 ---
 

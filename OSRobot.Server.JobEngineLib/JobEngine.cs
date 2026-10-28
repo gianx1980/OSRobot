@@ -227,12 +227,9 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config, IU
     /// Evaluates the source's outgoing connections against each of its results and queues the target
     /// task once per result that satisfies the connection's conditions.
     /// </summary>
-    /// <returns>For each result, whether some connection queued a task for it.</returns>
-    private bool[] DispatchSuccessors(JobRun run, IPluginInstance source, List<ExecResult> execResults, DynamicDataChain dataChain,
-                                      bool isEvent, IPluginInstanceLogger logger)
+    private void DispatchSuccessors(JobRun run, IPluginInstance source, List<ExecResult> execResults, DynamicDataChain dataChain,
+                                    bool isEvent, IPluginInstanceLogger logger)
     {
-        bool[] dispatched = new bool[execResults.Count];
-
         foreach (PluginInstanceConnection connection in source.Connections)
         {
             if (!connection.Enabled)
@@ -260,10 +257,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config, IU
 
                     ExecResult collected = CommonDynamicData.BuildCollectedResult(source, execResults, connection.CollectedResultRule);
                     if (connection.EvaluateExecConditions(collected))
-                    {
                         Schedule(CreateWorkItem(run, target, dataChain, source, collected, subInstanceIndex: null, logger), connection.WaitSeconds);
-                        Array.Fill(dispatched, true);
-                    }
 
                     continue;
                 }
@@ -277,7 +271,6 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config, IU
                     // Events have no iterations: a task started by an event has no sub-instance index.
                     int? subInstanceIndex = isEvent ? null : i;
                     Schedule(CreateWorkItem(run, target, dataChain, source, execResult, subInstanceIndex, logger), connection.WaitSeconds);
-                    dispatched[i] = true;
                 }
             }
             catch (Exception ex)
@@ -285,13 +278,14 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config, IU
                 logger.Error(source, $"Error dispatching connection to object {target.Config.Id}", ex);
             }
         }
-
-        return dispatched;
     }
 
-    /// <summary>Tells the Task failure events about each failed result of a task execution.</summary>
-    /// <param name="handled">For each result, whether a connection queued something for it.</param>
-    private void ReportFailures(JobRun run, ITask task, List<ExecResult> execResults, bool[] handled)
+    /// <summary>
+    /// Tells the Task failure events about each failed result of a task execution, whether or not one of the
+    /// task's connections reacts to it: an event reports every failure in its scope, and its own connections'
+    /// conditions decide what to leave out.
+    /// </summary>
+    private void ReportFailures(JobRun run, ITask task, List<ExecResult> execResults)
     {
         for (int i = 0; i < execResults.Count; i++)
         {
@@ -299,7 +293,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config, IU
                 continue;
 
             string errorMessage = execResults[i].Data.TryGetValue(CommonDynamicData.ErrorMessage, out object? message) ? message?.ToString() ?? string.Empty : string.Empty;
-            ReportFailure(run, new TaskFailure(task, i, errorMessage, DateTime.Now, handled[i]));
+            ReportFailure(run, new TaskFailure(task, i, errorMessage, DateTime.Now));
         }
     }
 
@@ -407,14 +401,14 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config, IU
                     item.Logger.Error("ExecuteTask: TaskCopy object is null.", ex);
 
                 // Outside the task's own error handling (no result, no successors): still a failure to report.
-                ReportFailure(run, new TaskFailure(item.Task, null, Core.Core.Variables.Redact(ex.Message), DateTime.Now, Handled: false));
+                ReportFailure(run, new TaskFailure(item.Task, null, Core.Core.Variables.Redact(ex.Message), DateTime.Now));
                 return;
             }
 
             // Successors come from the definition, not the clone: the graph is the same and it doesn't
             // depend on how deep the clone went.
-            bool[] handled = DispatchSuccessors(run, item.Task, instExecResult.ExecResults, item.DataChain, isEvent: false, item.Logger);
-            ReportFailures(run, item.Task, instExecResult.ExecResults, handled);
+            DispatchSuccessors(run, item.Task, instExecResult.ExecResults, item.DataChain, isEvent: false, item.Logger);
+            ReportFailures(run, item.Task, instExecResult.ExecResults);
         }
         finally
         {

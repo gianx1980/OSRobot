@@ -111,13 +111,14 @@ public sealed class JobGraph
     /// <summary>
     /// Connects two objects. With no conditions given, the target runs when the source succeeds. runMode and
     /// collectedResultRule are left out of the JSON when not given, like in jobs saved before they existed.
+    /// dynamicDataCode and conditionValue apply to every condition (the field and the value it is compared with).
     /// </summary>
     public JobGraph Connect(int source, int target, int? waitSeconds = null, bool enabled = true,
                             string[]? executeOperators = null, string[]? dontExecuteOperators = null, string dynamicDataCode = "",
-                            string? runMode = null, string? collectedResultRule = null)
+                            string? runMode = null, string? collectedResultRule = null, string conditionValue = "")
     {
         object[] Conditions(string[] operators) =>
-            [.. operators.Select(o => new { dynamicDataCode, @operator = o, minValue = string.Empty, maxValue = string.Empty })];
+            [.. operators.Select(o => new { dynamicDataCode, @operator = o, minValue = conditionValue, maxValue = string.Empty })];
 
         Dictionary<string, object?> connection = new()
         {

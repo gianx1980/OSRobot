@@ -104,10 +104,10 @@ Place it in a folder and connect it to the tasks that should react, as with any 
 | Setting | Description |
 |---|---|
 | Watch | Whose failures to report: **This folder and its subfolders** (the default), **This folder only** or **All folders**, relative to the folder the event is in. |
-| Only failures the job doesn't already handle | On by default. A failure is *handled* when a connection of the failed task starts something for it, typically an *Object does not execute* connection: those failures are skipped, so a job that already reacts to its own failures doesn't alert twice. Turn it off to report every failure. |
 | Group failures for (seconds) | **0** (the default): the event fires once per failure. Otherwise the first failure opens a window of this many seconds, and at its end the event fires **once** with every failure of the window. The window closes after that time whatever happens, so a task failing over and over is still reported every window. |
 
-Each failed iteration counts as one failure.
+Each failed iteration counts as one failure. Every failure in scope is reported, including those the
+job already reacts to with an *Object does not execute* connection.
 
 **Dynamic data:**
 
@@ -123,6 +123,10 @@ Each failed iteration counts as one failure.
 
 Things to know:
 
+- **Leaving tasks out.** A job that already reports its own failures would be reported twice. Either
+  keep it outside the event's scope (another folder, or *Watch*: *This folder only*), or add a
+  *don't execute* condition to the event's connection, for example `FailedObjectName` *Value equals
+  to* `Nightly backup`, or `FailedObjectFolder` *Value starts with* `Backups`.
 - **The event's own job is not watched.** If the tasks connected to a Task failure event fail (for
   example the mail server is down), that failure is logged but doesn't fire the event again, which
   would otherwise loop forever.

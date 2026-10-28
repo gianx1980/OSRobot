@@ -58,7 +58,7 @@ public class TaskFailureEvent : IEvent, ITaskFailureListener
     {
         TaskFailureEventConfig config = (TaskFailureEventConfig)Config;
 
-        if ((failure.Handled && config.ReportOnlyUnhandled) || !IsInScope(failure.Task, config.Scope))
+        if (!IsInScope(failure.Task, config.Scope))
             return;
 
         lock (_gate)

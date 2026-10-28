@@ -25,12 +25,6 @@ public class TaskFailureEventConfig : IEventConfig
     public TaskFailureEventScope Scope { get; set; } = TaskFailureEventScope.ThisFolderAndSubfolders;
 
     /// <summary>
-    /// Skip failures the job already reacts to: those for which one of the task's connections started
-    /// something (e.g. an "Object does not execute" connection).
-    /// </summary>
-    public bool ReportOnlyUnhandled { get; set; } = true;
-
-    /// <summary>
     /// 0: the event fires once per failure. Otherwise the first failure opens a window of this many
     /// seconds, and the event fires once at its end with every failure of the window.
     /// </summary>

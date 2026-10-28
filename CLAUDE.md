@@ -83,9 +83,10 @@ not a worker. `SerialExecution` = 1 worker; otherwise `MaxConcurrentTasks`.
 
 **Failure reporting**: a failed result carries the standard `ErrorMessage` field (set by
 `BaseTask.RecordFailure`). After dispatching a task's connections the engine reports each failed
-result to the events implementing `ITaskFailureListener` (the Task failure event), with `Handled`
-= some connection queued a task for it; errors the engine catches itself are reported too. Those
-events are initialized first and publish from their own thread. Runs started by them have
+result to the events implementing `ITaskFailureListener` (the Task failure event), whether or not a
+connection of the task reacts to it (there is deliberately no "handled" notion: what to leave out is
+decided by conditions on the event's own connections); errors the engine catches itself are reported
+too. Those events are initialized first and publish from their own thread. Runs started by them have
 `JobRun.ReportsFailures` false, so a failing report job can't trigger itself in a loop.
 
 **User notifications**: `NotifyUsersTask` calls `Core.UserNotifier` (`IUserNotifier`, no-op by

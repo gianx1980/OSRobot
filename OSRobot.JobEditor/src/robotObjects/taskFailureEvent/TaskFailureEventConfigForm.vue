@@ -25,18 +25,6 @@
           </div>
         </div>
         <div class="row q-mt-md">
-          <div class="col">
-            <q-toggle
-              v-model="_formData.modelValue.reportOnlyUnhandled"
-              :label="_$t('reportOnlyUnhandledFailures')"
-              dense
-            />
-            <div class="text-caption text-grey-8 q-mt-xs">
-              {{ _$t("reportOnlyUnhandledFailuresHint") }}
-            </div>
-          </div>
-        </div>
-        <div class="row q-mt-md">
           <div class="col-4">
             <q-input
               filled

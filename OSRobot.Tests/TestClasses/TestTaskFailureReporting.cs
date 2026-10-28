@@ -14,14 +14,13 @@ public sealed class TestTaskFailureReporting
     private const int FailureEventId = 9;
     private const string ProbeFailure = "Probe task configured to fail.";
 
-    private static object FailureEvent(bool onlyUnhandled = true) => new
+    private static object FailureEvent() => new
     {
         pluginId = "TaskFailureEvent",
         id = FailureEventId,
         name = "Failures",
         enabled = true,
         scope = "AllFolders",
-        reportOnlyUnhandled = onlyUnhandled,
         groupForSeconds = 0
     };
 
@@ -45,14 +44,15 @@ public sealed class TestTaskFailureReporting
     }
 
     [TestMethod]
-    public void A_failure_the_job_handles_is_not_reported()
+    public void A_failure_the_job_reacts_to_is_reported_too()
     {
+        // An event saved when the option existed: reportOnlyUnhandled is ignored now.
         JobGraph graph = new JobGraph()
             .Task(2, "Backup", fail: true)
             .Task(3, "OnBackupFailure")
             .Connect(JobGraph.EventId, 2)
             .Connect(2, 3, executeOperators: ["ObjectDoesNotExecute"])
-            .Node(FailureEvent())
+            .Node(new { pluginId = "TaskFailureEvent", id = FailureEventId, name = "Failures", enabled = true, scope = "AllFolders", reportOnlyUnhandled = true })
             .Task(10, "Report")
             .Connect(FailureEventId, 10);
 
@@ -60,26 +60,48 @@ public sealed class TestTaskFailureReporting
         Assert.IsTrue(harness.Fire());
 
         Assert.IsTrue(EngineHarness.WaitFor(() => ProbeLog.Find("OnBackupFailure") != null, TimeSpan.FromSeconds(10)));
-        Thread.Sleep(1000);
-        Assert.AreEqual(0, Count("Report"));
+        Assert.IsTrue(EngineHarness.WaitFor(() => ProbeLog.Find("Report") != null, TimeSpan.FromSeconds(10)));
     }
 
     [TestMethod]
-    public void A_handled_failure_is_reported_when_the_event_wants_every_failure()
+    public void A_condition_on_the_events_connection_leaves_a_task_out()
     {
+        // The way to skip a task that reports its own failures: a don't-execute condition on its name.
         JobGraph graph = new JobGraph()
             .Task(2, "Backup", fail: true)
-            .Task(3, "OnBackupFailure")
+            .Task(3, "Export", fail: true)
             .Connect(JobGraph.EventId, 2)
-            .Connect(2, 3, executeOperators: ["ObjectDoesNotExecute"])
-            .Node(FailureEvent(onlyUnhandled: false))
-            .Task(10, "Report")
-            .Connect(FailureEventId, 10);
+            .Connect(JobGraph.EventId, 3)
+            .Node(FailureEvent())
+            .Task(10, "Report", value: "{object[9].FailedObjectName}")
+            .Connect(FailureEventId, 10, dontExecuteOperators: ["ValueEqualsTo"], dynamicDataCode: "FailedObjectName", conditionValue: "Backup");
 
         using EngineHarness harness = new(graph);
         Assert.IsTrue(harness.Fire());
 
         Assert.IsTrue(EngineHarness.WaitFor(() => ProbeLog.Find("Report") != null, TimeSpan.FromSeconds(10)));
+        Thread.Sleep(1000);
+        CollectionAssert.AreEqual(new[] { "Export" }, ProbeLog.Entries.Where(e => e.Label == "Report").Select(e => e.Value).ToArray());
+    }
+
+    [TestMethod]
+    public void A_failed_iteration_is_reported_whatever_the_connections_run_mode()
+    {
+        JobGraph graph = new JobGraph()
+            .IteratingTask(2, "Loop", iterations: 3, failOnIteration: 1)
+            .Task(3, "Summary")
+            .Connect(JobGraph.EventId, 2)
+            .Connect(2, 3, runMode: "OnceWithAllResults", collectedResultRule: "AnySucceeded", executeOperators: ["ObjectExecutes"])
+            .Node(FailureEvent())
+            .Task(10, "Report", value: "{object[9].FailedIterationIndex}")
+            .Connect(FailureEventId, 10);
+
+        using EngineHarness harness = new(graph);
+        Assert.IsTrue(harness.Fire());
+
+        Assert.IsTrue(EngineHarness.WaitFor(() => ProbeLog.Find("Summary") != null, TimeSpan.FromSeconds(10)));
+        Assert.IsTrue(EngineHarness.WaitFor(() => ProbeLog.Find("Report") != null, TimeSpan.FromSeconds(10)), "The failed iteration is reported");
+        Assert.AreEqual("1", ProbeLog.Find("Report")!.Value);
     }
 
     [TestMethod]

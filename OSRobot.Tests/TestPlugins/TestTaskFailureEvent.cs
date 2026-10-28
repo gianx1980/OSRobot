@@ -58,18 +58,18 @@ public sealed class TestTaskFailureEvent
         return new TestProbeTask { ParentFolder = folder, Config = new TestProbeTaskConfig { Id = id, Name = name } };
     }
 
-    private static TaskFailure Failure(ITask task, bool handled = false, string message = "boom", int? iteration = 0)
+    private static TaskFailure Failure(ITask task, string message = "boom", int? iteration = 0)
     {
-        return new TaskFailure(task, iteration, message, DateTime.Now, handled);
+        return new TaskFailure(task, iteration, message, DateTime.Now);
     }
 
     private (TaskFailureEvent Event, CapturingSink Sink) Event(Folder folder, TaskFailureEventScope scope = TaskFailureEventScope.ThisFolderAndSubfolders,
-                                                              bool onlyUnhandled = true, int groupForSeconds = 0)
+                                                              int groupForSeconds = 0)
     {
         TaskFailureEvent failureEvent = new()
         {
             ParentFolder = folder,
-            Config = new TaskFailureEventConfig { Id = 50, Name = "Failures", Scope = scope, ReportOnlyUnhandled = onlyUnhandled, GroupForSeconds = groupForSeconds }
+            Config = new TaskFailureEventConfig { Id = 50, Name = "Failures", Scope = scope, GroupForSeconds = groupForSeconds }
         };
         CapturingSink sink = new();
         failureEvent.Init(sink);
@@ -94,21 +94,6 @@ public sealed class TestTaskFailureEvent
         Assert.AreEqual(1, data[TaskFailureEvent.FailureCount]);
         Assert.AreEqual(1, ((DataTable)data[TaskFailureEvent.Failures]).Rows.Count);
         Assert.AreEqual(50, data[CommonDynamicData.ObjectID]);
-    }
-
-    [TestMethod]
-    public void Handled_failures_are_skipped_unless_asked_for()
-    {
-        (TaskFailureEvent onlyUnhandled, CapturingSink skipped) = Event(_backups);
-        (TaskFailureEvent everything, CapturingSink reported) = Event(_backups, onlyUnhandled: false);
-        TestProbeTask task = Task(_backups, 12, "A");
-
-        onlyUnhandled.OnTaskFailed(Failure(task, handled: true));
-        everything.OnTaskFailed(Failure(task, handled: true));
-
-        Assert.IsTrue(reported.WaitFor(1, TimeSpan.FromSeconds(5)));
-        Thread.Sleep(200);
-        Assert.AreEqual(0, skipped.Published.Count);
     }
 
     [TestMethod]

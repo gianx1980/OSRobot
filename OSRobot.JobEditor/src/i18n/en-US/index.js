@@ -516,9 +516,6 @@ export default {
   groupFailuresForSeconds: "Group failures for (seconds)",
   groupFailuresHint:
     "0: the event fires once per failure. Otherwise the first failure opens a window of this many seconds, and the event fires once at its end with every failure of the window in the Failures recordset.",
-  reportOnlyUnhandledFailures: "Only failures the job doesn't already handle",
-  reportOnlyUnhandledFailuresHint:
-    'Skips a failure when a connection of the failed task starts something for it, e.g. an "Object does not execute" connection.',
   scopeAllFolders: "All folders",
   scopeThisFolder: "This folder only",
   scopeThisFolderAndSubfolders: "This folder and its subfolders",
