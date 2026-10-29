@@ -15,7 +15,8 @@
 | Account locked out | Too many failed logins. Wait `LockoutDurationMinutes` (15 by default). |
 | *"Connection to server lost"* | The server is stopped or unreachable. The editor retries automatically. |
 | Editor not reachable from another PC | The server listens on localhost only by default. Configure HTTPS remote access (see [Security and deployment](12-security.md)). |
-| CPU event does not work on Linux/macOS | The CPU event is Windows-only; hover the computer icon on a card to see supported platforms. |
+| CPU event does not work on macOS | The CPU event supports Windows and Linux; hover the computer icon on a card to see supported platforms. |
+| CPU event fires later than expected after a restart | The first check only takes the starting point: usage is measured from the second one. |
 | Old execution logs are missing | They were cleaned up after `CleanUpLogsOlderThanHours`. Increase the value. |
 
 ---

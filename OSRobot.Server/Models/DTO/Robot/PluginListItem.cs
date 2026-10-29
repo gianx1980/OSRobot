@@ -20,11 +20,12 @@ public class PluginListItem(string pluginId, string title, string pluginType, IP
                 platforms.Add("All platforms");
             else
             {
+                // Independent checks: a plugin can support several platforms.
                 if (SupportedOSPlatforms.HasFlag(EnumOSPlatform.Windows))
                     platforms.Add("Windows");
-                else if (SupportedOSPlatforms.HasFlag(EnumOSPlatform.Linux))
+                if (SupportedOSPlatforms.HasFlag(EnumOSPlatform.Linux))
                     platforms.Add("Linux");
-                else if (SupportedOSPlatforms.HasFlag(EnumOSPlatform.MacOS))
+                if (SupportedOSPlatforms.HasFlag(EnumOSPlatform.MacOS))
                     platforms.Add("MacOs");
 
             }

@@ -35,7 +35,8 @@ Timing details:
 
 ## 9.2 CPU event
 
-Monitors processor usage. **Platforms:** Windows only.
+Monitors the total processor usage of the machine, all processors together. **Platforms:** Windows,
+Linux.
 
 | Setting | Description |
 |---|---|
@@ -43,6 +44,14 @@ Monitors processor usage. **Platforms:** Windows only.
 | Trigger if average usage is above threshold (%) in the last N minutes | Fires when the average over the period exceeds the threshold. |
 | Trigger if the following number of minutes passed since the last trigger | Limits how often the event can fire, to avoid floods of notifications. |
 | Check every | Sampling interval, in seconds. |
+
+Usage is measured between two checks, so the first check after the server starts (or the jobs are
+reloaded) only takes the starting point: the first value comes one interval later.
+
+- **Windows** reads the same *Processor utility* value Task Manager shows.
+- **Linux** reads `/proc/stat`, as `top` does. Inside a container this is the host's processor usage,
+  not the container's share.
+- **macOS** is not supported yet.
 
 **Dynamic data:** `CpuUsagePercentage`.
 

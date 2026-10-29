@@ -17,7 +17,7 @@
 | Plugin | Type | Platforms | Main dynamic data |
 |---|---|---|---|
 | [Date/Time](09-events.md#91-datetime-event) | Event | All | standard |
-| [CPU](09-events.md#92-cpu-event) | Event | Windows | `CpuUsagePercentage` |
+| [CPU](09-events.md#92-cpu-event) | Event | Windows, Linux | `CpuUsagePercentage` |
 | [Memory](09-events.md#93-memory-event) | Event | All | `MemoryUsagePercentage` |
 | [Disk space](09-events.md#94-disk-space-event) | Event | All | `DiskName`, `DiskSpaceBytes` |
 | [File system](09-events.md#95-file-system-event) | Event | All | `FullPathName`, `FileName`, `FileExtension`, `ChangeType` |
