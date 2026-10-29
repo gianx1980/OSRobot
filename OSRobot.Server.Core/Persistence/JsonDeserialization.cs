@@ -92,6 +92,26 @@ public class JsonDeserialization(JsonDocument jsonDoc)
         }
     }
 
+    // The settings of a subfolder, from its node in the parent folder. Missing "enabled" means enabled.
+    private static void ApplyFolderSettings(Folder parentFolder, JsonElement folderNodeConfig)
+    {
+        if (!folderNodeConfig.TryGetProperty("id", out JsonElement jsonId) || !int.TryParse(jsonId.ToString(), out int folderId))
+            return;
+
+        Folder? childFolder = parentFolder.Items.OfType<Folder>().FirstOrDefault(f => f.Config.Id == folderId);
+        if (childFolder == null)
+            return;
+
+        foreach (JsonProperty property in folderNodeConfig.EnumerateObject())
+        {
+            if (property.Name.Equals("enabled", StringComparison.OrdinalIgnoreCase)
+                && property.Value.ValueKind is JsonValueKind.True or JsonValueKind.False)
+            {
+                childFolder.Config.Enabled = property.Value.GetBoolean();
+            }
+        }
+    }
+
     #pragma warning disable CA1859
     private object? DeserializeJsonDoc()
     {
@@ -134,9 +154,12 @@ public class JsonDeserialization(JsonDocument jsonDoc)
                 JsonElement jsonPluginId = jsonPluginObjectConfig.GetProperty("pluginId");
                 string pluginId = jsonPluginId.ToString();
 
-                // We don't have to consider inner folders, so skip them
+                // An inner folder is built from the folder tree: its node here only holds its own settings.
                 if (pluginId == "Folder")
+                {
+                    ApplyFolderSettings(folder, jsonPluginObjectConfig);
                     continue;
+                }
 
                 // Get plugininstance type and create an instance of it
                 IPlugin plugin = PluginRegistry.GetPlugin(pluginId) ?? throw new ApplicationException($"Cannot get type for: {pluginId}");

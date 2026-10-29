@@ -64,6 +64,18 @@ const _propsRef = ref(_props);
 const _showToggleLogField = _propsRef.value.showToggleLogField ?? true;
 const _showToggleEnableField = _propsRef.value.showToggleEnableField ?? true;
 
+// The canvas shows disabled objects (and the tree disabled folders): tell it.
+watch(
+  () => _propsRef.value.modelValue.enabled,
+  (enabled) => {
+    _emit("nodeNeedsUpdate", {
+      nodeId: _propsRef.value.modelValue.id,
+      pluginId: _propsRef.value.modelValue.pluginId,
+      enabled: enabled,
+    });
+  }
+);
+
 watch(
   () => _propsRef.value.modelValue.name,
   (newName, oldName) => {

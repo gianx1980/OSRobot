@@ -141,14 +141,16 @@ public sealed class TestTaskFailureEvent
         (TaskFailureEvent failureEvent, CapturingSink sink) = Event(_backups, groupForSeconds: 1);
         TestProbeTask task = Task(_backups, 1, "Flapping");
 
-        // A failure every 200 ms for 2.6 s: waiting for a quiet moment would never fire.
+        // A failure every 200 ms for 2.6 s. Fixed 1 s windows publish two or three times; waiting for a quiet
+        // moment instead would publish once, 1 s after the last failure. Waiting (not counting at the end of the
+        // loop) keeps the test independent of how late the timers run on a busy machine.
         for (int i = 0; i < 13; i++)
         {
             failureEvent.OnTaskFailed(Failure(task));
             Thread.Sleep(200);
         }
 
-        Assert.IsTrue(sink.Published.Count >= 2, $"Published {sink.Published.Count} time(s)");
+        Assert.IsTrue(sink.WaitFor(2, TimeSpan.FromSeconds(10)), $"Published {sink.Published.Count} time(s)");
     }
 
     [TestMethod]

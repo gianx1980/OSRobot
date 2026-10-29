@@ -13,19 +13,18 @@ public class PluginInstanceLogger : IPluginInstanceLogger
     private readonly object _lockWriting = new();
 
     private static int _instanceCounter = 0;
-    private readonly static object _lockInstanceCounter = new();
 
     private static string GetLogFileName(int eventID)
     {
         // You can have the same event trigger multiple times at the same moment.
         // This counter is used to make the log file name unique for each event instance.
-        lock (_lockInstanceCounter)
-        {
-            _instanceCounter++;
-        }
+        // Use the value Increment returns: reading the field again lets two concurrent callers get
+        // the same number, and DateTime.Now's ticks can match too, so two loggers would share a file
+        // and the second one's writes would fail with a sharing violation.
+        int instance = Interlocked.Increment(ref _instanceCounter);
 
         DateTime now = DateTime.Now;
-        return $"{eventID}_{now.ToIsoDate().Replace(":", "_")}_{now.Ticks}_{_instanceCounter}.log";
+        return $"{eventID}_{now.ToIsoDate().Replace(":", "_")}_{now.Ticks}_{instance}.log";
     }
 
     #pragma warning disable CA1859

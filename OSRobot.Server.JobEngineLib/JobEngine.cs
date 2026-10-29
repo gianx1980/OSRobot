@@ -123,6 +123,14 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config, IU
             }
             else if (pluginInstance is IFolder innerFolder)
             {
+                // A disabled folder pauses everything in it, subfolders included: none of its events start.
+                // Its tasks are still initialized, so "Start task" keeps working on them, as on a disabled task.
+                if (!innerFolder.Config.Enabled)
+                {
+                    _log.Info($"Folder {innerFolder.Config.Id}:{innerFolder.Config.Name} disabled: its events are not started");
+                    continue;
+                }
+
                 List<IEvent> innerFolderEvents = GetEventList(innerFolder);
                 events.AddRange(innerFolderEvents);
             }

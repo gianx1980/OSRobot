@@ -64,6 +64,19 @@ Every event and task has two switches in its *General* section:
 
 Connections also have an **Enabled** switch: a disabled connection is ignored.
 
+Folders have an **Enabled** switch too, in the folder's *General* section: it pauses a whole job, or
+a group of jobs, in one click. The events of a disabled folder, and of all its subfolders, are not
+started. Turning the folder back on restores each object's own switch as it was.
+
+On the canvas a disabled event, task or folder is shown faded, with its name struck through and a
+pause icon. A disabled folder has a crossed-out folder icon in the *Workspace tree*, and opening a
+disabled folder (or one inside it) shows a banner at the top of the canvas.
+
+> [!NOTE]
+> Like every change, enabling or disabling takes effect after **Save** and **Reload server
+> configuration**. **Execute** on a task still runs it, even when the task or its folder is
+> disabled: it is a deliberate manual run, handy to test a paused job.
+
 ## 5.6 Saving and applying changes
 
 Click **Save** to send the workspace to the server. The server first validates the whole

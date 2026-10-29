@@ -521,6 +521,11 @@ export default {
   scopeThisFolderAndSubfolders: "This folder and its subfolders",
   watch: "Watch",
 
+  // Disabled objects and folders
+  disabled: "Disabled",
+  thisFolderIsDisabled:
+    "This folder is disabled, or inside a disabled folder: its events don't start. Tasks can still be run with Execute.",
+
   // Variables and secrets
   addVariableOrSecret: "Add variable or secret",
   cannotBeDecrypted: "Cannot be decrypted: enter its value again",

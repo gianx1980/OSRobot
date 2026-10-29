@@ -69,7 +69,9 @@ registration step. Plugin `Id` must be unique (duplicate throws) and is the key 
 object per folder with VueFlow `nodes` (`workspaceItemConfig`) and `edges`
 (`workspaceConnectionConfig`). `JsonDeserialization` turns it into a `Folder` tree by
 `PluginRegistry.GetPlugin(pluginId)` + deserializing the node config into the type returned by
-`GetPluginDefaultConfig()` (case-insensitive, string→int tolerant). `RobotController.WorkspaceJobs`
+`GetPluginDefaultConfig()` (case-insensitive, string→int tolerant). A subfolder's own settings
+(`enabled`) live in its node (`pluginId: "Folder"`) inside the parent folder; missing means enabled.
+The engine doesn't start the events of a disabled folder or of its subfolders. `RobotController.WorkspaceJobs`
 validates with the same deserializer before an atomic temp-file + `File.Replace` write (keeps
 `jobs.json.bak`). Engine reload is a separate call (`ReloadJobsConfig`).
 

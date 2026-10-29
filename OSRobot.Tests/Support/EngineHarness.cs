@@ -50,11 +50,43 @@ public sealed class JobGraph
 
     private readonly List<object> _nodes = [];
     private readonly List<object> _edges = [];
+    private readonly List<(int Id, string Name, JobGraph Content)> _folders = [];
 
     /// <param name="eventFiresOnInit">The event publishes once from inside Init(), like OSRobotServiceStartEvent.</param>
     public JobGraph(bool eventFiresOnInit = false)
     {
         _nodes.Add(new { workspaceItemConfig = new { pluginId = "TestTriggerEvent", id = EventId, name = "Trigger", fireOnInit = eventFiresOnInit } });
+    }
+
+    private JobGraph(bool withTrigger, bool eventFiresOnInit)
+    {
+        if (withTrigger)
+            _nodes.Add(new { workspaceItemConfig = new { pluginId = "TestTriggerEvent", id = EventId, name = "Trigger", fireOnInit = eventFiresOnInit } });
+    }
+
+    /// <summary>The content of a subfolder: like a JobGraph, without the root's trigger event.</summary>
+    public static JobGraph FolderContent() => new(withTrigger: false, eventFiresOnInit: false);
+
+    /// <summary>Adds a trigger event, fired with TestTriggerEvent.Fire(id).</summary>
+    public JobGraph Trigger(int id)
+    {
+        _nodes.Add(new { workspaceItemConfig = new { pluginId = "TestTriggerEvent", id, name = $"Trigger {id}", fireOnInit = false } });
+        return this;
+    }
+
+    /// <summary>
+    /// Adds a subfolder: its node here (holding its settings, as the editor saves it) and its own content.
+    /// enabled null leaves "enabled" out of the node, as in jobs saved before folders could be disabled.
+    /// </summary>
+    public JobGraph Folder(int id, string name, JobGraph content, bool? enabled = null)
+    {
+        Dictionary<string, object> config = new() { ["pluginId"] = "Folder", ["id"] = id, ["name"] = name };
+        if (enabled != null)
+            config["enabled"] = enabled.Value;
+
+        _nodes.Add(new { workspaceItemConfig = config });
+        _folders.Add((id, name, content));
+        return this;
     }
 
     /// <summary>Adds a probe task. Its label is what shows up in the ProbeLog.</summary>
@@ -143,11 +175,20 @@ public sealed class JobGraph
     {
         var doc = new Dictionary<string, object>
         {
-            ["folder_0"] = new { id = "0", nodes = _nodes, edges = _edges },
-            ["folderTree"] = new[] { new { id = "0", label = "Root", icon = "folder", children = Array.Empty<object>() } },
+            ["folderTree"] = new[] { new { id = "0", label = "Root", icon = "folder", children = AddFolderData(doc: null, 0) } },
             ["lastId"] = 0
         };
+        AddFolderData(doc, 0);
         return JsonSerializer.Serialize(doc);
+    }
+
+    // Writes folder_{id} for this graph and its subfolders into doc (when given); returns the folderTree children.
+    private object[] AddFolderData(Dictionary<string, object>? doc, int id)
+    {
+        if (doc != null)
+            doc[$"folder_{id}"] = new { id = id.ToString(), nodes = _nodes, edges = _edges };
+
+        return [.. _folders.Select(f => new { id = f.Id.ToString(), label = f.Name, icon = "folder", children = f.Content.AddFolderData(doc, f.Id) })];
     }
 }
 

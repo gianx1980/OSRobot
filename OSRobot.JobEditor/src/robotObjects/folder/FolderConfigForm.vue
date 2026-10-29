@@ -6,7 +6,6 @@
     <PluginGeneralConfigForm
       v-model="_formData.modelValue"
       :showToggleLogField="false"
-      :showToggleEnableField="false"
       @nodeNeedsUpdate="_emit('nodeNeedsUpdate', $event)"
     />
   </div>
@@ -23,4 +22,9 @@ const _i18n = useI18n();
 const _$t = _i18n.t;
 
 const _formData = ref(_props);
+
+// A folder saved before it could be disabled has no "enabled": it is enabled.
+if (_formData.value.modelValue.enabled === undefined) {
+  _formData.value.modelValue.enabled = true;
+}
 </script>
