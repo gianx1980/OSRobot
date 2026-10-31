@@ -35,6 +35,9 @@ RobotObjectUtility.getPluginIcon = function (objectId) {
     case "TaskFailureEvent":
       return "report_problem";
 
+    case "WebhookEvent":
+      return "webhook";
+
     case "ReadTextFileTask":
       return "description";
 

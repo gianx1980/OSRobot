@@ -10,6 +10,7 @@
 | *"Variable 'X' is not defined"* / *"Secret 'X' is not defined"* | The name is misspelled or was deleted. Check **Variables and secrets** (names ignore case, but `{var[...]}` and `{secret[...]}` are separate). |
 | *"Secret 'X' cannot be decrypted"*, or a secret marked *Cannot be decrypted* | The keys folder (`Data\keys`) is missing or doesn't match `config.db`, the certificate changed, or (Windows without a certificate) the service now runs under another account or on another computer. Restore the keys, or enter the secret's value again. |
 | The server doesn't start: *"Data Protection: cannot open the certificate"* | `AppSettings:DataProtection:CertificatePath` is set but the `.pfx` password is wrong or missing. See [Server configuration](03-configuration.md#35-secrets-encryption-appsettingsdataprotection). |
+| A webhook call gets `404` | The path is wrong, the hook or its folder is disabled, the jobs weren't reloaded after saving, or the token or signature is wrong (see `ExecLogs\audit-*.log`). |
 | *"C# scripting ([CODE] expressions) is disabled"* | `ScriptingEnabled` is `false` on this server. Rewrite the value without `[CODE]` or ask the administrator. |
 | Run program fails with *"exited with code N"* | The program returned a non-zero exit code. Fix the program call or turn off *Fail if the program exits with a non-zero code*. |
 | Account locked out | Too many failed logins. Wait `LockoutDurationMinutes` (15 by default). |

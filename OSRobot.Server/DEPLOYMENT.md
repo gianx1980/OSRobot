@@ -149,6 +149,60 @@ Kestrel terminates TLS itself. Use this if you don't want to run IIS or a separa
 
 ---
 
+## Letting other machines call the webhooks
+
+Calls to a [Webhook event](../docs/user-manual/09-events.md#99-webhook-event) from the same machine
+work without any of this. To let other machines call them, without exposing the editor or the API:
+
+### A dedicated endpoint (no proxy needed)
+
+The server listens on addresses and ports, not on URLs, so one URL can't be opened on its own. Instead,
+add a Kestrel endpoint named exactly **`Webhooks`** in `appsettings.Production.json`:
+
+```json
+{
+  "Kestrel": {
+    "Endpoints": {
+      "MyHttpEndpoint": { "Url": "http://localhost:7098" },
+      "Webhooks": {
+        "Url": "https://0.0.0.0:7099",
+        "Certificate": { "Path": "hooks.pfx", "Password": "..." }
+      }
+    }
+  }
+}
+```
+
+That endpoint serves `POST /hooks/...` and answers 404 to everything else: login, API, Swagger, the
+notifications hub, static files. The main endpoint stays on `localhost`. Then:
+
+- Open the port in the firewall, only for the machines that need it.
+- Use HTTPS as above. Over plain HTTP anyone on the network can read the token and the body; the server
+  logs a warning at startup.
+- HTTP-to-HTTPS redirection is off while this endpoint exists: otherwise the editor's calls would be sent to
+  this port, where they don't exist. Keep the main endpoint on `localhost`, or give it HTTPS of its own.
+
+### Behind a reverse proxy
+
+If the server already sits behind IIS, nginx or Caddy, publish only that path:
+
+```nginx
+location /hooks/ {
+    proxy_pass http://127.0.0.1:7098;
+    proxy_set_header X-Forwarded-For $remote_addr;
+    client_max_body_size 1m;
+}
+```
+
+Don't add a catch-all `location /` to the same public server block.
+
+### From internet services
+
+Services such as GitHub need a public address. Use one of the above with a public certificate, or a
+tunnel (Cloudflare Tunnel, ngrok) forwarding only `/hooks/`.
+
+---
+
 ## Run under a dedicated, least-privilege service account
 
 This matters regardless of which HTTPS option above you pick, and arguably matters more: as

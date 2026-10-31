@@ -101,6 +101,15 @@ public class DataProtectionConfig
     public string PreviousCertificatePaths { get; set; } = string.Empty;
 }
 
+/// <summary>Limits of the calls to /hooks/. See WebhookEndpoint and DEPLOYMENT.md.</summary>
+public class WebhooksConfig
+{
+    public long MaxBodyBytes { get; set; } = 1024 * 1024;
+
+    /// <summary>All the calls from one address, accepted or not. Each hook also has its own limit.</summary>
+    public int MaxRequestsPerMinutePerIp { get; set; } = 600;
+}
+
 public class AppSettings
 {
     public JWTConfig JWT { get; private set; } = new JWTConfig();
@@ -110,4 +119,5 @@ public class AppSettings
     public ReverseProxyConfig ReverseProxy { get; private set; } = new ReverseProxyConfig();
     public SecurityConfig Security { get; private set; } = new SecurityConfig();
     public DataProtectionConfig DataProtection { get; private set; } = new DataProtectionConfig();
+    public WebhooksConfig Webhooks { get; private set; } = new WebhooksConfig();
 }

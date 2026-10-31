@@ -22,6 +22,7 @@ using OSRobot.Server.Infrastructure.Notifications;
 using OSRobot.Server.Infrastructure.Security;
 using OSRobot.Server.Infrastructure.Security.Abstract;
 using OSRobot.Server.Infrastructure.Variables;
+using OSRobot.Server.Infrastructure.Webhooks;
 using OSRobot.Server.JobEngineLib;
 using OSRobot.Server.JobEngineLib.Infrastructure.Abstract;
 using Serilog;
@@ -57,6 +58,15 @@ void _warnIfExposedWithoutHttps(IConfiguration configuration, Serilog.ILogger st
         {
             nonLoopbackHttpUrls.Add(url);
         }
+    }
+
+    // The generic warning below doesn't fire when another endpoint has HTTPS, but hooks would still travel in clear.
+    string? webhooksUrl = configuration[$"Kestrel:Endpoints:{WebhookEndpoint.EndpointName}:Url"];
+    if (hasHttpsEndpoint && webhooksUrl != null && nonLoopbackHttpUrls.Contains(webhooksUrl))
+    {
+        startupLogger.Warning(
+            "The webhooks endpoint {Url} has no HTTPS: tokens and request bodies travel in plaintext. " +
+            "Give it a certificate - see DEPLOYMENT.md.", webhooksUrl);
     }
 
     if (!hasHttpsEndpoint && nonLoopbackHttpUrls.Count > 0)
@@ -299,6 +309,11 @@ else
     logger.Warning("Secrets encryption keys in {KeysPath} are protected only by the folder's permissions: anyone who can read the folder " +
                    "and config.db can read the secrets. Configure AppSettings:DataProtection:CertificatePath - see DEPLOYMENT.md.", dataProtection.KeysPath);
 
+// Calls from other systems (the Webhook event): see WebhookEndpoint.
+WebhooksConfig webhooksConfig = builder.Configuration.GetSection("AppSettings:Webhooks").Get<WebhooksConfig>() ?? new WebhooksConfig();
+int? webhooksOnlyPort = WebhookEndpoint.GetWebhooksOnlyPort(builder.Configuration);
+builder.Services.AddOSRobotWebhooks(webhooksConfig);
+
 builder.Services.AddSingleton<VariableStore>();
 builder.Services.AddSingleton<IVariableStore>(sp => sp.GetRequiredService<VariableStore>());
 builder.Services.AddSingleton<IVariableResolver>(sp => sp.GetRequiredService<VariableStore>());
@@ -314,6 +329,9 @@ builder.Services.AddScoped<IJWTManager, JWTManager>();
 builder.Host.UseWindowsService();
 
 var app = builder.Build();
+
+// First of all: on the endpoint open to other machines, nothing but the hooks exists.
+app.UseWebhooksOnlyEndpoint(webhooksOnlyPort);
 
 // Before the engine starts using them: re-encrypt the secrets if the key protecting them no longer
 // matches AppSettings:DataProtection (e.g. a certificate was added). A failure here is logged, not fatal:
@@ -347,7 +365,12 @@ app.UseFileServer(new FileServerOptions
     RequestPath = "/Public"
 });
 
-app.UseHttpsRedirection();
+// With an HTTPS webhooks endpoint, this middleware would take it for "the" HTTPS port and send the editor's
+// calls there, where they don't exist. In that setup the main endpoint is on loopback anyway.
+if (webhooksOnlyPort == null)
+    app.UseHttpsRedirection();
+
+app.UseRateLimiter();
 
 // Explicit rather than relying on WebApplication's automatic middleware insertion - keeps the
 // pipeline order visible and correct regardless of future framework behavior changes.

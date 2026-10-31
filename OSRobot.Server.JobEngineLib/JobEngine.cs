@@ -28,6 +28,9 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config, IU
     private List<IEvent> _events = [];
     private List<ITask> _tasks = [];
 
+    // The enabled Webhook events by path. Replaced whole (read by the request threads without a lock).
+    private volatile Dictionary<string, IWebhookEvent> _webhooks = [];
+
     // The enabled events that want to know about task failures. Replaced whole (read by the workers without a lock).
     private volatile ITaskFailureListener[] _failureListeners = [];
 
@@ -530,6 +533,11 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config, IU
                 t.Init();
             });
 
+            // Before the queue opens, so that an accepting engine always has the map of this configuration. A call
+            // reaching a hook not initialized yet gets the same answer as a call during a reload: retry.
+            _events = GetEventList(_rootFolder);
+            _webhooks = BuildWebhookMap();
+
             // From here on runs are accepted. This must happen before events are initialized: an event
             // may publish from inside Init() (OSRobotServiceStartEvent does), and that must not be ignored.
             int workerCount = GetWorkerCount();
@@ -540,7 +548,6 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config, IU
             }
 
             _log.Info("Starting events initialization");
-            _events = GetEventList(_rootFolder);
 
             // Task failure events first, and listening before any other event can start a run: a failure
             // in a run started from another event's Init() is reported too.
@@ -554,6 +561,32 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config, IU
         {
             _log.Error("An error occurred while starting JobEngine.", ex);
         }
+    }
+
+    private Dictionary<string, IWebhookEvent> BuildWebhookMap()
+    {
+        Dictionary<string, IWebhookEvent> webhooks = new(StringComparer.OrdinalIgnoreCase);
+
+        foreach (IWebhookEvent webhook in _events.OfType<IWebhookEvent>())
+        {
+            // DynamicDataValidator warns about these on save; a call can only go to one of them.
+            if (!webhooks.TryAdd(webhook.Path, webhook))
+                _log.Error($"Webhook {webhook.Config.Id}:{webhook.Config.Name} ignored: another hook has the path '{webhook.Path}'");
+        }
+
+        return webhooks;
+    }
+
+    public WebhookDeliveryResult DeliverWebhook(string path, WebhookRequest request)
+    {
+        // Stop() takes the queue away first: during a stop or a reload every call can be retried.
+        lock (_lifecycleGate)
+        {
+            if (_queue == null)
+                return WebhookDeliveryResult.EngineNotAccepting;
+        }
+
+        return _webhooks.TryGetValue(path, out IWebhookEvent? webhook) ? webhook.Deliver(request) : WebhookDeliveryResult.NotFound;
     }
 
     private void InitEvent(IEvent @event)

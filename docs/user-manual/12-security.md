@@ -27,6 +27,8 @@ The full explanation is in [SECURITY.md](../../SECURITY.md).
 - On Linux, protect the secrets' keys with a certificate (see
   [DEPLOYMENT.md](../../OSRobot.Server/DEPLOYMENT.md)). Back up `Data\keys` together with
   `config.db`.
+- If you use the Webhook event from other machines, expose only the `Webhooks` endpoint, with HTTPS,
+  and keep the jobs it starts from pasting the call's body into SQL text or program arguments.
 - Review `ExecLogs\audit-*.log` periodically.
 - Behind a reverse proxy, exclude the `access_token` URL parameter from the proxy's access logs:
   the editor's notifications connection (`/hubs/notifications`) sends the login token that way,

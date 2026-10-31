@@ -295,4 +295,60 @@ public sealed class TestDynamicDataValidator
 
         Assert.AreEqual(0, Validate(WithSendEMailPassword(password), variables).Count, string.Join(Environment.NewLine, Validate(WithSendEMailPassword(password), variables)));
     }
+
+    // ----- Webhooks ------------------------------------------------------------------------------
+
+    private static object WebhookNode(int id, string path, string token = "{secret['HookToken']}", bool enabled = true) =>
+        new { pluginId = "WebhookEvent", id, name = $"Hook {id}", enabled, path, token };
+
+    private static readonly VariableSet _hookTokenSecret = new([], [KeyValuePair.Create("HookToken", (string?)"value")]);
+
+    [TestMethod]
+    public void A_well_configured_webhook_produces_no_issues()
+    {
+        Assert.AreEqual(0, Validate(new JobGraph().Node(WebhookNode(2, "deploy")), _hookTokenSecret).Count);
+    }
+
+    [TestMethod]
+    public void Two_webhooks_on_one_path_are_reported_ignoring_case()
+    {
+        JobGraph graph = new JobGraph().Node(WebhookNode(2, "deploy")).Node(WebhookNode(3, "DEPLOY"));
+
+        DynamicDataIssue issue = Single(Validate(graph, _hookTokenSecret));
+        Assert.AreEqual(3, issue.ObjectId);
+        StringAssert.Contains(issue.Message, "Another webhook has this path");
+    }
+
+    [TestMethod]
+    public void A_disabled_webhook_does_not_clash()
+    {
+        JobGraph graph = new JobGraph().Node(WebhookNode(2, "deploy")).Node(WebhookNode(3, "deploy", enabled: false));
+
+        Assert.AreEqual(0, Validate(graph, _hookTokenSecret).Count);
+    }
+
+    [TestMethod]
+    [DataRow("", DisplayName = "Empty")]
+    [DataRow("has space", DisplayName = "Space")]
+    [DataRow("a/b", DisplayName = "Slash")]
+    public void A_path_that_cannot_be_called_is_reported(string path)
+    {
+        StringAssert.Contains(Single(Validate(new JobGraph().Node(WebhookNode(2, path)), _hookTokenSecret)).Message, "can't be called");
+    }
+
+    [TestMethod]
+    public void A_webhook_without_a_token_is_reported()
+    {
+        StringAssert.Contains(Single(Validate(new JobGraph().Node(WebhookNode(2, "deploy", token: "")))).Message, "no token");
+    }
+
+    [TestMethod]
+    public void A_webhook_token_in_plain_text_is_reported_without_showing_it()
+    {
+        DynamicDataIssue issue = Single(Validate(new JobGraph().Node(WebhookNode(2, "deploy", token: "hunter2"))));
+
+        Assert.AreEqual("Token", issue.Location);
+        StringAssert.Contains(issue.Message, "plain text");
+        Assert.IsFalse(issue.ToString().Contains("hunter2"));
+    }
 }

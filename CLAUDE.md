@@ -91,6 +91,13 @@ decided by conditions on the event's own connections); errors the engine catches
 too. Those events are initialized first and publish from their own thread. Runs started by them have
 `JobRun.ReportsFailures` false, so a failing report job can't trigger itself in a loop.
 
+**Webhooks**: `WebhooksController` (`POST /hooks/{path}`, anonymous, outside `/api`) reads the body up to
+`AppSettings:Webhooks:MaxBodyBytes` and calls `JobEngine.DeliverWebhook`, which finds the enabled
+`IWebhookEvent` by path; the event checks the token or HMAC signature, its calls-per-minute limit, and
+publishes. Wrong credentials answer 404 like an unknown hook. The action must not bind parameters: MVC would
+read a form-encoded body and consume it. A Kestrel endpoint named `Webhooks` serves only the hooks
+(`WebhookEndpoint.UseWebhooksOnlyEndpoint`, deny by default, first in the pipeline).
+
 **User notifications**: `NotifyUsersTask` calls `Core.UserNotifier` (`IUserNotifier`, no-op by
 default), which `JobEngine` installs from its optional constructor parameter. The server's
 `HubUserNotifier` broadcasts to every editor connected to `NotificationsHub`

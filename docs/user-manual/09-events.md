@@ -145,6 +145,61 @@ Things to know:
   event sends one message, not one per row. To list the failures in the message, use a C#
   expression over `dynamicDataChain[ID]["Failures"]`, or iterate over the recordset on purpose.
 
+## 9.9 Webhook event
+
+Fires when another system calls `POST /hooks/{path}` on this server: a build server when a build
+ends, an application when an order is confirmed, a script on another machine. The body of the call
+reaches the job as dynamic data. **Platforms:** all.
+
+| Setting | Description |
+|---|---|
+| Path | The last part of the URL, for example `deploy-done`. Letters, digits, `_` and `-`. A random one is proposed. Each enabled hook needs its own. |
+| Authentication | **Token in a header**: the caller sends `Authorization: Bearer <token>` or `X-OSRobot-Token: <token>`. **Signature of the body (HMAC-SHA256)**: the caller signs the body with the key, as GitHub does; the signature, in hexadecimal or base64, with or without `sha256=` in front, travels in the header you choose (default `X-Hub-Signature-256`). |
+| Token / Signing key | **Generate token** creates a random one and stores it as a [secret](08-dynamic-data.md#87-variables-and-secrets). It is shown only then: copy it for the caller. Without a token every call is refused. |
+| Maximum calls per minute | Calls accepted for this hook; default 60, 0 for no limit. |
+| JSON Path to data / Returns recordset | As in the [REST API task](10-tasks.md#rest-api): extract a value or a list of rows from a JSON body. With a JSON path set, a body that is not JSON is refused. |
+
+**Calling it:**
+
+```bash
+curl -X POST -H "Authorization: Bearer <token>" -H "Content-Type: application/json" -d "{\"order\": 123}" http://localhost:7098/hooks/deploy-done
+```
+
+The answer comes right away, without waiting for the job:
+
+| Answer | Meaning |
+|---|---|
+| `202 Accepted` | The job was started. |
+| `404 Not Found` | No such hook, the hook or its folder is disabled, **or the token or signature is wrong**: nothing reveals which hooks exist. Wrong tokens are written to the audit log. |
+| `400 Bad Request` | The body is not JSON although a JSON path is set. |
+| `413 Payload Too Large` | The body exceeds the limit (1 MB by default). |
+| `429 Too Many Requests` | Too many calls, for this hook or from this address. |
+| `503 Service Unavailable` | The server is reloading or stopping: retry shortly. |
+
+**Dynamic data:**
+
+| Field | Content |
+|---|---|
+| `RequestBody` | The body of the call, as text. |
+| `ContentType`, `SourceIp` | Its content type, and the caller's address. |
+| `RequestHeaders`, `QueryParameters` | Recordsets with columns `Name` and `Value`. Credentials are left out: `Authorization`, the token and signature headers, cookies. |
+| `JsonPathData`, `DefaultRecordset` | What the JSON path extracted. |
+
+> [!WARNING]
+> **The body comes from outside: treat it as untrusted.** Placeholders inside it are never expanded,
+> so it can't read a secret. But pasting `{object[N].RequestBody}` into a SQL query, or into the
+> arguments of a Run program task, lets the caller inject commands. In SQL, pass it as a parameter.
+
+Things to know:
+
+- **Calls from this machine work right away.** By default the server listens on `localhost` only. To
+  let other machines call a hook, without exposing the editor or the API, see
+  [DEPLOYMENT.md](../../OSRobot.Server/DEPLOYMENT.md#letting-other-machines-call-the-webhooks).
+- **Signatures:** the key signs the whole body, GitHub's scheme. Services that sign something else,
+  such as Stripe (a timestamp plus the body), are not supported yet. A signature doesn't expire: a
+  recorded call can be sent again.
+- Files (multipart bodies) are not supported, and calls can't wait for the job's result.
+
 ---
 
 Previous: [8. Dynamic data](08-dynamic-data.md) · Next: [10. Tasks reference](10-tasks.md)

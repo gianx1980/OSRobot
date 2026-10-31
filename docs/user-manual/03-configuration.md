@@ -90,6 +90,19 @@ and re-encrypting the secrets"*. From then on the secrets no longer depend on th
 If `CertificatePath` is set but the file is missing, has no private key or the password is wrong,
 the server doesn't start: it never falls back to unprotected keys.
 
+## 3.6 Webhooks (`AppSettings:Webhooks`)
+
+Limits of the calls to the [Webhook event](09-events.md#99-webhook-event). Each hook also has its own
+limit of calls per minute.
+
+| Setting | Default | Description |
+|---|---|---|
+| `MaxBodyBytes` | `1048576` (1 MB) | Largest body accepted. |
+| `MaxRequestsPerMinutePerIp` | `600` | All the calls from one address, accepted or not. |
+
+To let other machines call the hooks, add a Kestrel endpoint named `Webhooks`: it serves nothing but
+the hooks. See [DEPLOYMENT.md](../../OSRobot.Server/DEPLOYMENT.md#letting-other-machines-call-the-webhooks).
+
 ---
 
 Previous: [2. Installation and first start](02-installation.md) · Next: [4. The Job Editor at a glance](04-job-editor.md)

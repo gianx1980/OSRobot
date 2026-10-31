@@ -651,4 +651,28 @@
   <data name="TxtDynDataFailures" xml:space="preserve">
     <value>Every failure reported by this occurrence, one row each</value>
   </data>
+  <data name="TxtWebhookEvent" xml:space="preserve">
+    <value>Webhook event</value>
+  </data>
+  <data name="TxtDynDataRequestBody" xml:space="preserve">
+    <value>Body of the call</value>
+  </data>
+  <data name="TxtDynDataContentType" xml:space="preserve">
+    <value>Content type of the call</value>
+  </data>
+  <data name="TxtDynDataSourceIp" xml:space="preserve">
+    <value>IP address of the caller</value>
+  </data>
+  <data name="TxtDynDataRequestHeaders" xml:space="preserve">
+    <value>Headers of the call, without credentials</value>
+  </data>
+  <data name="TxtDynDataQueryParameters" xml:space="preserve">
+    <value>Query string parameters of the call</value>
+  </data>
+  <data name="TxtDynDataJsonPathDataWebhook" xml:space="preserve">
+    <value>Value extracted by the JSON path</value>
+  </data>
+  <data name="TxtDynDataWebhookRecordset" xml:space="preserve">
+    <value>Rows extracted by the JSON path</value>
+  </data>
 </root>

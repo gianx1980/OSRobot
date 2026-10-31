@@ -521,6 +521,33 @@ export default {
   scopeThisFolderAndSubfolders: "This folder and its subfolders",
   watch: "Watch",
 
+  // Webhook event
+  call: "Call",
+  copied: "Copied",
+  example: "Example",
+  generateWebhookToken: "Generate token",
+  generateWebhookTokenConfirm:
+    "This replaces the current token: systems using it will stop working until they get the new one. Continue?",
+  webhookAuthSignature: "Signature of the body (HMAC-SHA256)",
+  webhookAuthToken: "Token in a header",
+  webhookAuthentication: "Authentication",
+  webhookBody: "Body",
+  webhookJsonPathHint:
+    "Optional. A body that is not JSON is then refused. The whole body is always available as RequestBody.",
+  webhookMaxCallsPerMinute: "Maximum calls per minute",
+  webhookMaxCallsPerMinuteHint: "0: no limit",
+  webhookPath: "Path",
+  webhookPathRule: "Use only letters, digits, _ and -",
+  webhookSignatureHeader: "Header with the signature",
+  webhookSigningKey: "Signing key",
+  webhookToken: "Token",
+  webhookTokenGenerated: "Token generated",
+  webhookTokenGeneratedMessage:
+    "Copy it now and give it to the system that will call this hook: it is stored as a secret and won't be shown again. Save the job to apply it.",
+  webhookUntrustedDataWarning:
+    "The body comes from outside: treat it as untrusted. Pass it to SQL as a parameter, never in the query text, and don't use it in Run program arguments.",
+  webhookUrl: "URL on this server",
+
   // Disabled objects and folders
   disabled: "Disabled",
   thisFolderIsDisabled:

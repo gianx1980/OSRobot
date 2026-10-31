@@ -51,6 +51,19 @@ From now on every task failure in the folder is reported, at most one e-mail a m
 out a task that already sends its own failure e-mail, add a *don't execute* condition to the
 connection from the event: `FailedObjectName` *Value equals to* the task's name.
 
+## A.5 Start a job from another system
+
+1. Add a **Webhook event** (Id 9). Set the path to `build-done` and click **Generate token**. Copy
+   the token shown: it won't be shown again.
+2. Set *JSON Path to data* to `$.version`, so the job receives the version the caller sends.
+3. Connect the event to the tasks to run, using `{object[9].JsonPathData}` in their settings.
+4. Click **Save**, then **Reload server configuration**.
+5. Have the other system call it:
+
+   ```bash
+   curl -X POST -H "Authorization: Bearer <token>" -H "Content-Type: application/json" -d "{\"version\": \"1.4.0\"}" http://localhost:7098/hooks/build-done
+   ```
+
 ---
 
 Previous: [13. Troubleshooting](13-troubleshooting.md) · Next: [Appendix B. Quick reference](appendix-b-quick-reference.md)

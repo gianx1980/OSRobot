@@ -99,6 +99,27 @@ kept in `config.db`, encrypted with ASP.NET Core Data Protection.
   text, and the editor offers to move it to a secret. `jobs.json.bak` keeps the previous version
   of the jobs until the next save.
 
+## Webhooks
+
+The Webhook event is the only way to start a job without logging in: `POST /hooks/{path}` is anonymous,
+and the hook itself checks a token or an HMAC signature, in constant time.
+
+- **Exposure.** By default the hooks answer on the same loopback endpoint as everything else. A Kestrel
+  endpoint named `Webhooks` opens them to other machines: that endpoint serves `POST /hooks/...` and
+  answers 404 to anything else, ahead of the rest of the pipeline, so the editor, login, API, hub and
+  Swagger don't exist there, and anything added later stays private by default. The restriction follows from
+  the endpoint's name, so it can't be forgotten; a URL it can't parse stops the server.
+- **Probing.** A wrong credential, an unknown path and a disabled hook get the same 404. Wrong credentials
+  are written to the audit log.
+- **Flooding.** A body limit, a limit per address and one per hook. The hook's limit also protects the task
+  queue, which is unbounded. Rejected calls don't create log files.
+- **The body is untrusted.** It is never parsed for placeholders, so it can't read a secret or an
+  environment variable, and it is never logged. But it is data controlled by the caller: a job that pastes it
+  into SQL text or program arguments is open to injection. Credential headers don't reach the job's data.
+- **What a credential allows.** Whoever has it can start that job, as often as the limits allow, with a body of
+  their choosing. A signature doesn't expire, so a recorded call can be replayed. Use HTTPS: without it the
+  token and the body can be read on the network.
+
 ## Reducing the surface (optional, off by default)
 
 If a specific deployment doesn't need the full power — for example, an environment with multiple

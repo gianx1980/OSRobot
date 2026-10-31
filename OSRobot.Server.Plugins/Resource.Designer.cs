@@ -1662,5 +1662,77 @@ namespace OSRobot.Server.Plugins {
                 return ResourceManager.GetString("TxtDynDataFailures", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Webhook event.
+        /// </summary>
+        internal static string TxtWebhookEvent {
+            get {
+                return ResourceManager.GetString("TxtWebhookEvent", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Body of the call.
+        /// </summary>
+        internal static string TxtDynDataRequestBody {
+            get {
+                return ResourceManager.GetString("TxtDynDataRequestBody", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Content type of the call.
+        /// </summary>
+        internal static string TxtDynDataContentType {
+            get {
+                return ResourceManager.GetString("TxtDynDataContentType", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to IP address of the caller.
+        /// </summary>
+        internal static string TxtDynDataSourceIp {
+            get {
+                return ResourceManager.GetString("TxtDynDataSourceIp", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Headers of the call, without credentials.
+        /// </summary>
+        internal static string TxtDynDataRequestHeaders {
+            get {
+                return ResourceManager.GetString("TxtDynDataRequestHeaders", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Query string parameters of the call.
+        /// </summary>
+        internal static string TxtDynDataQueryParameters {
+            get {
+                return ResourceManager.GetString("TxtDynDataQueryParameters", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Value extracted by the JSON path.
+        /// </summary>
+        internal static string TxtDynDataJsonPathDataWebhook {
+            get {
+                return ResourceManager.GetString("TxtDynDataJsonPathDataWebhook", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Rows extracted by the JSON path.
+        /// </summary>
+        internal static string TxtDynDataWebhookRecordset {
+            get {
+                return ResourceManager.GetString("TxtDynDataWebhookRecordset", resourceCulture);
+            }
+        }
     }
 }

@@ -38,7 +38,7 @@ public class DynamicDataIssue(int objectId, string objectName, string location, 
 public static class DynamicDataValidator
 {
     private const string _codePlaceholder = "[CODE]";
-    private const string _passwordProperty = "Password";
+    private static readonly string[] _credentialProperties = ["Password", "Token"];
 
     /// <param name="variables">The defined variables and secrets; Core.Variables when not given.</param>
     public static List<DynamicDataIssue> Validate(IFolder rootFolder, IVariableResolver? variables = null)
@@ -52,11 +52,13 @@ public static class DynamicDataValidator
         foreach (IPluginInstance instance in instances)
             instancesById.TryAdd(instance.Config.Id, instance);
 
+        List<DynamicDataIssue> webhookIssues = CheckWebhooks(instances);
+
         Dictionary<int, List<int>> predecessors = BuildPredecessors(instances);
         Dictionary<Type, HashSet<string>> outputsByType = BuildOutputsByType(recordsetsOnly: false);
         Dictionary<Type, HashSet<string>> recordsetsByType = BuildOutputsByType(recordsetsOnly: true);
 
-        List<DynamicDataIssue> issues = [];
+        List<DynamicDataIssue> issues = webhookIssues;
 
         foreach (IPluginInstance instance in instances)
         {
@@ -98,9 +100,9 @@ public static class DynamicDataValidator
 
                 if (IsPlainTextPassword(location, value))
                 {
-                    // The reference is left empty: the warning is logged and shown, the password must not be.
+                    // The reference is left empty: the warning is logged and shown, the value must not be.
                     issues.Add(new DynamicDataIssue(instance.Config.Id, instance.Config.Name, location, string.Empty,
-                                                    "The password is stored in plain text in jobs.json. Move it to a secret and write {secret['Name']} here instead."));
+                                                    "This credential is stored in plain text in jobs.json. Move it to a secret and write {secret['Name']} here instead."));
                 }
             }
 
@@ -127,16 +129,39 @@ public static class DynamicDataValidator
         return issues;
     }
 
-    // A property named Password (at any depth) written as literal text. A value taking the password from
+    // A credential property (at any depth) written as literal text. A value taking the password from
     // somewhere else ({secret[...]}, {environment[...]}, another object, [CODE]) doesn't store it in jobs.json.
     private static bool IsPlainTextPassword(string location, string value)
     {
         string propertyName = location[(location.LastIndexOf('.') + 1)..];
 
-        return propertyName.Equals(_passwordProperty, StringComparison.OrdinalIgnoreCase)
+        return _credentialProperties.Contains(propertyName, StringComparer.OrdinalIgnoreCase)
                && !string.IsNullOrEmpty(value)
                && !value.StartsWith(_codePlaceholder)
                && !DynamicDataParser.ContainsPlaceholder(value);
+    }
+
+    // Problems a job can only show when it is called: a path that can't be reached, two hooks on one path, no token.
+    private static List<DynamicDataIssue> CheckWebhooks(List<IPluginInstance> instances)
+    {
+        List<DynamicDataIssue> issues = [];
+        HashSet<string> paths = new(StringComparer.OrdinalIgnoreCase);
+
+        foreach (IWebhookEvent webhook in instances.OfType<IWebhookEvent>().Where(w => w.Config.Enabled))
+        {
+            if (!WebhookPath.IsValid(webhook.Path))
+                issues.Add(new DynamicDataIssue(webhook.Config.Id, webhook.Config.Name, "Path", webhook.Path,
+                                                $"The path must contain only letters, digits, '_' and '-' (at most {WebhookPath.MaxLength} characters): this hook can't be called."));
+            else if (!paths.Add(webhook.Path))
+                issues.Add(new DynamicDataIssue(webhook.Config.Id, webhook.Config.Name, "Path", webhook.Path,
+                                                "Another webhook has this path: only one of them receives the calls."));
+
+            if (string.IsNullOrWhiteSpace(webhook.Token))
+                issues.Add(new DynamicDataIssue(webhook.Config.Id, webhook.Config.Name, "Token", string.Empty,
+                                                "The webhook has no token: every call is refused."));
+        }
+
+        return issues;
     }
 
     private static string? CheckReference(DynamicDataInfo info, int referencingId, Dictionary<int, IPluginInstance> instancesById, HashSet<int> upstream,

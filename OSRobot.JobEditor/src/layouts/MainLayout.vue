@@ -214,6 +214,7 @@ import DiskSpaceEventConfigForm from "src/robotObjects/diskSpaceEvent/DiskSpaceE
 import MemoryEventConfigForm from "src/robotObjects/memoryEvent/MemoryEventConfigForm.vue";
 import OSRobotServiceStartEventConfigForm from "src/robotObjects/osRobotServiceStartEvent/OSRobotServiceStartEventConfigForm.vue";
 import TaskFailureEventConfigForm from "src/robotObjects/taskFailureEvent/TaskFailureEventConfigForm.vue";
+import WebhookEventConfigForm from "src/robotObjects/webhookEvent/WebhookEventConfigForm.vue";
 import SystemEventsEventConfigForm from "src/robotObjects/systemEventsEvent/SystemEventsEventConfigForm.vue";
 import ExcelFileTaskConfigForm from "src/robotObjects/excelFileTask/ExcelFileTaskConfigForm.vue";
 import FileSystemTaskConfigForm from "src/robotObjects/fileSystemTask/FileSystemTaskConfigForm.vue";
@@ -295,6 +296,7 @@ const _configForms = {
   MemoryEventConfigForm,
   OSRobotServiceStartEventConfigForm,
   TaskFailureEventConfigForm,
+  WebhookEventConfigForm,
   SystemEventsEventConfigForm,
   ExcelFileTaskConfigForm,
   FileSystemTaskConfigForm,
