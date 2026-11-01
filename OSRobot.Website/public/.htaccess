@@ -1,0 +1,44 @@
+# SPDX-FileCopyrightText: Gianluca Di Bucci (gianx1980) <https://www.os-robot.com>
+# SPDX-License-Identifier: GPL-3.0-or-later
+
+# Every URL WordPress used to serve is either still a page or redirected here: search
+# engines have indexed them. Redirects must stay permanent (301).
+
+DirectoryIndex index.html
+ErrorDocument 404 /404.html
+
+# Behind Aruba's proxy, Apache's automatic slash redirect points at http://, which adds a hop.
+RedirectMatch 301 ^/(downloads|installation|quick-start|privacy-terms-of-use|manual|manual/[\w-]+)$ https://www.os-robot.com/$1/
+
+# Download Monitor links. Only the latest version is still offered, so links to the others
+# go to the Downloads page.
+RedirectMatch 301 ^/download/254/?$ https://github.com/gianx1980/OSRobot/releases/download/v1.2.0/os-robot_v1_2_0.zip
+RedirectMatch 301 ^/download/249/?$ https://www.os-robot.com/downloads/
+RedirectMatch 301 ^/download/243/?$ https://www.os-robot.com/downloads/
+RedirectMatch 301 ^/download/235/?$ https://www.os-robot.com/downloads/
+RedirectMatch 301 ^/download/230/?$ https://www.os-robot.com/downloads/
+RedirectMatch 301 ^/download/193/?$ https://www.os-robot.com/downloads/
+RedirectMatch 301 ^/download/156/?$ https://www.os-robot.com/downloads/
+RedirectMatch 301 ^/download/150/?$ https://www.os-robot.com/downloads/
+RedirectMatch 301 ^/download/82/?$ https://www.os-robot.com/downloads/
+RedirectMatch 301 ^/download/62/?$ https://www.os-robot.com/downloads/
+RedirectMatch 301 ^/download/52/?$ https://www.os-robot.com/downloads/
+
+# Old direct links to the zips that WordPress kept outside its protected download folder
+RedirectMatch 301 ^/wp-content/uploads/2025/12/os-robot_v1_0_7\.zip$ https://www.os-robot.com/downloads/
+RedirectMatch 301 ^/wp-content/uploads/2025/03/os-robot_v1_0_0\.zip$ https://www.os-robot.com/downloads/
+
+# WordPress pages with no equivalent here
+RedirectMatch 301 ^/no-access/?$ https://www.os-robot.com/
+RedirectMatch 301 ^/feed/?$ https://www.os-robot.com/
+RedirectMatch 301 ^/comments/feed/?$ https://www.os-robot.com/
+RedirectMatch 301 ^/category/ https://www.os-robot.com/
+RedirectMatch 301 ^/wp-sitemap\.xml$ https://www.os-robot.com/sitemap.xml
+RedirectMatch 301 ^/wp-sitemap-posts-page-1\.xml$ https://www.os-robot.com/sitemap.xml
+
+# WordPress stays on the server, switched off, until the new site has proved itself.
+# Its code must not be reachable in the meantime.
+RedirectMatch 404 ^/(wp-admin|wp-includes|wp-content/?$|wp-content/plugins|wp-content/themes|wp-login\.php|xmlrpc\.php|wp-[^/]*\.php)
+# This site has no PHP. Matching anywhere in the path also covers the renamed index.php.off,
+# which some PHP setups would still run, and anything left under wp-content.
+RedirectMatch 404 (?i)\.ph(p|ar|tml)

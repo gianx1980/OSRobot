@@ -56,6 +56,8 @@ OSRobot.Server.Core  <-  OSRobot.Server.Plugins  <-  OSRobot.Server.JobEngineLib
   `Resources/InitJobs.txt` (embedded resources). Schema upgrades are additive `ALTER TABLE`s in
   `Program.cs` (`_upgradeUserSchema`); there are no EF migrations.
 - **OSRobot.Server.JobEngine** – a placeholder console app (`Hello world`); not used.
+- **OSRobot.Website** – the public site (VitePress, not part of the solution). The manual pages are
+  generated from `docs/user-manual/`; see `OSRobot.Website/README.md` for building and publishing.
 - The release version is set only in `Directory.Build.props`.
 
 ## Core runtime model

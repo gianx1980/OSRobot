@@ -1,0 +1,21 @@
+{
+  "name": "osrobot-website",
+  "version": "1.0.0",
+  "private": true,
+  "description": "The public OS-Robot website",
+  "type": "module",
+  "license": "GPL-3.0-or-later",
+  "scripts": {
+    "predev": "node scripts/sync-manual.mjs",
+    "dev": "vitepress dev",
+    "prebuild": "node scripts/sync-manual.mjs",
+    "build": "vitepress build",
+    "build:test": "node scripts/build-test.mjs && node --test test-build/",
+    "preview": "vitepress preview",
+    "test": "node --test test/",
+    "check-urls": "node scripts/check-urls.mjs"
+  },
+  "devDependencies": {
+    "vitepress": "1.6.4"
+  }
+}

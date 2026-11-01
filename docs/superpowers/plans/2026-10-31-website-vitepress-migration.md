@@ -17,6 +17,7 @@
 - **Hosting:** stay on Aruba for now. No DNS, name server or email record changes of any kind.
 - **Publishing:** build locally and upload by FTP. Automated deployment is left out until manual uploads become a nuisance.
 - **Zips:** use GitHub Releases. `dlm_uploads` answers 403 to direct requests, new releases already go to GitHub, and the zips stay out of the site's uploads.
+- **Versions offered (decided 2026-11-01):** only the latest, 1.2.0. Old download links redirect to `/downloads/`, GitHub releases are left as they are, and Task 4's zip uploads are no longer needed.
 - **Rollback:** WordPress stays on the server, switched off rather than deleted, until the new site has proved itself.
 - **Later option:** moving to Cloudflare Pages stays possible. These URLs, pages and zips carry over, and only `.htaccess` would need converting.
 
@@ -288,8 +289,7 @@ test("all 11 download IDs redirect permanently to their zip, with or without sla
 });
 test("retired WordPress URLs are covered", () => {
   for (const pattern of ["^/no-access/?$", "^/feed/?$", "^/comments/feed/?$", "^/category/",
-                         "^/wp-sitemap\\.xml$", "^/wp-sitemap-posts-page-1\\.xml$",
-                         "^/wp-content/uploads/dlm_uploads/"]) {
+                         "^/wp-sitemap\\.xml$", "^/wp-sitemap-posts-page-1\\.xml$"]) {
     assert.ok(rules.some((r) => r.startsWith("RedirectMatch 301 ") && r.includes(pattern)), pattern);
   }
 });
@@ -318,7 +318,7 @@ test("downloads page links straight to GitHub", () => {
     - One `RedirectMatch 301` per download.
     - `/no-access/`, `/feed/`, `/comments/feed/` and `/category/...` → `https://www.os-robot.com/`.
     - Both sitemap paths → `https://www.os-robot.com/sitemap.xml`.
-    - `/wp-content/uploads/dlm_uploads/...`, `/wp-content/uploads/2025/12/os-robot_v1_0_7.zip` and `/wp-content/uploads/2025/03/os-robot_v1_0_0.zip` → `https://www.os-robot.com/downloads/`.
+    - `/wp-content/uploads/2025/12/os-robot_v1_0_7.zip` and `/wp-content/uploads/2025/03/os-robot_v1_0_0.zip` → `https://www.os-robot.com/downloads/`. Files in `dlm_uploads` already answer 403 and keep doing so.
     - One `RedirectMatch 404` covering `/wp-admin`, `/wp-login.php`, `/xmlrpc.php`, `/wp-includes/`, `/wp-content/plugins/`, `/wp-content/themes/` and root `wp-*.php` files.
     - Any rule that must survive from Task 0, Step 4, and anything from Task 0, Step 10.
     - **No WordPress rewrite block.**
@@ -358,7 +358,7 @@ Pick a quiet time. The switch takes minutes, with a short period where pages may
 - [ ] **Step 1 [You]: Sign off on the local preview,** including a phone-sized viewport, and decide on committing and merging `website` into `master`. The published manual comes from `master`, so features still on `11_Dev` appear when that branch merges and the site is rebuilt.
 - [ ] **Step 2: Build from `master`.** Run: `npm ci && npm run build && npm test`. Expected: PASS.
 - [ ] **Step 3 [You]: Take a fresh backup** of the files and database.
-- [ ] **Step 4 [You]: Rename on the server,** in the web folder: `index.php` → `index.php.off` and `.htaccess` → `.htaccess.wordpress`. WordPress's files stay in place but stop answering.
+- [ ] **Step 4 [You]: Save a listing of the web folder, then rename on the server.** The listing shows whether `robots.txt` or a favicon already exists, which the rollback would otherwise delete rather than restore. In the web folder, rename: `index.php` → `index.php.off` and `.htaccess` → `.htaccess.wordpress`. WordPress's files stay in place but stop answering.
 - [ ] **Step 5 [You]: Upload the contents of `.vitepress/dist` to the web folder,** including the hidden `.htaccess`. Delete nothing. The images merge into the existing `wp-content/uploads` folders.
 - [ ] **Step 6 [You]: Purge Aruba's page cache,** if Task 0, Step 5 found one.
 - [ ] **Step 7: Run the checker.** Run: `node scripts/check-urls.mjs`. Expected: exit 0. If it can't be made to pass in the same session, roll back.
@@ -366,7 +366,7 @@ Pick a quiet time. The switch takes minutes, with a short period where pages may
 - [ ] **Step 9 [You]: Submit `https://www.os-robot.com/sitemap.xml` in Search Console,** remove the old `wp-sitemap.xml` entry if listed, and use URL Inspection on the 5 main pages.
 - [ ] **Step 10 [You]: Test email once** in each direction. Nothing here should affect it, but it's a quick reassurance.
 
-**Rollback:** delete the uploaded `.htaccess`; rename `.htaccess.wordpress` and `index.php.off` back; and remove the new `index.html`, `404.html`, `sitemap.xml`, `robots.txt`, `favicon.jpeg`, `hashmap.json`, `assets/`, `downloads/`, `installation/`, `quick-start/`, `privacy-terms-of-use/` and `manual/`. Real folders override WordPress's URLs, so they must go. Purge the cache. If that doesn't restore the site, restore the Step 3 backup.
+**Rollback:** delete the uploaded `.htaccess`; rename `.htaccess.wordpress` and `index.php.off` back; and remove the new `index.html`, `404.html`, `sitemap.xml`, `robots.txt`, `favicon.jpeg`, `hashmap.json`, `vp-icons.css`, `assets/`, `downloads/`, `installation/`, `quick-start/`, `privacy-terms-of-use/` and `manual/`. Real folders override WordPress's URLs, so they must go. Purge the cache. If that doesn't restore the site, restore the Step 3 backup.
 
 ### Task 7: Monitor, then retire WordPress [You + Claude]
 

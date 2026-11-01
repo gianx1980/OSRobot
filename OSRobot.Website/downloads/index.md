@@ -1,0 +1,16 @@
+---
+title: "Downloads"
+description: "Download the latest version of OS-Robot, free and open-source under the GPL-3.0."
+---
+
+# Downloads
+
+The software OS-Robot is distributed without any warranty, under the terms of the GNU General Public License v3.0 (GPL-3.0).
+
+The developers and contributors are not liable for any direct, indirect, incidental, or consequential damages resulting from the use of the software.
+
+The use of OS-Robot is at the user’s own risk. Before using the software, make sure you have read and understood the terms of the GPL-3.0, [available here](https://www.gnu.org/licenses/gpl-3.0.html).
+
+### Latest version
+
+[OS-Robot 1.2.0](https://github.com/gianx1980/OSRobot/releases/download/v1.2.0/os-robot_v1_2_0.zip) (Released on October 21, 2026)
