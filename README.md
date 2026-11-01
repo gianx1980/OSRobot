@@ -17,12 +17,17 @@ when. Jobs are organized into folders and run entirely on the machine OS-Robot i
   execution conditions (e.g. "only if the previous task succeeded", or a dynamic-data condition),
   and per-object enable/disable and logging toggles.
 - **Events** - `DateTimeEvent` (schedule/recurrence), `CpuEvent`, `MemoryEvent`, `DiskSpaceEvent`,
-  `FileSystemEvent`, `SystemEventsEvent`, `OSRobotServiceStartEvent`.
+  `FileSystemEvent`, `SystemEventsEvent`, `OSRobotServiceStartEvent`, `TaskFailureEvent`, which
+  reports the failures of other jobs (one e-mail for a whole folder, grouped over time), and
+  `WebhookEvent`, which lets other systems start a job with an HTTP call.
 - **Tasks** - file I/O (`ReadTextFileTask`, `WriteTextFileTask`, `ReadBinaryFileTask`,
   `WriteBinaryFileTask`, `FileSystemTask`), archives (`ZipTask`, `UnzipTask`), data
   (`ExcelFileTask`, `SqlServerBackupTask`, `SqlServerBulkCopyTask`, `SqlServerCommandTask`),
-  network (`FtpSftpTask`, `RESTAPITask`, `PingTask`), messaging (`SendEMailTask`), and
-  `RunProgramTask` for anything else.
+  network (`FtpSftpTask`, `RESTAPITask`, `PingTask`), messaging (`SendEMailTask`,
+  `NotifyUsersTask`), and `RunProgramTask` for anything else.
+- **Variables and secrets** - shared values used in any job setting as `{var['Name']}` or
+  `{secret['Name']}`. Secrets are stored encrypted, never shown again and hidden in logs, so
+  passwords don't have to sit in the job definitions.
 - **REST API** (ASP.NET Core, JWT-authenticated, Swagger UI included) that the job editor talks to
   - and that you can drive yourself for automation or a custom front end.
 - **Execution logging** per job/task run, browsable from the editor.

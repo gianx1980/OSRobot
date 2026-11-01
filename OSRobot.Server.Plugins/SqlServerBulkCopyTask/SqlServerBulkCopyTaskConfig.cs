@@ -26,14 +26,19 @@ public class SqlServerBulkCopyTaskConfig : ITaskConfig
     [DynamicData]
     public string DestinationTable { get; set; } = string.Empty;
 
+    [DynamicData]
     public string Server { get; set; } = string.Empty;
 
+    [DynamicData]
     public string Database { get; set; } = string.Empty;
 
+    [DynamicData]
     public string Username { get; set; } = string.Empty;
 
+    [DynamicData]
     public string Password { get; set; } = string.Empty;
     
+    [DynamicData]
     public string ConnectionStringOptions { get; set; } = string.Empty;
     public int CommandTimeout { get; set; } = _defaultCommandTimeout;
 }

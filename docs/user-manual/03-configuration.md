@@ -58,6 +58,51 @@ nginx/Caddy or Kestrel with a certificate). See [Security and deployment](12-sec
 | `ReverseProxy:KnownProxies` | empty | Comma-separated IPs of reverse proxies running on another machine. |
 | `ReverseProxy:KnownNetworks` | empty | Comma-separated CIDR networks of trusted proxies, e.g. `10.0.0.0/24`. |
 
+## 3.5 Secrets encryption (`AppSettings:DataProtection`)
+
+[Secrets](08-dynamic-data.md#87-variables-and-secrets) are encrypted with keys kept in their own
+folder, and those keys are encrypted in turn:
+
+- with a **certificate**, when `CertificatePath` is set (any operating system);
+- otherwise, on **Windows**, with DPAPI for the account the server runs under;
+- otherwise (Linux, macOS) they are protected only by the folder's permissions, and the server
+  logs a warning at startup.
+
+| Setting | Default | Description |
+|---|---|---|
+| `KeysPath` | empty: `keys` inside `DataPath` | Folder of the encryption keys. Back it up together with `config.db`. |
+| `CertificatePath` | empty | A `.pfx` file, with its private key, that encrypts the keys. Recommended on Linux. |
+| `CertificatePasswordCredential` | `dp-cert-password` | Name of the systemd credential holding the `.pfx` password (see [DEPLOYMENT.md](../../OSRobot.Server/DEPLOYMENT.md)). |
+| `CertificatePasswordEnvironmentVariable` | `OSROBOT_DP_CERT_PASSWORD` | Environment variable holding the `.pfx` password, used when no systemd credential has it. |
+| `PreviousCertificatePaths` | empty | Comma-separated `.pfx` files of earlier certificates (same password). Needed only for the first start after replacing the certificate, to read the keys the old one encrypted. |
+
+**Changing the protection.** At every start the server checks that the key in use is protected the
+way these settings say. If it isn't - a certificate was added, or replaced - it creates a new key,
+protected as configured, and re-encrypts every secret with it. The log says so: *"creating a new key
+and re-encrypting the secrets"*. From then on the secrets no longer depend on the old protection.
+
+> [!WARNING]
+> With DPAPI (Windows, no certificate) only the same account on the same computer can read the
+> keys. To move the installation to another computer, or run the service under a different
+> account, first configure a certificate and **start the server once where it is now**, so the
+> secrets are re-encrypted; then move it. Otherwise the secrets must be entered again.
+
+If `CertificatePath` is set but the file is missing, has no private key or the password is wrong,
+the server doesn't start: it never falls back to unprotected keys.
+
+## 3.6 Webhooks (`AppSettings:Webhooks`)
+
+Limits of the calls to the [Webhook event](09-events.md#99-webhook-event). Each hook also has its own
+limit of calls per minute.
+
+| Setting | Default | Description |
+|---|---|---|
+| `MaxBodyBytes` | `1048576` (1 MB) | Largest body accepted. |
+| `MaxRequestsPerMinutePerIp` | `600` | All the calls from one address, accepted or not. |
+
+To let other machines call the hooks, add a Kestrel endpoint named `Webhooks`: it serves nothing but
+the hooks. See [DEPLOYMENT.md](../../OSRobot.Server/DEPLOYMENT.md#letting-other-machines-call-the-webhooks).
+
 ---
 
 Previous: [2. Installation and first start](02-installation.md) · Next: [4. The Job Editor at a glance](04-job-editor.md)

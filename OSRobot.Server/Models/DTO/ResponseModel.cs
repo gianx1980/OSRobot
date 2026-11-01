@@ -16,6 +16,8 @@ public enum ResponseCode : int
     ErrorSavingJobs = -101,
     InvalidJobsConfiguration = -102,
     CannotStartTask = -200,
+    InvalidVariable = -300,
+    VariableNotFound = -301,
     ResponseGenericError = int.MinValue
 }
 

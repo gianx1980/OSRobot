@@ -358,6 +358,15 @@ namespace OSRobot.Server.Core {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to Error message, when the object failed.
+        /// </summary>
+        internal static string TxtDynDataErrorMessage {
+            get {
+                return ResourceManager.GetString("TxtDynDataErrorMessage", resourceCulture);
+            }
+        }
+
+        /// <summary>
         ///   Looks up a localized string similar to Number of iterations.
         /// </summary>
         internal static string TxtDynDataNumberOfIterations {

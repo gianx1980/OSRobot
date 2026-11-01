@@ -28,5 +28,6 @@ public class CpuEventPlugin : IPlugin
     
     public IPluginInstanceConfig GetPluginDefaultConfig() => new CpuEventConfig();
     
-    public EnumOSPlatform SupportedOSPlatforms => EnumOSPlatform.Windows;
+    // macOS would need host_statistics(HOST_CPU_LOAD_INFO): see CpuUsageSampler.
+    public EnumOSPlatform SupportedOSPlatforms => EnumOSPlatform.Windows | EnumOSPlatform.Linux;
 }

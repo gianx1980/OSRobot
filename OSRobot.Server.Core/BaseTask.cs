@@ -119,7 +119,9 @@ public abstract class BaseTask : ITask
     {
         LogFailure(currentIteration, ex);
 
-        DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, false, -1, executionStartDateTime, DateTime.Now, _iterationsCount);
+        // The reason travels with the result: connections and the Task failure event can pass it on.
+        DynamicDataSet dDataSet = CommonDynamicData.BuildStandardDynamicDataSet(this, false, -1, executionStartDateTime, DateTime.Now, _iterationsCount,
+                                                                                Core.Variables.Redact(ex.Message));
         ExecResult result = new(false, dDataSet);
 
         try

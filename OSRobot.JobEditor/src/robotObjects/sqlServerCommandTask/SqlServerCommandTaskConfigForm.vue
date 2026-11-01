@@ -9,6 +9,7 @@
     />
     <SqlServerConnectionConfigForm
       v-model="_propsRef.modelValue"
+      :containingFolderItems="_propsRef.containingFolderItems"
       showDatabaseField="true"
       :testConnectionButtonLabel="_$t('testConnection')"
       @attemptedConnection="_attemptedConnection"

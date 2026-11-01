@@ -37,6 +37,9 @@ public interface IJobEngine
 
     public Task<bool> StartTaskAsync(int taskID, CancellationToken cancellationToken = default);
 
+    /// <summary>Hands a call to /hooks/{path} to the enabled Webhook event with that path.</summary>
+    public WebhookDeliveryResult DeliverWebhook(string path, WebhookRequest request);
+
     public ReloadJobsReturnValues ReloadJobs();
 
     public List<IPlugin> GetPlugins();

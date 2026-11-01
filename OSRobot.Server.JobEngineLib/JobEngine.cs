@@ -8,21 +8,31 @@ using OSRobot.Server.Core.Logging;
 using OSRobot.Server.Core.Logging.Abstract;
 using OSRobot.Server.Core.Notifications;
 using OSRobot.Server.Core.Persistence;
+using OSRobot.Server.Core.Variables;
 using OSRobot.Server.JobEngineLib.Infrastructure.Abstract;
 
 
 namespace OSRobot.Server.JobEngineLib;
 
 // userNotifier: where NotifyUsersTask sends notifications (Core.UserNotifier); null = nowhere.
-public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config, IUserNotifier? userNotifier = null) : IJobEngine, IEventSink
+// variables: the values of {var[...]} and {secret[...]} (Core.Variables); null = none defined.
+public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config, IUserNotifier? userNotifier = null,
+                               IVariableResolver? variables = null) : IJobEngine, IEventSink
 {
     private readonly IAppLogger _log = appLogger;
     private readonly IJobEngineConfig _config = config;
     private readonly IUserNotifier? _userNotifier = userNotifier;
+    private readonly IVariableResolver? _variables = variables;
     private IFolder _rootFolder = new Folder();
 
     private List<IEvent> _events = [];
     private List<ITask> _tasks = [];
+
+    // The enabled Webhook events by path. Replaced whole (read by the request threads without a lock).
+    private volatile Dictionary<string, IWebhookEvent> _webhooks = [];
+
+    // The enabled events that want to know about task failures. Replaced whole (read by the workers without a lock).
+    private volatile ITaskFailureListener[] _failureListeners = [];
 
     // Log cleanup timer. Created in Start(), fully torn down in Stop().
     private System.Timers.Timer? _logCleanTimer;
@@ -44,14 +54,14 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config, IU
     private long _runIdSeq;
 
     /// <returns>null if the engine is not accepting work (stopped, stopping or reloading).</returns>
-    private JobRun? TryBeginRun(CancellationToken callerToken = default)
+    private JobRun? TryBeginRun(CancellationToken callerToken = default, bool reportsFailures = true)
     {
         lock (_lifecycleGate)
         {
             if (_queue == null)
                 return null;
 
-            return new JobRun(Interlocked.Increment(ref _runIdSeq), _queue, callerToken);
+            return new JobRun(Interlocked.Increment(ref _runIdSeq), _queue, callerToken, reportsFailures);
         }
     }
 
@@ -116,6 +126,14 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config, IU
             }
             else if (pluginInstance is IFolder innerFolder)
             {
+                // A disabled folder pauses everything in it, subfolders included: none of its events start.
+                // Its tasks are still initialized, so "Start task" keeps working on them, as on a disabled task.
+                if (!innerFolder.Config.Enabled)
+                {
+                    _log.Info($"Folder {innerFolder.Config.Id}:{innerFolder.Config.Name} disabled: its events are not started");
+                    continue;
+                }
+
                 List<IEvent> innerFolderEvents = GetEventList(innerFolder);
                 events.AddRange(innerFolderEvents);
             }
@@ -190,7 +208,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config, IU
     // event source's thread is never held by task execution or by a connection's WaitSeconds.
     bool IEventSink.Publish(IEvent source, DynamicDataSet dynamicData, IPluginInstanceLogger logger)
     {
-        JobRun? run = TryBeginRun();
+        JobRun? run = TryBeginRun(reportsFailures: source is not ITaskFailureListener);
         if (run == null)
         {
             _log.Info($"Event from object {source.Config.Id} ignored: engine is not accepting events.");
@@ -269,6 +287,43 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config, IU
             catch (Exception ex)
             {
                 logger.Error(source, $"Error dispatching connection to object {target.Config.Id}", ex);
+            }
+        }
+    }
+
+    /// <summary>
+    /// Tells the Task failure events about each failed result of a task execution, whether or not one of the
+    /// task's connections reacts to it: an event reports every failure in its scope, and its own connections'
+    /// conditions decide what to leave out.
+    /// </summary>
+    private void ReportFailures(JobRun run, ITask task, List<ExecResult> execResults)
+    {
+        for (int i = 0; i < execResults.Count; i++)
+        {
+            if (execResults[i].Result)
+                continue;
+
+            string errorMessage = execResults[i].Data.TryGetValue(CommonDynamicData.ErrorMessage, out object? message) ? message?.ToString() ?? string.Empty : string.Empty;
+            ReportFailure(run, new TaskFailure(task, i, errorMessage, DateTime.Now));
+        }
+    }
+
+    private void ReportFailure(JobRun run, TaskFailure failure)
+    {
+        ITaskFailureListener[] listeners = _failureListeners;
+        if (listeners.Length == 0 || !run.ReportsFailures)
+            return;
+
+        foreach (ITaskFailureListener listener in listeners)
+        {
+            // A broken listener must not stop the worker, nor the other listeners.
+            try
+            {
+                listener.OnTaskFailed(failure);
+            }
+            catch (Exception ex)
+            {
+                _log.Error($"Error reporting the failure of task {failure.Task.Config.Id} to event {((IEvent)listener).Config.Id}", ex);
             }
         }
     }
@@ -355,12 +410,16 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config, IU
                     item.Logger.Error(taskCopy, "ExecuteTask", ex);
                 else
                     item.Logger.Error("ExecuteTask: TaskCopy object is null.", ex);
+
+                // Outside the task's own error handling (no result, no successors): still a failure to report.
+                ReportFailure(run, new TaskFailure(item.Task, null, Core.Core.Variables.Redact(ex.Message), DateTime.Now));
                 return;
             }
 
             // Successors come from the definition, not the clone: the graph is the same and it doesn't
             // depend on how deep the clone went.
             DispatchSuccessors(run, item.Task, instExecResult.ExecResults, item.DataChain, isEvent: false, item.Logger);
+            ReportFailures(run, item.Task, instExecResult.ExecResults);
         }
         finally
         {
@@ -424,7 +483,7 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config, IU
 
         try
         {
-            Server.Core.Core.Init(_config.LogPath, _config.ScriptingEnabled, _config.RunProgramAllowedExecutablePaths, _userNotifier);
+            Server.Core.Core.Init(_config.LogPath, _config.ScriptingEnabled, _config.RunProgramAllowedExecutablePaths, _userNotifier, _variables);
 
             _log.Info("Starting OSRobot.JobEngine...");
 
@@ -474,6 +533,11 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config, IU
                 t.Init();
             });
 
+            // Before the queue opens, so that an accepting engine always has the map of this configuration. A call
+            // reaching a hook not initialized yet gets the same answer as a call during a reload: retry.
+            _events = GetEventList(_rootFolder);
+            _webhooks = BuildWebhookMap();
+
             // From here on runs are accepted. This must happen before events are initialized: an event
             // may publish from inside Init() (OSRobotServiceStartEvent does), and that must not be ignored.
             int workerCount = GetWorkerCount();
@@ -484,17 +548,51 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config, IU
             }
 
             _log.Info("Starting events initialization");
-            _events = GetEventList(_rootFolder);
-            _events.ForEach(t =>
-            {
-                _log.Info($"Initializing event: {t.Config.Id}:{t.Config.Name}:{t.GetType().Name}");
-                t.Init(this);
-            });
+
+            // Task failure events first, and listening before any other event can start a run: a failure
+            // in a run started from another event's Init() is reported too.
+            List<IEvent> failureListeners = [.. _events.Where(e => e is ITaskFailureListener)];
+            failureListeners.ForEach(InitEvent);
+            _failureListeners = [.. failureListeners.Cast<ITaskFailureListener>()];
+
+            _events.Where(e => e is not ITaskFailureListener).ToList().ForEach(InitEvent);
         }
         catch (Exception ex)
         {
             _log.Error("An error occurred while starting JobEngine.", ex);
         }
+    }
+
+    private Dictionary<string, IWebhookEvent> BuildWebhookMap()
+    {
+        Dictionary<string, IWebhookEvent> webhooks = new(StringComparer.OrdinalIgnoreCase);
+
+        foreach (IWebhookEvent webhook in _events.OfType<IWebhookEvent>())
+        {
+            // DynamicDataValidator warns about these on save; a call can only go to one of them.
+            if (!webhooks.TryAdd(webhook.Path, webhook))
+                _log.Error($"Webhook {webhook.Config.Id}:{webhook.Config.Name} ignored: another hook has the path '{webhook.Path}'");
+        }
+
+        return webhooks;
+    }
+
+    public WebhookDeliveryResult DeliverWebhook(string path, WebhookRequest request)
+    {
+        // Stop() takes the queue away first: during a stop or a reload every call can be retried.
+        lock (_lifecycleGate)
+        {
+            if (_queue == null)
+                return WebhookDeliveryResult.EngineNotAccepting;
+        }
+
+        return _webhooks.TryGetValue(path, out IWebhookEvent? webhook) ? webhook.Deliver(request) : WebhookDeliveryResult.NotFound;
+    }
+
+    private void InitEvent(IEvent @event)
+    {
+        _log.Info($"Initializing event: {@event.Config.Id}:{@event.Config.Name}:{@event.GetType().Name}");
+        @event.Init(this);
     }
 
     public void Stop(CancellationToken cancellationToken = default)
@@ -532,6 +630,9 @@ public partial class JobEngine(IAppLogger appLogger, IJobEngineConfig config, IU
                 _logCleanTimer.Dispose();
                 _logCleanTimer = null;
             }
+
+            // The queue is drained: no task is left to fail. Stop reporting before the listeners are destroyed.
+            _failureListeners = [];
 
             _log.Info("Destroying events");
             _events.ForEach(E =>
