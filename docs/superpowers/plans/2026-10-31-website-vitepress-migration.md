@@ -17,6 +17,7 @@
 - **Hosting:** stay on Aruba for now. No DNS, name server or email record changes of any kind.
 - **Publishing:** build locally and upload by FTP. Automated deployment is left out until manual uploads become a nuisance.
 - **Zips:** use GitHub Releases. `dlm_uploads` answers 403 to direct requests, new releases already go to GitHub, and the zips stay out of the site's uploads.
+- **Versions offered (decided 2026-11-01):** only the latest, 1.2.0. Old download links redirect to `/downloads/`, GitHub releases are left as they are, and Task 4's zip uploads are no longer needed.
 - **Rollback:** WordPress stays on the server, switched off rather than deleted, until the new site has proved itself.
 - **Later option:** moving to Cloudflare Pages stays possible. These URLs, pages and zips carry over, and only `.htaccess` would need converting.
 

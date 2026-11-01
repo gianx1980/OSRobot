@@ -17,29 +17,27 @@ function _filesUnder(dir) {
 }
 
 const _base = "https://github.com/gianx1980/OSRobot/releases/download";
-const _downloads = [
-  [254, "v1.2.0/os-robot_v1_2_0.zip"],
-  [249, "v1.1.0/os-robot_v1_1_0.zip"],
-  [243, "v1.0.8/os-robot_v1_0_8.zip"],
-  [235, "v1.0.7/os-robot_v1_0_7.zip"],
-  [230, "v1.0.6/os-robot_v1_0_6.zip"],
-  [193, "v1.0.5/os-robot_v1_0_5.zip"],
-  [156, "v1.0.4/os-robot_v1_0_4.zip"],
-  [150, "v1.0.3/os-robot_v1_0_3.zip"],
-  [82, "v1.0.2/os-robot_v1_0_2.zip"],
-  [62, "v1.0.1/os-robot_v1_0_1.zip"],
-  [52, "v1.0.0/os-robot_v1_0_0.zip"],
-];
+const _latestZip = `${_base}/v1.2.0/os-robot_v1_2_0.zip`;
+const _retiredDownloadIds = [249, 243, 235, 230, 193, 156, 150, 82, 62, 52];
 
 const _rules = readFileSync(new URL("../public/.htaccess", import.meta.url), "utf8")
   .split(/\r?\n/)
   .map((line) => line.trim().replace(/\s+/g, " "))
   .filter((line) => line && !line.startsWith("#"));
 
-test("all 11 download IDs redirect permanently to their zip, with or without slash", () => {
-  for (const [id, target] of _downloads) {
-    assert.ok(_rules.includes(`RedirectMatch 301 ^/download/${id}/?$ ${_base}/${target}`), String(id));
+test("the latest version's old download link still reaches its zip", () => {
+  assert.ok(_rules.includes(`RedirectMatch 301 ^/download/254/?$ ${_latestZip}`));
+});
+
+test("download links of retired versions go to the Downloads page", () => {
+  for (const id of _retiredDownloadIds) {
+    assert.ok(_rules.includes(`RedirectMatch 301 ^/download/${id}/?$ https://www.os-robot.com/downloads/`), String(id));
   }
+});
+
+test("no redirect sends visitors to a retired version's zip", () => {
+  const zipRules = _rules.filter((rule) => rule.startsWith("RedirectMatch") && rule.endsWith(".zip"));
+  assert.deepEqual(zipRules, [`RedirectMatch 301 ^/download/254/?$ ${_latestZip}`]);
 });
 
 test("retired WordPress URLs are covered", () => {
@@ -102,10 +100,15 @@ test("the 404 page is configured and .htaccess reaches the build", () => {
   assert.ok(existsDist(".htaccess"));
 });
 
-test("the downloads page keeps its title and links straight to GitHub", () => {
+test("the downloads page keeps its title and links straight to the latest zip", () => {
   const html = readDist("downloads/index.html");
   assert.ok(html.includes("<title>Downloads – OS-Robot</title>"));
-  for (const [, target] of _downloads) {
-    assert.ok(html.includes(`${_base}/${target}`), target);
-  }
+  assert.ok(html.includes(_latestZip));
+});
+
+test("the downloads page offers only the latest version", () => {
+  const html = readDist("downloads/index.html");
+  const zips = new Set([...html.matchAll(/href="([^"]+\.zip)"/g)].map((match) => match[1]));
+  assert.deepEqual([...zips], [_latestZip]);
+  assert.doesNotMatch(html, /Old versions/);
 });

@@ -1,4 +1,5 @@
 .vitepress/dist/
+.vitepress/dist-test/
 .vitepress/cache/
 # Generated from docs/user-manual by scripts/sync-manual.mjs
 manual/

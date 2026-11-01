@@ -10,6 +10,7 @@
     "dev": "vitepress dev",
     "prebuild": "node scripts/sync-manual.mjs",
     "build": "vitepress build",
+    "build:test": "node scripts/build-test.mjs && node --test test-build/",
     "preview": "vitepress preview",
     "test": "node --test test/",
     "check-urls": "node scripts/check-urls.mjs"

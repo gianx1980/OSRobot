@@ -2,11 +2,14 @@
 // SPDX-License-Identifier: GPL-3.0-or-later
 
 import { readFileSync } from "node:fs";
-import { defineConfig } from "vitepress";
+import { defineConfig, type HeadConfig } from "vitepress";
 import { buildSidebar } from "../scripts/sync-manual.mjs";
 import { markdownOptions } from "./markdownOptions.mjs";
 
 const _siteUrl = "https://www.os-robot.com";
+// Set by scripts/build-test.mjs, for a private copy of the site in a subfolder of the server.
+const _testBase = process.env.OSROBOT_TEST_BASE;
+const _base = _testBase ?? "/";
 const _manualReadme = readFileSync(new URL("../../docs/user-manual/README.md", import.meta.url), "utf8");
 
 // Pages live in x/index.md so that URLs keep the trailing slash WordPress gave them:
@@ -23,9 +26,14 @@ export default defineConfig({
     "OS-Robot is a free, open-source and cross-platform automation server with a graphical job editor.",
   cleanUrls: false,
   srcExclude: ["README.md"],
-  sitemap: { hostname: _siteUrl },
+  base: _base,
+  outDir: _testBase ? ".vitepress/dist-test" : ".vitepress/dist",
+  sitemap: _testBase ? undefined : { hostname: _siteUrl },
   markdown: markdownOptions,
-  head: [["link", { rel: "icon", href: "/favicon.jpeg" }]],
+  head: [
+    ["link", { rel: "icon", href: `${_base}favicon.jpeg` }],
+    ...(_testBase ? ([["meta", { name: "robots", content: "noindex, nofollow" }]] as HeadConfig[]) : []),
+  ],
   transformPageData(pageData) {
     pageData.frontmatter.head ??= [];
     pageData.frontmatter.head.push([
@@ -53,7 +61,7 @@ export default defineConfig({
     socialLinks: [{ icon: "github", link: "https://github.com/gianx1980/OSRobot" }],
     search: { provider: "local" },
     footer: {
-      message: '<a href="/privacy-terms-of-use/">Privacy and terms</a>',
+      message: `<a href="${_base}privacy-terms-of-use/">Privacy and terms</a>`,
       copyright: "Copyright © 2025-2026 | OS-Robot.com",
     },
   },

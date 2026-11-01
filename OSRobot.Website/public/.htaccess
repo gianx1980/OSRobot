@@ -10,18 +10,19 @@ ErrorDocument 404 /404.html
 # Behind Aruba's proxy, Apache's automatic slash redirect points at http://, which adds a hop.
 RedirectMatch 301 ^/(downloads|installation|quick-start|privacy-terms-of-use|manual|manual/[\w-]+)$ https://www.os-robot.com/$1/
 
-# Download Monitor links
+# Download Monitor links. Only the latest version is still offered, so links to the others
+# go to the Downloads page.
 RedirectMatch 301 ^/download/254/?$ https://github.com/gianx1980/OSRobot/releases/download/v1.2.0/os-robot_v1_2_0.zip
-RedirectMatch 301 ^/download/249/?$ https://github.com/gianx1980/OSRobot/releases/download/v1.1.0/os-robot_v1_1_0.zip
-RedirectMatch 301 ^/download/243/?$ https://github.com/gianx1980/OSRobot/releases/download/v1.0.8/os-robot_v1_0_8.zip
-RedirectMatch 301 ^/download/235/?$ https://github.com/gianx1980/OSRobot/releases/download/v1.0.7/os-robot_v1_0_7.zip
-RedirectMatch 301 ^/download/230/?$ https://github.com/gianx1980/OSRobot/releases/download/v1.0.6/os-robot_v1_0_6.zip
-RedirectMatch 301 ^/download/193/?$ https://github.com/gianx1980/OSRobot/releases/download/v1.0.5/os-robot_v1_0_5.zip
-RedirectMatch 301 ^/download/156/?$ https://github.com/gianx1980/OSRobot/releases/download/v1.0.4/os-robot_v1_0_4.zip
-RedirectMatch 301 ^/download/150/?$ https://github.com/gianx1980/OSRobot/releases/download/v1.0.3/os-robot_v1_0_3.zip
-RedirectMatch 301 ^/download/82/?$ https://github.com/gianx1980/OSRobot/releases/download/v1.0.2/os-robot_v1_0_2.zip
-RedirectMatch 301 ^/download/62/?$ https://github.com/gianx1980/OSRobot/releases/download/v1.0.1/os-robot_v1_0_1.zip
-RedirectMatch 301 ^/download/52/?$ https://github.com/gianx1980/OSRobot/releases/download/v1.0.0/os-robot_v1_0_0.zip
+RedirectMatch 301 ^/download/249/?$ https://www.os-robot.com/downloads/
+RedirectMatch 301 ^/download/243/?$ https://www.os-robot.com/downloads/
+RedirectMatch 301 ^/download/235/?$ https://www.os-robot.com/downloads/
+RedirectMatch 301 ^/download/230/?$ https://www.os-robot.com/downloads/
+RedirectMatch 301 ^/download/193/?$ https://www.os-robot.com/downloads/
+RedirectMatch 301 ^/download/156/?$ https://www.os-robot.com/downloads/
+RedirectMatch 301 ^/download/150/?$ https://www.os-robot.com/downloads/
+RedirectMatch 301 ^/download/82/?$ https://www.os-robot.com/downloads/
+RedirectMatch 301 ^/download/62/?$ https://www.os-robot.com/downloads/
+RedirectMatch 301 ^/download/52/?$ https://www.os-robot.com/downloads/
 
 # Old direct links to the zips that WordPress kept outside its protected download folder
 RedirectMatch 301 ^/wp-content/uploads/2025/12/os-robot_v1_0_7\.zip$ https://www.os-robot.com/downloads/
