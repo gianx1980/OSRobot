@@ -9,6 +9,7 @@
     />
     <SqlServerConnectionConfigForm
       v-model="_propsRef.modelValue"
+      :containingFolderItems="_propsRef.containingFolderItems"
       @attemptedConnection="_attemptedConnection"
     />
     <q-card class="q-mt-sm q-mb-sm">

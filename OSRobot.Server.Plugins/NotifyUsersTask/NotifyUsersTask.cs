@@ -28,7 +28,9 @@ public class NotifyUsersTask : MultipleIterationTask
         if (string.IsNullOrWhiteSpace(config.Title))
             throw new ApplicationException($"Task {config.Name}: the notification title is empty.");
 
-        UserNotification notification = new(Truncate(config.Title, MaxTitleLength), Truncate(config.Message, MaxMessageLength),
+        // Notifications reach every open editor: secrets are redacted as in the execution logs.
+        UserNotification notification = new(Truncate(Core.Core.Variables.Redact(config.Title), MaxTitleLength),
+                                             Truncate(Core.Core.Variables.Redact(config.Message), MaxMessageLength),
                                              config.Level, DateTime.Now, config.Name);
 
         await Core.Core.UserNotifier.NotifyAsync(notification, _cancellationToken);

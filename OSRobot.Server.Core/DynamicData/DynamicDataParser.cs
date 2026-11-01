@@ -3,6 +3,7 @@
 
 using Microsoft.CodeAnalysis.CSharp.Scripting;
 using Microsoft.CodeAnalysis.Scripting;
+using OSRobot.Server.Core.Variables;
 using System.Data;
 using System.Reflection;
 using System.Text.RegularExpressions;
@@ -26,11 +27,16 @@ public class DynamicDataInfo(string dynamicData, int objectID, string fieldName,
     public string RowIndex { get; set; } = rowIndex;
 }
 
+/// <param name="Placeholder">The placeholder as written, e.g. "{secret['SmtpPassword']}".</param>
+public sealed record VariableReference(VariableKind Kind, string Name, string Placeholder);
+
 public static partial class DynamicDataParser
 {
     private const string _codePlaceholder = "[CODE]";
+    private const string _kindVariable = "var";
+    private const string _kindSecret = "secret";
     private readonly static Regex _regExFieldValue = DynamicDataRegex();
-    private readonly static Regex _regExEnvVarValue = EnvironmentRegex();
+    private readonly static Regex _regExPlaceholder = PlaceholderRegex();
 
     public static List<DynamicDataInfo> GetDynamicDataInfo(string input)
     {
@@ -72,22 +78,72 @@ public static partial class DynamicDataParser
         return null;
     }
 
-    public static string ParseBasic(string input, List<DynamicDataInfo> dynDataInfoList, DynamicDataChain dynamicDataChain, int iterationNumber, int? subInstanceIndex)
+    // Every placeholder is found in the original text and replaced in a single pass, so what a
+    // placeholder expands to is never parsed again: a value coming from outside (a file, a REST
+    // response, an e-mail) that happens to contain "{secret['X']}" or "{environment['X']}" stays
+    // literal text instead of disclosing that secret or variable.
+    private static string ReplacePlaceholders(string input, DynamicDataChain? dynamicDataChain, int iterationNumber, int? subInstanceIndex,
+                                              IVariableResolver variables)
     {
-        string tempParseResult = input;
-        foreach (DynamicDataInfo ddi in dynDataInfoList)
+        return _regExPlaceholder.Replace(input, (regExMatch) =>
         {
-            string val = GetDynamicDataValue(ddi, dynamicDataChain, iterationNumber, subInstanceIndex)?.ToString() ?? string.Empty;
-            tempParseResult = tempParseResult.Replace(ddi.DynamicData, val);
+            Group kind = regExMatch.Groups["Kind"];
+            if (kind.Success)
+                return ResolveNamedValue(kind.Value, regExMatch.Groups["VarName"].Value, variables);
+
+            // Object references are left as they are when there is no chain to take them from (ResolveVariables).
+            if (dynamicDataChain == null)
+                return regExMatch.Value;
+
+            DynamicDataInfo ddi = new(regExMatch.Value,
+                                      int.Parse(regExMatch.Groups["ObjectID"].Value),
+                                      regExMatch.Groups["FieldName"].Value,
+                                      regExMatch.Groups["SubFieldName"].Value,
+                                      regExMatch.Groups["RowIndex"].Value);
+
+            return GetDynamicDataValue(ddi, dynamicDataChain, iterationNumber, subInstanceIndex)?.ToString() ?? string.Empty;
+        });
+    }
+
+    private static string ResolveNamedValue(string kind, string name, IVariableResolver variables)
+    {
+        if (kind.Equals(_kindVariable, StringComparison.OrdinalIgnoreCase))
+            return variables.Resolve(VariableKind.Variable, name);
+
+        if (kind.Equals(_kindSecret, StringComparison.OrdinalIgnoreCase))
+            return variables.Resolve(VariableKind.Secret, name);
+
+        // An undefined environment variable becomes empty, as it always did.
+        return Environment.GetEnvironmentVariable(name) ?? string.Empty;
+    }
+
+    /// <summary>
+    /// Replaces the {environment[...]}, {var[...]} and {secret[...]} placeholders only, leaving object
+    /// references untouched. For values used outside a run, e.g. the editor's "Test connection".
+    /// </summary>
+    public static string ResolveVariables(string? input, IVariableResolver? variables = null)
+    {
+        if (string.IsNullOrEmpty(input) || input.StartsWith(_codePlaceholder))
+            return input ?? string.Empty;
+
+        return ReplacePlaceholders(input, null, 0, null, variables ?? Core.Variables);
+    }
+
+    /// <summary>The {var[...]} and {secret[...]} placeholders found in the text.</summary>
+    public static List<VariableReference> GetVariableReferences(string input)
+    {
+        List<VariableReference> references = [];
+
+        foreach (Match match in _regExPlaceholder.Matches(input))
+        {
+            string kind = match.Groups["Kind"].Value;
+            if (kind.Equals(_kindVariable, StringComparison.OrdinalIgnoreCase))
+                references.Add(new VariableReference(VariableKind.Variable, match.Groups["VarName"].Value, match.Value));
+            else if (kind.Equals(_kindSecret, StringComparison.OrdinalIgnoreCase))
+                references.Add(new VariableReference(VariableKind.Secret, match.Groups["VarName"].Value, match.Value));
         }
 
-        tempParseResult = _regExEnvVarValue.Replace(tempParseResult, (regExMatch) => {
-            string varName = regExMatch.Groups["VarName"].Value;
-
-            return Environment.GetEnvironmentVariable(varName) ?? string.Empty;
-        });
-
-        return tempParseResult;
+        return references;
     }
 
     public static string ParseCSharpCode(string input, DynamicDataChain dynamicDataChain, int iterationNumber, int? subInstanceIndex)
@@ -125,6 +181,13 @@ public static partial class DynamicDataParser
 
     public static string ReplaceDynamicData(string input, DynamicDataChain dynamicDataChain, int iterationNumber, int? subInstanceIndex)
     {
+        return ReplaceDynamicData(input, dynamicDataChain, iterationNumber, subInstanceIndex, Core.Variables);
+    }
+
+    /// <param name="variables">Where {var[...]} and {secret[...]} take their values from.</param>
+    public static string ReplaceDynamicData(string input, DynamicDataChain dynamicDataChain, int iterationNumber, int? subInstanceIndex,
+                                            IVariableResolver variables)
+    {
         if (input == null)
             return string.Empty;
 
@@ -135,13 +198,9 @@ public static partial class DynamicDataParser
         }
         else
         {
-            // Basic dynamic data management
-
-            // Given a placeholder in the format (for example):
-            //  {object[3].DefaultRecordset[1]['FieldName']}
-            //  Extract the parameters needed to replace the placeholder with real data
-            List<DynamicDataInfo> dynamicDataInfoList = GetDynamicDataInfo(input);
-            return ParseBasic(input, dynamicDataInfoList, dynamicDataChain, iterationNumber, subInstanceIndex);
+            // Basic dynamic data management: placeholders such as {object[3].DefaultRecordset[1]['FieldName']},
+            // {environment['PATH']}, {var['ShareRoot']} or {secret['SmtpPassword']}.
+            return ReplacePlaceholders(input, dynamicDataChain, iterationNumber, subInstanceIndex, variables);
         }
     }
 
@@ -228,6 +287,12 @@ public static partial class DynamicDataParser
         return _regExFieldValue.IsMatch(input);
     }
 
+    /// <summary>Whether the text contains any placeholder: an object reference, {environment[...]}, {var[...]} or {secret[...]}.</summary>
+    public static bool ContainsPlaceholder(string input)
+    {
+        return _regExPlaceholder.IsMatch(input);
+    }
+
     public static void Parse(IPluginInstanceConfig config, DynamicDataChain dynamicDataChain, int iterationNumber, int? subInstanceIndex)
     {
         Type configType = config.GetType();
@@ -277,7 +342,9 @@ public static partial class DynamicDataParser
     [GeneratedRegex(@"\{object\[(?<ObjectID>\d+)\]\.(?<FieldName>\w+)(\[(?<RowIndex>\d+|\{iterationIndex\}|\{subInstanceIndex\})\])?(\[\'(?<SubFieldName>.*?)\'\])?\}", RegexOptions.IgnoreCase, "")]
     private static partial Regex DynamicDataRegex();
 
-    // Use Invariant Culture ("")
-    [GeneratedRegex(@"\{environment\[\'(?<VarName>.*?)\'\]\}", RegexOptions.IgnoreCase, "")]
-    private static partial Regex EnvironmentRegex();
+    // Any placeholder: an object reference (as DynamicDataRegex) or a named value ({environment['X']},
+    // {var['X']}, {secret['X']}), told apart by the Kind group. Use Invariant Culture ("")
+    [GeneratedRegex(@"\{object\[(?<ObjectID>\d+)\]\.(?<FieldName>\w+)(\[(?<RowIndex>\d+|\{iterationIndex\}|\{subInstanceIndex\})\])?(\[\'(?<SubFieldName>.*?)\'\])?\}" +
+                    @"|\{(?<Kind>environment|var|secret)\[\'(?<VarName>.*?)\'\]\}", RegexOptions.IgnoreCase, "")]
+    private static partial Regex PlaceholderRegex();
 }

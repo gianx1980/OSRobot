@@ -4,6 +4,8 @@
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Mvc;
 using OSRobot.Server.Controllers.Base;
+using OSRobot.Server.Core.DynamicData;
+using OSRobot.Server.Core.Variables;
 using OSRobot.Server.Models.DTO;
 using OSRobot.Server.Models.DTO.ClientUtils;
 using OSRobot.Server.Plugins.Infrastructure.Utilities.SqlClient;
@@ -12,8 +14,24 @@ namespace OSRobot.Server.Controllers;
 
 [ApiController]
 [Route("api/[controller]")]
-public class ClientUtilsController : AppControllerBase
+public class ClientUtilsController(IVariableResolver variables) : AppControllerBase
 {
+    private readonly IVariableResolver _variables = variables;
+
+    // The connection fields may hold {var[...]}, {secret[...]} or {environment[...]} placeholders, as in a
+    // task: they are resolved here, on the server, so a secret's value never travels to the editor.
+    // Object references can't be resolved outside a run and are left as they are.
+    private ResolvedSqlServerConnection ResolveConnectionInfo(SqlServerConnectionRequest connectionInfo)
+    {
+        return new ResolvedSqlServerConnection(DynamicDataParser.ResolveVariables(connectionInfo.Server, _variables),
+                                               connectionInfo.Database == null ? null : DynamicDataParser.ResolveVariables(connectionInfo.Database, _variables),
+                                               DynamicDataParser.ResolveVariables(connectionInfo.Username, _variables),
+                                               DynamicDataParser.ResolveVariables(connectionInfo.Password, _variables),
+                                               DynamicDataParser.ResolveVariables(connectionInfo.ConnectionStringOptions, _variables));
+    }
+
+    private sealed record ResolvedSqlServerConnection(string Server, string? Database, string Username, string Password, string ConnectionStringOptions);
+
     [HttpGet]
     [Route("OSInfo")]
     [Authorize]
@@ -100,10 +118,12 @@ public class ClientUtilsController : AppControllerBase
         return Ok(response);
     }
 
-    [HttpGet]
+    // POST, not GET: the request carries a password, which must not end up in a URL (and so in
+    // proxy and web server access logs).
+    [HttpPost]
     [Route("SqlServerConnectionTest")]
     [Authorize]
-    public ActionResult<ResponseModel> SqlServerConnectionTest([FromQuery] SqlServerConnectionRequest connectionInfo)
+    public ActionResult<ResponseModel> SqlServerConnectionTest([FromBody] SqlServerConnectionRequest connectionInfo)
     {
         if (connectionInfo.Server == null
             || connectionInfo.Username == null
@@ -113,7 +133,18 @@ public class ClientUtilsController : AppControllerBase
             return BadRequest(errorResp);
         }
 
-        bool testResult = SqlServer.TestConnection(connectionInfo.Server, connectionInfo.Database, connectionInfo.Username, connectionInfo.Password, connectionInfo.ConnectionStringOptions);
+        ResolvedSqlServerConnection connection;
+        try
+        {
+            connection = ResolveConnectionInfo(connectionInfo);
+        }
+        catch (ApplicationException ex)
+        {
+            ResponseModel errorResp = new(ResponseCode.InvalidVariable, ex.Message);
+            return BadRequest(errorResp);
+        }
+
+        bool testResult = SqlServer.TestConnection(connection.Server, connection.Database, connection.Username, connection.Password, connection.ConnectionStringOptions);
         if (!testResult)
         {
             ResponseModel errorResp = new(ResponseCode.ResponseGenericError, "Connection error");
@@ -124,10 +155,11 @@ public class ClientUtilsController : AppControllerBase
         return Ok(response);
     }
 
-    [HttpGet]
+    // POST for the same reason as SqlServerConnectionTest.
+    [HttpPost]
     [Route("SqlServerDatabases")]
     [Authorize]
-    public ActionResult<ResponseModel<List<DatabaseListItem>>> SqlServerDatabases([FromQuery] SqlServerConnectionRequest connectionInfo)
+    public ActionResult<ResponseModel<List<DatabaseListItem>>> SqlServerDatabases([FromBody] SqlServerConnectionRequest connectionInfo)
     {
         if (connectionInfo.Server == null
             || connectionInfo.Username == null
@@ -137,7 +169,18 @@ public class ClientUtilsController : AppControllerBase
             return BadRequest(errorResp);
         }
 
-        List<SqlServerDatabaseListItem>? sqlDatabaseList = SqlServer.GetDatabaseList(connectionInfo.Server, connectionInfo.Username, connectionInfo.Password, connectionInfo.ConnectionStringOptions);
+        ResolvedSqlServerConnection connection;
+        try
+        {
+            connection = ResolveConnectionInfo(connectionInfo);
+        }
+        catch (ApplicationException ex)
+        {
+            ResponseModel errorResp = new(ResponseCode.InvalidVariable, ex.Message);
+            return BadRequest(errorResp);
+        }
+
+        List<SqlServerDatabaseListItem>? sqlDatabaseList = SqlServer.GetDatabaseList(connection.Server, connection.Username, connection.Password, connection.ConnectionStringOptions);
         if (sqlDatabaseList == null)
         {
             ResponseModel errorResp = new(ResponseCode.ResponseGenericError, "Connection error");

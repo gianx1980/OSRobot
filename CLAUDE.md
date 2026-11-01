@@ -71,7 +71,9 @@ registration step. Plugin `Id` must be unique (duplicate throws) and is the key 
 object per folder with VueFlow `nodes` (`workspaceItemConfig`) and `edges`
 (`workspaceConnectionConfig`). `JsonDeserialization` turns it into a `Folder` tree by
 `PluginRegistry.GetPlugin(pluginId)` + deserializing the node config into the type returned by
-`GetPluginDefaultConfig()` (case-insensitive, string→int tolerant). `RobotController.WorkspaceJobs`
+`GetPluginDefaultConfig()` (case-insensitive, string→int tolerant). A subfolder's own settings
+(`enabled`) live in its node (`pluginId: "Folder"`) inside the parent folder; missing means enabled.
+The engine doesn't start the events of a disabled folder or of its subfolders. `RobotController.WorkspaceJobs`
 validates with the same deserializer before an atomic temp-file + `File.Replace` write (keeps
 `jobs.json.bak`). Engine reload is a separate call (`ReloadJobsConfig`).
 
@@ -82,6 +84,21 @@ task runs as a **clone** (`CoreHelpers.CloneTaskForRun`: a fresh instance with a
 sharing the definition's `ParentFolder` and `Connections`) because the same definition can run
 concurrently; successors are taken from the shared definition. `WaitSeconds` uses a timer,
 not a worker. `SerialExecution` = 1 worker; otherwise `MaxConcurrentTasks`.
+
+**Failure reporting**: a failed result carries the standard `ErrorMessage` field (set by
+`BaseTask.RecordFailure`). After dispatching a task's connections the engine reports each failed
+result to the events implementing `ITaskFailureListener` (the Task failure event), whether or not a
+connection of the task reacts to it (there is deliberately no "handled" notion: what to leave out is
+decided by conditions on the event's own connections); errors the engine catches itself are reported
+too. Those events are initialized first and publish from their own thread. Runs started by them have
+`JobRun.ReportsFailures` false, so a failing report job can't trigger itself in a loop.
+
+**Webhooks**: `WebhooksController` (`POST /hooks/{path}`, anonymous, outside `/api`) reads the body up to
+`AppSettings:Webhooks:MaxBodyBytes` and calls `JobEngine.DeliverWebhook`, which finds the enabled
+`IWebhookEvent` by path; the event checks the token or HMAC signature, its calls-per-minute limit, and
+publishes. Wrong credentials answer 404 like an unknown hook. The action must not bind parameters: MVC would
+read a form-encoded body and consume it. A Kestrel endpoint named `Webhooks` serves only the hooks
+(`WebhookEndpoint.UseWebhooksOnlyEndpoint`, deny by default, first in the pipeline).
 
 **User notifications**: `NotifyUsersTask` calls `Core.UserNotifier` (`IUserNotifier`, no-op by
 default), which `JobEngine` installs from its optional constructor parameter. The server's
@@ -107,8 +124,10 @@ Pattern (see `OSRobot.Server.Plugins/ZipTask/` as a compact example) — one fol
 - `XxxConfig : ITaskConfig` / `IEventConfig` – must carry `Id`, `Name`, `Enabled`, `Log` and, for
   tasks, `PluginIterationMode`/`IterationObject`/`IterationsCount`. Mark user-editable strings that
   accept `{object[N].Field}` placeholders with `[DynamicData]`; enums use
-  `[JsonConverter(typeof(JsonStringEnumConverter))]`. Secrets (passwords, connection options) are
-  not encrypted: `jobs.json` holds them in plain text and they reach the editor as they are.
+  `[JsonConverter(typeof(JsonStringEnumConverter))]`. Credentials typed into a config are stored in
+  `jobs.json` in plain text; users keep them out by writing `{secret['Name']}`, which works only if
+  the property is `[DynamicData]` (or resolved by the task itself). Name password properties
+  `Password`: saving warns when one holds plain text.
   Config properties need a public getter and setter (get-only collections are silently dropped
   when `jobs.json` loads) and concrete, non-interface types.
 - `Xxx` task – derive from `MultipleIterationTask` (runs once per iteration;
@@ -136,15 +155,34 @@ Add tests under `OSRobot.Tests/TestPlugins/` and docs in `docs/user-manual/09-ev
 
 Placeholders resolved by `DynamicDataParser`:
 `{object[ID].Field}`, `{object[ID].Recordset[row]['Column']}` where row is a number,
-`{iterationIndex}` or `{subInstanceIndex}`; `{environment['VAR']}`; and `[CODE]` C# script
-expressions (Roslyn scripting) — disabled when `JobEngineConfig:ScriptingEnabled` is false.
-`DynamicDataValidator` reports broken references as warnings (on load and on save), not errors.
+`{iterationIndex}` or `{subInstanceIndex}`; `{environment['VAR']}`; `{var['Name']}` and
+`{secret['Name']}`; and `[CODE]` C# script expressions (Roslyn scripting) — disabled when
+`JobEngineConfig:ScriptingEnabled` is false, and they don't see variables or secrets.
+All placeholders are replaced in a single regex pass (`PlaceholderRegex`), so a substituted value is
+never parsed again: keep it that way, it is what stops external data from expanding a secret.
+`DynamicDataValidator` reports broken references, undefined variables/secrets and plain-text
+`Password` properties as warnings (on load and on save), not errors.
+
+**Variables and secrets** come from `Core.Variables` (`IVariableResolver`, default the empty
+`VariableSet`), installed by `JobEngine` from its optional constructor parameter like
+`Core.UserNotifier`. In the server it is `VariableStore` (singleton, table `Variables` in
+`config.db`, created by `ConfigDatabaseSchema`): secrets are encrypted with Data Protection
+(`DataProtectionSetup`: key ring in `Data/keys`, protected by a certificate, DPAPI or nothing),
+served from an immutable snapshot rebuilt after each change, so no engine reload is needed.
+At startup `SecretKeyRotation` re-keys and re-encrypts the secrets when the active key's protection
+(read from its XML) differs from the configuration: Data Protection never re-encrypts existing keys.
+`IVariableResolver.Redact` is applied to every execution-log line (`PluginInstanceLogger`), to
+`AppLogger` messages and to Notification task text. `VariablesController` never returns a secret's
+value. Tests that swap `Core.Variables` must be `[DoNotParallelize]`; prefer the overloads that take
+an `IVariableResolver`.
 
 ## Security-relevant settings
 
 `OSRobot.Server/appsettings.json` → `AppSettings:JobEngineConfig` (`ScriptingEnabled`,
 `RunProgramAllowedExecutablePaths`, concurrency, log retention) are pushed into the static
-`OSRobot.Server.Core.Core` at engine start. The API is loopback-only by default; anyone who can
+`OSRobot.Server.Core.Core` at engine start. `AppSettings:DataProtection` decides how the secrets'
+keys are protected; a configured certificate that can't be loaded must stop the server, never
+fall back to unprotected keys. The API is loopback-only by default; anyone who can
 authenticate or write `jobs.json` can run code as the service account. `MustChangePasswordFilter`
 blocks all endpoints until the seeded admin password is changed. Read SECURITY.md before changing
 auth, scripting, or `RunProgramTask`.

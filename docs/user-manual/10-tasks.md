@@ -118,6 +118,10 @@ All SQL Server tasks share a connection section: **Server**, **Database**, **Use
 e.g. `TrustServerCertificate=True`) and **Command timeout (seconds)** (default 30). Use **Test
 connection** to verify the parameters.
 
+The connection fields accept dynamic data, so the password can be a secret: `{secret['SqlPassword']}`.
+**Test connection** resolves `{var[...]}`, `{secret[...]}` and `{environment[...]}` on the server;
+references to other objects are only resolved when the task runs.
+
 ### SQL Server command
 
 | Setting | Description |

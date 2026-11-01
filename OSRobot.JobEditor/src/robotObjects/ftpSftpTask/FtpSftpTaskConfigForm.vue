@@ -27,7 +27,7 @@
           </div>
         </div>
         <div class="row">
-          <div class="col">
+          <div class="col-11">
             <q-input
               filled
               v-model="_propsRef.modelValue.host"
@@ -35,6 +35,14 @@
               lazy-rules
               dense
               :rules="[(val) => !!val || _$t('thisFieldIsMandatory')]"
+            />
+          </div>
+          <div class="col-1">
+            <BtnDynamicDataBrowser
+              class="q-ml-sm"
+              v-model="_propsRef.modelValue"
+              :folderItems="_propsRef.containingFolderItems"
+              modelValueKey="host"
             />
           </div>
         </div>
@@ -59,7 +67,7 @@
           </div>
         </div>
         <div class="row">
-          <div class="col">
+          <div class="col-11">
             <q-input
               filled
               v-model="_propsRef.modelValue.username"
@@ -69,9 +77,17 @@
               :rules="[(val) => !!val || _$t('thisFieldIsMandatory')]"
             />
           </div>
+          <div class="col-1">
+            <BtnDynamicDataBrowser
+              class="q-ml-sm"
+              v-model="_propsRef.modelValue"
+              :folderItems="_propsRef.containingFolderItems"
+              modelValueKey="username"
+            />
+          </div>
         </div>
         <div class="row">
-          <div class="col">
+          <div class="col-11">
             <q-input
               filled
               v-model="_propsRef.modelValue.password"
@@ -79,6 +95,22 @@
               lazy-rules
               dense
               :rules="[(val) => !!val || _$t('thisFieldIsMandatory')]"
+            >
+              <template v-slot:append>
+                <BtnMoveToSecret
+                  :modelValue="_propsRef.modelValue"
+                  modelValueKey="password"
+                  suggestedName="FtpPassword"
+                />
+              </template>
+            </q-input>
+          </div>
+          <div class="col-1">
+            <BtnDynamicDataBrowser
+              class="q-ml-sm"
+              v-model="_propsRef.modelValue"
+              :folderItems="_propsRef.containingFolderItems"
+              modelValueKey="password"
             />
           </div>
         </div>
@@ -445,6 +477,7 @@ import PluginGeneralConfigForm from "src/components/PluginGeneralConfigForm.vue"
 import PluginIterationConfigForm from "src/components/PluginIterationConfigForm.vue";
 import BtnDynamicDataBrowser from "src/components/BtnDynamicDataBrowser.vue";
 import BtnFileBrowser from "src/components/BtnFileBrowser.vue";
+import BtnMoveToSecret from "src/components/BtnMoveToSecret.vue";
 
 const _props = defineProps(["modelValue", "containingFolderItems"]);
 const _propsRef = ref(_props);

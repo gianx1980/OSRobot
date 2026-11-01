@@ -1571,5 +1571,168 @@ namespace OSRobot.Server.Plugins {
                 return ResourceManager.GetString("TxtZipTask", resourceCulture);
             }
         }
+    
+
+        /// <summary>
+        ///   Looks up a localized string similar to Task failure event.
+        /// </summary>
+        internal static string TxtTaskFailureEvent {
+            get {
+                return ResourceManager.GetString("TxtTaskFailureEvent", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to ID of the task that failed.
+        /// </summary>
+        internal static string TxtDynDataFailedObjectID {
+            get {
+                return ResourceManager.GetString("TxtDynDataFailedObjectID", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Name of the task that failed.
+        /// </summary>
+        internal static string TxtDynDataFailedObjectName {
+            get {
+                return ResourceManager.GetString("TxtDynDataFailedObjectName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Type of the task that failed.
+        /// </summary>
+        internal static string TxtDynDataFailedObjectType {
+            get {
+                return ResourceManager.GetString("TxtDynDataFailedObjectType", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Folder of the task that failed.
+        /// </summary>
+        internal static string TxtDynDataFailedObjectFolder {
+            get {
+                return ResourceManager.GetString("TxtDynDataFailedObjectFolder", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Why the task failed.
+        /// </summary>
+        internal static string TxtDynDataFailureMessage {
+            get {
+                return ResourceManager.GetString("TxtDynDataFailureMessage", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Iteration that failed (-1: the whole task).
+        /// </summary>
+        internal static string TxtDynDataFailedIterationIndex {
+            get {
+                return ResourceManager.GetString("TxtDynDataFailedIterationIndex", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to When the task failed.
+        /// </summary>
+        internal static string TxtDynDataFailureDate {
+            get {
+                return ResourceManager.GetString("TxtDynDataFailureDate", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Number of failures reported by this occurrence.
+        /// </summary>
+        internal static string TxtDynDataFailureCount {
+            get {
+                return ResourceManager.GetString("TxtDynDataFailureCount", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Every failure reported by this occurrence, one row each.
+        /// </summary>
+        internal static string TxtDynDataFailures {
+            get {
+                return ResourceManager.GetString("TxtDynDataFailures", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Webhook event.
+        /// </summary>
+        internal static string TxtWebhookEvent {
+            get {
+                return ResourceManager.GetString("TxtWebhookEvent", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Body of the call.
+        /// </summary>
+        internal static string TxtDynDataRequestBody {
+            get {
+                return ResourceManager.GetString("TxtDynDataRequestBody", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Content type of the call.
+        /// </summary>
+        internal static string TxtDynDataContentType {
+            get {
+                return ResourceManager.GetString("TxtDynDataContentType", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to IP address of the caller.
+        /// </summary>
+        internal static string TxtDynDataSourceIp {
+            get {
+                return ResourceManager.GetString("TxtDynDataSourceIp", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Headers of the call, without credentials.
+        /// </summary>
+        internal static string TxtDynDataRequestHeaders {
+            get {
+                return ResourceManager.GetString("TxtDynDataRequestHeaders", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Query string parameters of the call.
+        /// </summary>
+        internal static string TxtDynDataQueryParameters {
+            get {
+                return ResourceManager.GetString("TxtDynDataQueryParameters", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Value extracted by the JSON path.
+        /// </summary>
+        internal static string TxtDynDataJsonPathDataWebhook {
+            get {
+                return ResourceManager.GetString("TxtDynDataJsonPathDataWebhook", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Rows extracted by the JSON path.
+        /// </summary>
+        internal static string TxtDynDataWebhookRecordset {
+            get {
+                return ResourceManager.GetString("TxtDynDataWebhookRecordset", resourceCulture);
+            }
+        }
     }
 }

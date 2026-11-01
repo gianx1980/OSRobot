@@ -49,7 +49,11 @@ function _delete(ev) {
       v-if="_props.data.type === 'task'"
     />
 
-    <q-card class="my-card" @dblclick.stop="_dblclick">
+    <q-card
+      class="my-card"
+      :class="{ 'node-disabled': _props.data.enabled === false }"
+      @dblclick.stop="_dblclick"
+    >
       <div class="row">
         <div class="col">
           <q-card-section class="section_info" align="left">
@@ -59,6 +63,14 @@ function _delete(ev) {
               role="presentation"
               >{{ _props.data.icon }}
               <q-tooltip>{{ _props.data.pluginTitle }}</q-tooltip>
+            </i>
+            <i
+              v-if="_props.data.enabled === false"
+              class="q-icon notranslate material-icons q-tree__icon q-mr-sm"
+              aria-hidden="true"
+              role="presentation"
+              >pause_circle
+              <q-tooltip>{{ _$t("disabled") }}</q-tooltip>
             </i>
             <i
               v-if="_props.data.type !== 'folder'"
@@ -104,7 +116,10 @@ function _delete(ev) {
       </div>
 
       <q-card-section>
-        <q-item-label>{{ _props.data.label }}</q-item-label>
+        <q-item-label
+          :class="{ 'text-strike': _props.data.enabled === false }"
+          >{{ _props.data.label }}</q-item-label
+        >
       </q-card-section>
     </q-card>
 
@@ -123,6 +138,12 @@ function _delete(ev) {
 
 .my-card .q-card__actions {
   padding: 0;
+}
+
+/* Disabled: never runs (event) or is skipped by its connections (task), or a disabled folder. */
+.my-card.node-disabled {
+  opacity: 0.55;
+  filter: grayscale(1);
 }
 </style>
 

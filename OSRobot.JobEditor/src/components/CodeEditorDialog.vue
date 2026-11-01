@@ -40,6 +40,40 @@
               </q-menu>
             </q-btn>
           </div>
+          <div class="col-3">
+            <!-- {var[...]} and {secret[...]} are resolved in Simple mode only, not inside [CODE]. -->
+            <q-btn
+              color="primary"
+              :label="_$t('insertVariableOrSecret')"
+              :disable="_codeType !== _modeSimple"
+              @click="_loadVariables"
+            >
+              <q-menu>
+                <q-list style="min-width: 200px">
+                  <q-item v-if="_variables.length === 0">
+                    <q-item-section class="text-grey-7">{{
+                      _$t("thereAreNoVariables")
+                    }}</q-item-section>
+                  </q-item>
+                  <q-item
+                    v-for="variable in _variables"
+                    :key="variable.name"
+                    clickable
+                    v-close-popup
+                    @click="_insertNamedValue(variable)"
+                  >
+                    <q-item-section avatar>
+                      <q-icon
+                        :name="variable.isSecret ? 'lock' : 'data_object'"
+                        size="xs"
+                      />
+                    </q-item-section>
+                    <q-item-section>{{ variable.name }}</q-item-section>
+                  </q-item>
+                </q-list>
+              </q-menu>
+            </q-btn>
+          </div>
           <div
             class="col-12 q-pa-md q-gutter-sm"
             style="height: 500px; overflow: auto"
@@ -69,6 +103,9 @@ import { useI18n } from "vue-i18n";
 import { useAppStore } from "src/stores/appStore.js";
 import DynamicDataBrowserDialog from "src/components/DynamicDataBrowserDialog.vue";
 import Robot from "src/infrastructure/server/Robot.js";
+import Variables, {
+  variablePlaceholder,
+} from "src/infrastructure/server/Variables.js";
 import Utility from "src/infrastructure/Utility.js";
 
 const _$q = useQuasar();
@@ -92,6 +129,7 @@ const _modeCSharp = "C#";
 const _placeholderIterationIndex = "iterationIndex";
 const _placeholderSubInstanceIndex = "subInstanceIndex";
 const _codeArea = ref(null);
+const _variables = ref([]);
 
 watch(_code, (newValue) => {
   if (newValue.substring(0, _codePrefix.length) === _codePrefix)
@@ -160,6 +198,23 @@ function _insertVariable(placeholder) {
   }
 
   _insertTextAtPosition(_codeArea, dynamicData);
+}
+
+async function _loadVariables() {
+  try {
+    const variables = new Variables(_user.token, _user.refreshToken);
+    const result = await variables.list();
+    _variables.value = result.responseObject ?? [];
+  } catch (e) {
+    Utility.manageException(_$q, _$t, e, _router);
+  }
+}
+
+function _insertNamedValue(variable) {
+  _insertTextAtPosition(
+    _codeArea,
+    variablePlaceholder(variable.name, variable.isSecret)
+  );
 }
 
 function _insertTextAtPosition(quasarInputRef, text) {

@@ -9,6 +9,10 @@
 
         <q-toolbar-title>{{ _$t("osRobot") }}</q-toolbar-title>
 
+        <q-btn dense flat round icon="password" @click="_showVariablesDialog">
+          <q-tooltip>{{ _$t("variablesAndSecrets") }}</q-tooltip>
+        </q-btn>
+
         <q-btn dense flat round icon="work_history" @click="_toggleLogDrawer">
           <q-tooltip>{{ _$t("showLogs") }}</q-tooltip>
         </q-btn>
@@ -133,9 +137,20 @@
     <q-page-container>
       <div
         id="cont1"
-        :style="{ height: $q.screen.height + 'px' }"
+        :style="{ height: $q.screen.height + 'px', position: 'relative' }"
         @drop="_drop"
       >
+        <q-banner
+          v-if="_selectedFolderDisabled"
+          dense
+          class="absolute-top bg-grey-3 text-grey-9"
+          style="z-index: 5"
+        >
+          <template v-slot:avatar>
+            <q-icon name="folder_off" color="grey-7" />
+          </template>
+          {{ _$t("thisFolderIsDisabled") }}
+        </q-banner>
         <VueFlow
           :nodes="_selectedFolderNodes"
           :edges="_selectedFolderEdges"
@@ -198,6 +213,8 @@ import FileSystemEventConfigForm from "src/robotObjects/fileSystemEvent/FileSyst
 import DiskSpaceEventConfigForm from "src/robotObjects/diskSpaceEvent/DiskSpaceEventConfigForm.vue";
 import MemoryEventConfigForm from "src/robotObjects/memoryEvent/MemoryEventConfigForm.vue";
 import OSRobotServiceStartEventConfigForm from "src/robotObjects/osRobotServiceStartEvent/OSRobotServiceStartEventConfigForm.vue";
+import TaskFailureEventConfigForm from "src/robotObjects/taskFailureEvent/TaskFailureEventConfigForm.vue";
+import WebhookEventConfigForm from "src/robotObjects/webhookEvent/WebhookEventConfigForm.vue";
 import SystemEventsEventConfigForm from "src/robotObjects/systemEventsEvent/SystemEventsEventConfigForm.vue";
 import ExcelFileTaskConfigForm from "src/robotObjects/excelFileTask/ExcelFileTaskConfigForm.vue";
 import FileSystemTaskConfigForm from "src/robotObjects/fileSystemTask/FileSystemTaskConfigForm.vue";
@@ -224,7 +241,7 @@ import WriteTextFileTaskConfigForm from "src/robotObjects/writeTextFileTask/writ
 import PingTaskConfigForm from "src/robotObjects/pingTask/PingTaskConfigForm.vue";
 import NotifyUsersTaskConfigForm from "src/robotObjects/notifyUsersTask/NotifyUsersTaskConfigForm.vue";
 
-import { ref, onMounted, onUnmounted, watch } from "vue";
+import { ref, computed, onMounted, onUnmounted, watch } from "vue";
 import {
   VueFlow,
   useVueFlow,
@@ -266,6 +283,7 @@ import Workspace from "src/infrastructure/server/Workspace.js";
 import RobotObjectUtility from "src/infrastructure/workspace/RobotObjectUtility.js";
 import ChangePasswordDialog from "src/components/ChangePasswordDialog.vue";
 import AboutDialog from "src/components/AboutDialog.vue";
+import VariablesDialog from "src/components/VariablesDialog.vue";
 
 const _configForms = {
   EmptyConfigForm,
@@ -277,6 +295,8 @@ const _configForms = {
   DiskSpaceEventConfigForm,
   MemoryEventConfigForm,
   OSRobotServiceStartEventConfigForm,
+  TaskFailureEventConfigForm,
+  WebhookEventConfigForm,
   SystemEventsEventConfigForm,
   ExcelFileTaskConfigForm,
   FileSystemTaskConfigForm,
@@ -428,6 +448,8 @@ function _createFlowElement(config, x, y, pluginInfo) {
       supportedOSPlatformList:
         pluginInfo === null ? null : pluginInfo.supportedOSPlatformList,
       pluginTitle: pluginInfo === null ? "Folder" : pluginInfo.title,
+      // A folder saved before it could be disabled has no "enabled": it is enabled.
+      enabled: config.enabled !== false,
     },
     position: { x: x, y: y },
     connectable: pluginInfo === null ? false : true,
@@ -537,7 +559,10 @@ async function _saveClick(ev) {
   try {
     _isSaving.value = true;
     const workspace = new Workspace(_user.token, _user.refreshToken);
-    let r = await workspace.save(_workspaceJobs);
+    let r = await workspace.save({
+      ..._workspaceJobs,
+      folderTree: _folderTreeForSave(_rootFolder.value),
+    });
 
     // The server saves the jobs anyway, but reports the dynamic data references
     // that would fail at runtime (missing object, object not upstream, unknown field).
@@ -571,13 +596,81 @@ async function _saveClick(ev) {
   }
 }
 
+// From the config forms: a name change (newName) or an Enabled switch (enabled).
 function _nodeNeedsUpdate(ev) {
-  const node = _findTreeNode(_rootFolder.value, ev.nodeId);
+  if (ev.newName !== undefined) {
+    const node = _findTreeNode(_rootFolder.value, ev.nodeId);
 
-  if (node !== null) node.label = ev.newName;
+    if (node !== null) node.label = ev.newName;
 
-  _selectedItemNode.data.label = ev.newName;
+    _selectedItemNode.data.label = ev.newName;
+  }
+
+  if (ev.enabled !== undefined) {
+    _selectedItemNode.data.enabled = ev.enabled !== false;
+    if (ev.pluginId === "Folder") _refreshFolderTreeStates(true);
+  }
 }
+
+// A folder's settings are in its node, inside its parent folder: the open folder's nodes are live
+// in VueFlow, the others are in _workspaceJobs. This marks the disabled folders in the workspace tree
+// (icon, and folderDisabled for the canvas banner).
+function _refreshFolderTreeStates(useLiveNodes) {
+  const disabledIds = new Set();
+  const collect = (configs) =>
+    configs.forEach((config) => {
+      if (config?.pluginId === "Folder" && config.enabled === false)
+        disabledIds.add(String(config.id));
+    });
+
+  Object.keys(_workspaceJobs)
+    .filter(
+      (key) =>
+        key.startsWith("folder_") &&
+        !(useLiveNodes && key === `folder_${_selectedFolder.value}`)
+    )
+    .forEach((key) =>
+      collect(_workspaceJobs[key].nodes.map((n) => n.workspaceItemConfig))
+    );
+
+  if (useLiveNodes) collect(getNodes.value.map((n) => n.workspaceItemConfig));
+
+  const mark = (treeNodes) =>
+    treeNodes.forEach((treeNode) => {
+      const disabled = disabledIds.has(String(treeNode.id));
+      treeNode.folderDisabled = disabled;
+      treeNode.icon = disabled ? "folder_off" : "folder";
+      treeNode.iconColor = disabled ? "grey-6" : undefined;
+      mark(treeNode.children ?? []);
+    });
+  mark(_rootFolder.value);
+}
+
+// The folder tree as saved: without what _refreshFolderTreeStates adds for display, which is
+// recomputed from the folders' nodes whenever the workspace is loaded.
+function _folderTreeForSave(treeNodes) {
+  return treeNodes.map(({ folderDisabled, iconColor, ...treeNode }) => ({
+    ...treeNode,
+    icon: "folder",
+    children: _folderTreeForSave(treeNode.children ?? []),
+  }));
+}
+
+// The tree nodes from the root down to the folder with the given id, or null.
+function _treePath(treeNodes, id) {
+  for (const treeNode of treeNodes) {
+    if (String(treeNode.id) === String(id)) return [treeNode];
+    const subPath = _treePath(treeNode.children ?? [], id);
+    if (subPath !== null) return [treeNode, ...subPath];
+  }
+  return null;
+}
+
+// The open folder is disabled, or inside a disabled folder: its events don't start.
+const _selectedFolderDisabled = computed(() => {
+  const path = _treePath(_rootFolder.value, _selectedFolder.value);
+  return path !== null && path.some((treeNode) => treeNode.folderDisabled);
+});
 
 function _folderOpen(ev) {
   // Set current folder
@@ -757,6 +850,7 @@ function _drop(ev) {
       id: newId,
       pluginId: data.pluginId,
       name: `Folder ${newId}`,
+      enabled: true,
     };
 
     // Update workspace jobs configuration
@@ -812,6 +906,7 @@ function _drop(ev) {
 }
 
 function _updateContainingFolderItems() {
+  _refreshFolderTreeStates(true);
   _selectedFolderNodes.value = getNodes.value;
   _containingFolderItems.value = _selectedFolderNodes.value.map((t) => {
     return {
@@ -1146,6 +1241,10 @@ function _showAboutDialog() {
   _$q.dialog({ component: AboutDialog });
 }
 
+function _showVariablesDialog() {
+  _$q.dialog({ component: VariablesDialog });
+}
+
 function _exitClick() {
   _$q
     .dialog({
@@ -1324,6 +1423,7 @@ onMounted(async () => {
         _workspaceJobs["folder_0"].nodes.map(_nodeFromSaved);
       _selectedFolderEdges.value =
         _workspaceJobs["folder_0"].edges.map(_edgeFromSaved);
+      _refreshFolderTreeStates(false);
     } else {
       // No jobs from server, init with an empty tree
       console.error("No jobs from server...");

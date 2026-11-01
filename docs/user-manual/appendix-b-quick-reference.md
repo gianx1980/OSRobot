@@ -17,12 +17,14 @@
 | Plugin | Type | Platforms | Main dynamic data |
 |---|---|---|---|
 | [Date/Time](09-events.md#91-datetime-event) | Event | All | standard |
-| [CPU](09-events.md#92-cpu-event) | Event | Windows | `CpuUsagePercentage` |
+| [CPU](09-events.md#92-cpu-event) | Event | Windows, Linux | `CpuUsagePercentage` |
 | [Memory](09-events.md#93-memory-event) | Event | All | `MemoryUsagePercentage` |
 | [Disk space](09-events.md#94-disk-space-event) | Event | All | `DiskName`, `DiskSpaceBytes` |
 | [File system](09-events.md#95-file-system-event) | Event | All | `FullPathName`, `FileName`, `FileExtension`, `ChangeType` |
 | [System events](09-events.md#96-system-events-event) | Event | Windows notifications | `EventCode` |
 | [OSRobot service start](09-events.md#97-osrobot-service-start-event) | Event | All | standard |
+| [Task failure](09-events.md#98-task-failure-event) | Event | All | `FailedObjectName`, `FailureMessage`, `FailureCount`, `Failures` |
+| [Webhook](09-events.md#99-webhook-event) | Event | All | `RequestBody`, `JsonPathData`, `RequestHeaders`, `DefaultRecordset` |
 | [Read text file](10-tasks.md#read-text-file) | Task | All | `DefaultRecordset` |
 | [Write text file](10-tasks.md#write-text-file) | Task | All | `DefaultRecordset` |
 | [Read binary file](10-tasks.md#read-binary-file) | Task | All | `DefaultRecordset` (`FileContent`...) |

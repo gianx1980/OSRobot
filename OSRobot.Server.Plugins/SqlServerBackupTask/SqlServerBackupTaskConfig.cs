@@ -40,9 +40,13 @@ public class SqlServerBackupTaskConfig : ITaskConfig
     public int IterationsCount { get; set; }
 
 
+    [DynamicData]
     public string Server { get; set; } = string.Empty;
+    [DynamicData]
     public string Username { get; set; } = string.Empty;
+    [DynamicData]
     public string Password { get; set; } = string.Empty;
+    [DynamicData]
     public string ConnectionStringOptions { get; set; } = string.Empty;
     [JsonConverter(typeof(JsonStringEnumConverter))]
     public BackupTypeEnum BackupType { get; set; }

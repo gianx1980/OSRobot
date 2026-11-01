@@ -1,9 +1,6 @@
 ﻿// SPDX-FileCopyrightText: Gianluca Di Bucci (gianx1980) <https://www.os-robot.com>
 // SPDX-License-Identifier: GPL-3.0-or-later
 
-// Suppress supported platform warning
-#pragma warning disable CA1416
-
 using OSRobot.Server.Core;
 using OSRobot.Server.Core.DynamicData;
 using OSRobot.Server.Core.Logging;
@@ -30,9 +27,8 @@ public class CpuEvent : IEvent
 
     private readonly System.Timers.Timer _recurringTimer = new();
 
-    private PerformanceCounter? _perfCounter;
-
-    private CounterSample _lastSample;
+    // Created at the first check, where an error is logged like any other (not in Init, which would stop the engine's start).
+    private ICpuUsageSampler? _sampler;
 
     private readonly List<CpuUsageSample> _cpuUsageSamples = [];
 
@@ -64,6 +60,7 @@ public class CpuEvent : IEvent
     public void Destroy()
     {
         _recurringTimer.Dispose();
+        _sampler?.Dispose();
     }
 
     private void RecurringTimer_Elapsed(object? sender, System.Timers.ElapsedEventArgs e)
@@ -79,14 +76,21 @@ public class CpuEvent : IEvent
 
             CpuEventConfig config = (CpuEventConfig)Config;
 
-            _perfCounter ??= new PerformanceCounter("Processor information", "% processor utility", "_Total");
+            _sampler ??= CpuUsageSampler.Create();
+
+            // Usage is measured between two checks: the first one only takes the starting point.
+            float? sample = _sampler.NextSample();
+            if (sample == null)
+            {
+                if (Config.Log)
+                    logger.Info(this, "First CPU sample taken: usage is measured from the next check");
+                return;
+            }
+
+            float cpuUsage = sample.Value;
 
             if (_dateFirstSample == DateTime.MinValue)
                 _dateFirstSample = DateTime.Now;
-
-            CounterSample currentSample = _perfCounter.NextSample();
-            float cpuUsage = CounterSample.Calculate(_lastSample, currentSample);
-            _lastSample = currentSample;
 
             Debug.WriteLine($"Samples Count before: {_cpuUsageSamples.Count}");
             if (config.TriggerIfAvgUsageIsAboveThresholdLastXMin)
@@ -131,7 +135,7 @@ public class CpuEvent : IEvent
 
                 if (Config.Log)
                 {
-                    logger.Info(this, "$Cpu usage detected: {CpuUsage}");
+                    logger.Info(this, $"Cpu usage detected: {cpuUsage}");
                     logger.EventTriggering(this);
                 }
                     
