@@ -548,6 +548,26 @@ export default {
     "The body comes from outside: treat it as untrusted. Pass it to SQL as a parameter, never in the query text, and don't use it in Run program arguments.",
   webhookUrl: "URL on this server",
 
+  // Service / process watch event
+  noWatchConditionSelected: "Nothing is selected: the event will never fire.",
+  serviceProcessWatchHint:
+    "Nothing fires for what is already stopped or running when the job starts. A process that starts and exits, or a service that stops and starts again, between two checks is not seen.",
+  triggerWhen: "Trigger when",
+  watchedProcessNames: "Process names",
+  watchedProcessNamesHint:
+    "With or without .exe. * and ? wildcards, not case-sensitive. Separate several names with ;",
+  watchedServiceNames: "Service names",
+  watchedServiceNamesHint:
+    "The service name or the display name. * and ? wildcards, not case-sensitive. Separate several names with ;",
+  watchProcesses: "Processes",
+  watchServices: "Windows services",
+  whenProcessExits: "A process exits (on Windows, with its exit code)",
+  whenProcessStarts: "A process starts",
+  whenServiceChangesState: "Any change of state, pending states included",
+  whenServiceIsPaused: "The service is paused",
+  whenServiceStarts: "The service starts or resumes",
+  whenServiceStops: "The service stops",
+
   // Disabled objects and folders
   disabled: "Disabled",
   thisFolderIsDisabled:

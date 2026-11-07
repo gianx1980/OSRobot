@@ -18,8 +18,9 @@ when. Jobs are organized into folders and run entirely on the machine OS-Robot i
   and per-object enable/disable and logging toggles.
 - **Events** - `DateTimeEvent` (schedule/recurrence), `CpuEvent`, `MemoryEvent`, `DiskSpaceEvent`,
   `FileSystemEvent`, `SystemEventsEvent`, `OSRobotServiceStartEvent`, `TaskFailureEvent`, which
-  reports the failures of other jobs (one e-mail for a whole folder, grouped over time), and
-  `WebhookEvent`, which lets other systems start a job with an HTTP call.
+  reports the failures of other jobs (one e-mail for a whole folder, grouped over time),
+  `WebhookEvent`, which lets other systems start a job with an HTTP call, and
+  `ServiceProcessWatchEvent`, which fires when a Windows service stops or a program starts or exits.
 - **Tasks** - file I/O (`ReadTextFileTask`, `WriteTextFileTask`, `ReadBinaryFileTask`,
   `WriteBinaryFileTask`, `FileSystemTask`), archives (`ZipTask`, `UnzipTask`), data
   (`ExcelFileTask`, `SqlServerBackupTask`, `SqlServerBulkCopyTask`, `SqlServerCommandTask`),

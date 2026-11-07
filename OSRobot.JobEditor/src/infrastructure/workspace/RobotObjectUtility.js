@@ -32,6 +32,9 @@ RobotObjectUtility.getPluginIcon = function (objectId) {
     case "OSRobotServiceStartEvent":
       return "settings";
 
+    case "ServiceProcessWatchEvent":
+      return "monitor_heart";
+
     case "TaskFailureEvent":
       return "report_problem";
 

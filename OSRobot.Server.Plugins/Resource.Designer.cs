@@ -1734,5 +1734,86 @@ namespace OSRobot.Server.Plugins {
                 return ResourceManager.GetString("TxtDynDataWebhookRecordset", resourceCulture);
             }
         }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Service / process watch event.
+        /// </summary>
+        internal static string TxtServiceProcessWatchEvent {
+            get {
+                return ResourceManager.GetString("TxtServiceProcessWatchEvent", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Name of the service (service watch).
+        /// </summary>
+        internal static string TxtDynDataServiceName {
+            get {
+                return ResourceManager.GetString("TxtDynDataServiceName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Display name of the service.
+        /// </summary>
+        internal static string TxtDynDataServiceDisplayName {
+            get {
+                return ResourceManager.GetString("TxtDynDataServiceDisplayName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to New state of the service: Stopped, Running, Paused or a pending state.
+        /// </summary>
+        internal static string TxtDynDataServiceState {
+            get {
+                return ResourceManager.GetString("TxtDynDataServiceState", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to State of the service at the previous check.
+        /// </summary>
+        internal static string TxtDynDataPreviousServiceState {
+            get {
+                return ResourceManager.GetString("TxtDynDataPreviousServiceState", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Name of the process, without extension (process watch).
+        /// </summary>
+        internal static string TxtDynDataProcessName {
+            get {
+                return ResourceManager.GetString("TxtDynDataProcessName", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Process ID.
+        /// </summary>
+        internal static string TxtDynDataProcessId {
+            get {
+                return ResourceManager.GetString("TxtDynDataProcessId", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to What happened to the process: Started or Exited.
+        /// </summary>
+        internal static string TxtDynDataProcessChange {
+            get {
+                return ResourceManager.GetString("TxtDynDataProcessChange", resourceCulture);
+            }
+        }
+
+        /// <summary>
+        ///   Looks up a localized string similar to Exit code of the process; empty when it cannot be read.
+        /// </summary>
+        internal static string TxtDynDataExitCode {
+            get {
+                return ResourceManager.GetString("TxtDynDataExitCode", resourceCulture);
+            }
+        }
     }
 }

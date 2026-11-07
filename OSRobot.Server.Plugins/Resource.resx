@@ -675,4 +675,31 @@
   <data name="TxtDynDataWebhookRecordset" xml:space="preserve">
     <value>Rows extracted by the JSON path</value>
   </data>
+  <data name="TxtServiceProcessWatchEvent" xml:space="preserve">
+    <value>Service / process watch event</value>
+  </data>
+  <data name="TxtDynDataServiceName" xml:space="preserve">
+    <value>Name of the service (service watch)</value>
+  </data>
+  <data name="TxtDynDataServiceDisplayName" xml:space="preserve">
+    <value>Display name of the service</value>
+  </data>
+  <data name="TxtDynDataServiceState" xml:space="preserve">
+    <value>New state of the service: Stopped, Running, Paused or a pending state</value>
+  </data>
+  <data name="TxtDynDataPreviousServiceState" xml:space="preserve">
+    <value>State of the service at the previous check</value>
+  </data>
+  <data name="TxtDynDataProcessName" xml:space="preserve">
+    <value>Name of the process, without extension (process watch)</value>
+  </data>
+  <data name="TxtDynDataProcessId" xml:space="preserve">
+    <value>Process ID</value>
+  </data>
+  <data name="TxtDynDataProcessChange" xml:space="preserve">
+    <value>What happened to the process: Started or Exited</value>
+  </data>
+  <data name="TxtDynDataExitCode" xml:space="preserve">
+    <value>Exit code of the process; empty when it cannot be read</value>
+  </data>
 </root>

@@ -216,6 +216,7 @@ import OSRobotServiceStartEventConfigForm from "src/robotObjects/osRobotServiceS
 import TaskFailureEventConfigForm from "src/robotObjects/taskFailureEvent/TaskFailureEventConfigForm.vue";
 import WebhookEventConfigForm from "src/robotObjects/webhookEvent/WebhookEventConfigForm.vue";
 import SystemEventsEventConfigForm from "src/robotObjects/systemEventsEvent/SystemEventsEventConfigForm.vue";
+import ServiceProcessWatchEventConfigForm from "src/robotObjects/serviceProcessWatchEvent/ServiceProcessWatchEventConfigForm.vue";
 import ExcelFileTaskConfigForm from "src/robotObjects/excelFileTask/ExcelFileTaskConfigForm.vue";
 import FileSystemTaskConfigForm from "src/robotObjects/fileSystemTask/FileSystemTaskConfigForm.vue";
 import FtpSftpTaskConfigForm from "src/robotObjects/ftpSftpTask/FtpSftpTaskConfigForm.vue";
@@ -298,6 +299,7 @@ const _configForms = {
   TaskFailureEventConfigForm,
   WebhookEventConfigForm,
   SystemEventsEventConfigForm,
+  ServiceProcessWatchEventConfigForm,
   ExcelFileTaskConfigForm,
   FileSystemTaskConfigForm,
   FtpSftpTaskConfigForm,

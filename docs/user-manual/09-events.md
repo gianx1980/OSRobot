@@ -200,6 +200,52 @@ Things to know:
   recorded call can be sent again.
 - Files (multipart bodies) are not supported, and calls can't wait for the job's result.
 
+## 9.10 Service / process watch event
+
+Fires when a Windows service stops or changes state, or when a program starts or exits: restart a
+service that stopped, warn someone when a program crashes, run a job when a program is opened.
+**Platforms:** Windows, Linux (services: Windows only).
+
+| Setting | Description |
+|---|---|
+| Watch | **Windows services** or **Processes**. |
+| Service names / Process names | The names to watch. `*` stands for any characters and `?` for one, case doesn't matter, and several names are separated by `;`: `SQL*;W3SVC`. A service matches on its name (`Spooler`) or its display name (`Print Spooler`); a process on its program name, with or without `.exe` (`notepad` or `notepad.exe`). |
+| Trigger when (services) | **The service stops** (the default), **The service starts or resumes**, **The service is paused**, and **Any change of state, pending states included** (*StartPending*, *StopPending*...). |
+| Trigger when (processes) | **A process starts**, **A process exits** (the default). |
+| Check every | Interval between checks, in seconds (default 5). |
+
+The event fires once for each service or process that changed: a name like `chrome` exits once per
+Chrome process. Watching every program (`*`) with *A process starts* fires very often.
+
+**Dynamic data:**
+
+| Field | Content |
+|---|---|
+| `ServiceName`, `ServiceDisplayName` | The service that changed. |
+| `ServiceState`, `PreviousServiceState` | Its new state and its state at the previous check: `Stopped`, `StartPending`, `StopPending`, `Running`, `ContinuePending`, `PausePending` or `Paused`. |
+| `ProcessName`, `ProcessId` | The process that started or exited, its name without extension. |
+| `ProcessChange` | `Started` or `Exited`. |
+| `ExitCode` | The exit code of a process that exited, e.g. `0`; empty when it can't be read (see below). |
+
+The fields of the other kind of watch are empty: a services watch publishes an empty `ProcessName`.
+The time of the change is the standard start date: when the check saw it.
+
+Things to know:
+
+- **Nothing fires at start.** When the server starts or the jobs are reloaded, the first check only
+  takes note of what is running and stopped: a service already stopped, or a program already running,
+  doesn't fire. A service installed later fires only when its state changes after that.
+- **Changes between two checks are not seen.** The event compares each check with the previous one:
+  a program that starts and exits, or a service that stops and starts again, within one interval goes
+  unnoticed, and pending states in between may be skipped. Lower *Check every* if that matters; a
+  check takes a few milliseconds.
+- **Exit codes** are read on Windows only, from programs OS-Robot is allowed to open. Protected
+  system processes, and other users' programs when the server doesn't run as an administrator or as
+  a service, have an empty `ExitCode`. On Linux only the parent of a program can read its exit code,
+  so it is always empty.
+- **On Linux** process names are cut to their first 15 characters, as `ps` shows them. Watching
+  services doesn't start there: the event's log says so.
+
 ---
 
 Previous: [8. Dynamic data](08-dynamic-data.md) · Next: [10. Tasks reference](10-tasks.md)

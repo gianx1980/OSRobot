@@ -18,6 +18,8 @@ public sealed class RecordingEventSink : IEventSink
     private readonly object _gate = new();
     private readonly List<DateTime> _occurrences = [];
     private readonly List<(int Count, TaskCompletionSource<DateTime> Tcs)> _waiters = [];
+    private readonly List<DynamicDataSet> _published = [];
+    private readonly List<(Func<DynamicDataSet, bool> Predicate, TaskCompletionSource<DynamicDataSet> Tcs)> _dataWaiters = [];
 
     public int Count { get { lock (_gate) return _occurrences.Count; } }
 
@@ -38,6 +40,10 @@ public sealed class RecordingEventSink : IEventSink
 
             foreach ((int count, TaskCompletionSource<DateTime> tcs) in _waiters.Where(w => w.Count == _occurrences.Count))
                 tcs.TrySetResult(now);
+
+            _published.Add(dynamicData);
+            foreach ((Func<DynamicDataSet, bool> predicate, TaskCompletionSource<DynamicDataSet> tcs) in _dataWaiters.Where(w => w.Predicate(dynamicData)))
+                tcs.TrySetResult(dynamicData);
         }
 
         return true;
@@ -56,6 +62,31 @@ public sealed class RecordingEventSink : IEventSink
                 return _occurrences[count - 1];
 
             _waiters.Add((count, tcs));
+        }
+
+        try
+        {
+            return await tcs.Task.WaitAsync(timeout);
+        }
+        catch (TimeoutException)
+        {
+            return null;
+        }
+    }
+
+    /// <summary>Waits until an occurrence whose dynamic data satisfies <paramref name="predicate"/> is published.</summary>
+    /// <returns>That occurrence's dynamic data, or null if none came within <paramref name="timeout"/>.</returns>
+    public async Task<DynamicDataSet?> WaitForPublishedAsync(Func<DynamicDataSet, bool> predicate, TimeSpan timeout)
+    {
+        TaskCompletionSource<DynamicDataSet> tcs = new(TaskCreationOptions.RunContinuationsAsynchronously);
+
+        lock (_gate)
+        {
+            DynamicDataSet? published = _published.FirstOrDefault(predicate);
+            if (published != null)
+                return published;
+
+            _dataWaiters.Add((predicate, tcs));
         }
 
         try
